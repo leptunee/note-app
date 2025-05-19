@@ -1,3 +1,4 @@
+import 'react-native-get-random-values';
 import React from 'react';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { Link, Tabs } from 'expo-router';
