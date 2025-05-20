@@ -238,26 +238,76 @@ export function useExport() {  /**
           return false;
         }
       }
-      
-      // 截取视图为图片 - 确保捕获视图的有效性
+        // 截取视图为图片 - 确保捕获视图的有效性
       if (!viewRef.current) {
         console.error('视图引用无效');
         Alert.alert('错误', '无法获取笔记视图');
         return false;
-      }
-        // 使用更安全的截图配置，避免宽高问题
-      const uri = await captureRef(viewRef, {
+      }      // 临时显示导出视图以进行截图
+      try {
+        if (viewRef.current) {
+          // 恢复正常大小和可见性以便截图
+          viewRef.current.setNativeProps({
+            style: {
+              position: 'absolute',
+              opacity: 1,
+              height: 'auto',
+              minHeight: 400,
+              width: 300, // 固定宽度，避免布局问题
+              left: 0,
+              top: 0,
+              backgroundColor: 'white',
+              borderRadius: 8,
+              padding: 10,
+              zIndex: 999,
+            }
+          });
+        }
+        
+        // 给渲染足够的时间
+        await new Promise(resolve => setTimeout(resolve, 300));
+      } catch (error) {
+        console.error('设置视图样式时出错:', error);
+      }      // 使用更安全的截图配置 - 先获取为base64，再写入文件
+      const fileName = `${note.title.replace(/[\\/:*?"<>|]/g, '_')}_${Date.now()}.png`;
+      const fileUri = `${FileSystem.cacheDirectory}${fileName}`;
+      
+      // 先截图为base64
+      const base64Image = await captureRef(viewRef, {
         format: 'png',
         quality: 1.0,
-        result: 'data-uri', // 使用data-uri避免文件类型问题
-        snapshotContentContainer: false // 不使用内容容器大小
+        result: 'base64',
+        snapshotContentContainer: false
       });
+      
+      // 将base64数据写入文件系统
+      await FileSystem.writeAsStringAsync(
+        fileUri, 
+        base64Image, 
+        { encoding: FileSystem.EncodingType.Base64 }
+      );
+        // 截图后恢复隐藏状态
+      try {
+        if (viewRef.current) {
+          viewRef.current.setNativeProps({
+            style: {
+              position: 'absolute',
+              opacity: 0,
+              width: 1,
+              left: -9999,
+              zIndex: -1
+            }
+          });
+        }
+      } catch (error) {
+        console.error('恢复视图样式时出错:', error);
+      }
 
-      // 创建文件名
-      const fileName = `${note.title.replace(/[\\/:*?"<>|]/g, '_')}_${Date.now()}.png`;      if (Platform.OS === 'android') {
+      // Android平台保存到相册
+      if (Platform.OS === 'android') {
         try {
           // 保存到媒体库 (Android)
-          const asset = await MediaLibrary.createAssetAsync(uri);
+          const asset = await MediaLibrary.createAssetAsync(fileUri);
           const album = await MediaLibrary.getAlbumAsync('笔记应用');
           
           // 如果相册不存在，则创建
@@ -272,9 +322,17 @@ export function useExport() {  /**
           console.error('保存到媒体库时出错:', error);
           // 即使媒体库保存失败，也尝试继续分享
         }
-      }      // 验证URI是否有效
-      if (!uri || typeof uri !== 'string') {
-        console.error('生成的图片URI无效');
+      }
+      
+      // 验证文件是否存在
+      try {
+        const fileInfo = await FileSystem.getInfoAsync(fileUri);
+        if (!fileInfo.exists) {
+          console.error('导出文件不存在');
+          return false;
+        }
+      } catch (error) {
+        console.error('检查文件时出错:', error);
         return false;
       }
       
@@ -282,7 +340,7 @@ export function useExport() {  /**
       try {
         const isAvailable = await Sharing.isAvailableAsync();
         if (isAvailable) {
-          await Sharing.shareAsync(uri, {
+          await Sharing.shareAsync(fileUri, {
             mimeType: 'image/png',
             dialogTitle: `分享笔记图片: ${note.title}`,
             UTI: 'public.png' // 用于iOS
