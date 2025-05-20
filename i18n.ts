@@ -2,7 +2,7 @@ import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import * as Localization from 'react-native-localize';
 
-const resources = {
+const resources = {  
   zh: {
     translation: {
       notes: '我的笔记',
@@ -10,6 +10,11 @@ const resources = {
       title: '标题',
       content: '内容',
       delete: '删除',
+      save: '保存',
+      edit: '编辑笔记',
+      back: '返回',
+      maxChars: '最多{{count}}个字',
+      titleTooLong: '标题不能超过{{max}}个字',
     },
   },
   en: {
@@ -19,6 +24,11 @@ const resources = {
       title: 'Title',
       content: 'Content',
       delete: 'Delete',
+      save: 'Save',
+      edit: 'Edit Note',
+      back: 'Back',
+      maxChars: 'max {{count}} chars',
+      titleTooLong: 'Title cannot exceed {{max}} characters',
     },
   },
 };
