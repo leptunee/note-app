@@ -18,10 +18,12 @@ export default function NoteEditScreen() {
   const [content, setContent] = useState('');
   const [titleError, setTitleError] = useState('');
   const [showExportModal, setShowExportModal] = useState(false);
+  const [showOptionsMenu, setShowOptionsMenu] = useState(false);
   const colorScheme = useColorScheme() ?? 'light';
   const MAX_TITLE_LENGTH = 64; // 最大标题长度限制为64个汉字
   const isNewNote = !id;
   const noteViewRef = useRef(null);
+  const optionsMenuRef = useRef(null);
   
   // 当页面加载时，如果有id，则查找对应的笔记
   useEffect(() => {
@@ -70,7 +72,8 @@ export default function NoteEditScreen() {
     
     router.back();
   };
-    // 删除笔记并返回主界面
+  
+  // 删除笔记并返回主界面
   const handleDelete = () => {
     if (id) {
       deleteNote(id);
@@ -88,7 +91,8 @@ export default function NoteEditScreen() {
     
     setShowExportModal(true);
   };
-    // 获取当前笔记对象
+  
+  // 获取当前笔记对象
   const getCurrentNote = () => {
     return id 
       ? notes.find(n => n.id === id) 
@@ -104,7 +108,8 @@ export default function NoteEditScreen() {
       Alert.alert('错误', '未找到笔记');
       return;
     }
-      const success = await exportAsTxt(currentNote);
+    
+    const success = await exportAsTxt(currentNote);
     if (success) {
       Alert.alert('成功', '笔记已导出为文本文件');
     } else {
@@ -129,6 +134,7 @@ export default function NoteEditScreen() {
       Alert.alert('错误', '导出笔记时出错');
     }
   };
+  
   // 导出为图片
   const handleExportAsImage = async () => {
     setShowExportModal(false);
@@ -183,41 +189,89 @@ export default function NoteEditScreen() {
     }
   };
   
+  // 点击屏幕其他区域关闭下拉菜单
+  useEffect(() => {
+    const handleClickOutside = () => {
+      if (showOptionsMenu) {
+        setShowOptionsMenu(false);
+      }
+    };
+    
+    // 添加事件监听 - 模拟点击外部关闭
+    setTimeout(() => {
+      if (showOptionsMenu) {
+        const timer = setTimeout(() => {
+          setShowOptionsMenu(false);
+        }, 4000); // 4秒后自动关闭
+        return () => clearTimeout(timer);
+      }
+    }, 100);
+    
+    return () => {
+      // 清理
+    };
+  }, [showOptionsMenu]);
+  
   return (
-    <View style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#000' : '#fff' }]}>      <View style={styles.header}>
+    <View style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#000' : '#fff' }]}>
+      <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
           <Text style={[styles.actionText, { color: Colors[colorScheme].tint }]}>{String(t('back'))}</Text>
         </TouchableOpacity>
+        
         <Text style={[styles.title, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
           {isNewNote ? String(t('add')) : String(t('edit'))}
         </Text>
+        
         <View style={styles.headerActions}>
           {!isNewNote && (
-            <>
+            <View style={styles.optionsMenuContainer}>
               <TouchableOpacity 
-                style={styles.exportButton} 
-                onPress={handleExport}
+                style={styles.optionsButton} 
+                onPress={() => setShowOptionsMenu(!showOptionsMenu)}
               >
-                <FontAwesome name="download" size={18} color="#ffffff" />
-                <Text style={styles.exportButtonText}>导出</Text>
+                <FontAwesome name="ellipsis-v" size={18} color={Colors[colorScheme].tint} />
               </TouchableOpacity>
-              <TouchableOpacity 
-                style={[styles.iconButton, { marginLeft: 10 }]}
-                onPress={() => {
-                  Alert.alert(
-                    String(t('deleteConfirmTitle')),
-                    String(t('deleteConfirmMessage')),
-                    [
-                      { text: String(t('cancel')), style: 'cancel' },
-                      { text: String(t('delete')), onPress: handleDelete, style: 'destructive' }
-                    ]
-                  );
-                }}
-              >
-                <FontAwesome name="trash-o" size={20} color="#ff3b30" />
-              </TouchableOpacity>
-            </>
+              
+              {/* 下拉菜单 */}
+              {showOptionsMenu && (
+                <View style={[styles.optionsMenu, { 
+                  backgroundColor: colorScheme === 'dark' ? '#333' : '#fff',
+                  borderColor: colorScheme === 'dark' ? '#444' : '#eaeaea'
+                }]}>
+                  <TouchableOpacity 
+                    style={styles.optionItem} 
+                    onPress={() => {
+                      setShowOptionsMenu(false);
+                      handleExport();
+                    }}
+                  >
+                    <FontAwesome name="download" size={18} color={colorScheme === 'dark' ? '#fff' : '#000'} style={styles.optionIcon} />
+                    <Text style={[styles.optionText, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>导出笔记</Text>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity 
+                    style={styles.optionItem} 
+                    onPress={() => {
+                      setShowOptionsMenu(false);
+                      Alert.alert(
+                        String(t('deleteConfirmTitle')),
+                        String(t('deleteConfirmMessage')),
+                        [
+                          { text: String(t('cancel')), style: 'cancel' },
+                          { text: String(t('delete')), onPress: handleDelete, style: 'destructive' }
+                        ]
+                      );
+                    }}
+                  >
+                    <FontAwesome name="trash-o" size={18} color="#ff3b30" style={styles.optionIcon} />
+                    <Text style={[styles.optionText, { color: '#ff3b30' }]}>删除笔记</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            </View>
           )}
+          
           <TouchableOpacity onPress={handleSave} style={{marginLeft: 15}}>
             <Text style={[styles.actionText, { color: Colors[colorScheme].tint }]}>{String(t('save'))}</Text>
           </TouchableOpacity>
@@ -247,7 +301,8 @@ export default function NoteEditScreen() {
       {titleError ? (
         <Text style={styles.errorText}>{titleError}</Text>
       ) : null}
-    <View style={styles.contentContainer}>
+      
+      <View style={styles.contentContainer}>
         <ScrollView style={styles.scrollView}>
           <View ref={noteViewRef} collapsable={false} style={styles.printableContent}>
             <View style={[styles.noteHeader, { backgroundColor: colorScheme === 'dark' ? '#222' : '#f8f8f8' }]}>
@@ -256,6 +311,7 @@ export default function NoteEditScreen() {
                 {new Date().toLocaleDateString()}
               </Text>
             </View>
+            
             <TextInput
               style={[styles.input, styles.contentInput, { 
                 backgroundColor: colorScheme === 'dark' ? '#333' : '#f5f5f5',
@@ -280,7 +336,8 @@ export default function NoteEditScreen() {
         onRequestClose={() => setShowExportModal(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={[styles.modalContainer, { backgroundColor: colorScheme === 'dark' ? '#333' : '#fff' }]}>            <View style={styles.modalHeader}>
+          <View style={[styles.modalContainer, { backgroundColor: colorScheme === 'dark' ? '#333' : '#fff' }]}>
+            <View style={styles.modalHeader}>
               <Text style={[styles.modalTitle, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>选择导出格式</Text>
               <TouchableOpacity 
                 style={styles.modalCloseBtn}
@@ -308,13 +365,15 @@ export default function NoteEditScreen() {
             <TouchableOpacity style={styles.exportOption} onPress={handleExportAsImage}>
               <FontAwesome name="file-image-o" size={24} color="#4CAF50" />
               <Text style={[styles.exportOptionText, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>图片 (.png)</Text>
-            </TouchableOpacity>              <TouchableOpacity 
-                style={[styles.closeButton, { backgroundColor: colorScheme === 'dark' ? '#444' : '#f0f0f0' }]} 
-                onPress={() => setShowExportModal(false)}
-              >
-                <FontAwesome name="times-circle" size={16} color={colorScheme === 'dark' ? '#ccc' : '#666'} style={{marginRight: 6}} />
-                <Text style={[styles.closeButtonText, { color: colorScheme === 'dark' ? '#fff' : '#333' }]}>取消</Text>
-              </TouchableOpacity>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={[styles.closeButton, { backgroundColor: colorScheme === 'dark' ? '#444' : '#f0f0f0' }]} 
+              onPress={() => setShowExportModal(false)}
+            >
+              <FontAwesome name="times-circle" size={16} color={colorScheme === 'dark' ? '#ccc' : '#666'} style={{marginRight: 6}} />
+              <Text style={[styles.closeButtonText, { color: colorScheme === 'dark' ? '#fff' : '#333' }]}>取消</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>
@@ -359,7 +418,8 @@ const styles = StyleSheet.create({
   contentInput: {
     minHeight: 300,
     textAlignVertical: 'top',
-  },  scrollView: {
+  },
+  scrollView: {
     flex: 1,
   },
   contentContainer: {
@@ -392,7 +452,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: 'rgba(0,0,0,0.5)',
     padding: 20,
-  },  modalContainer: {
+  },
+  modalContainer: {
     width: '100%',
     maxWidth: 400,
     borderRadius: 16,
@@ -402,7 +463,8 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
-  },  modalHeader: {
+  },
+  modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -432,7 +494,8 @@ const styles = StyleSheet.create({
     fontSize: 17,
     marginLeft: 15,
     fontWeight: '500',
-  },  closeButton: {
+  },
+  closeButton: {
     marginTop: 24,
     paddingVertical: 14,
     borderRadius: 10,
@@ -444,6 +507,10 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 1.5,
     elevation: 2,
+  },
+  closeButtonText: {
+    fontWeight: '600',
+    fontSize: 16
   },
   // 导出按钮样式
   exportButton: {
@@ -458,7 +525,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 1,
     elevation: 2,
-  },  exportButtonText: {
+  },
+  exportButtonText: {
     color: '#ffffff',
     fontWeight: '600',
     fontSize: 14,
@@ -481,13 +549,47 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     marginBottom: 4,
-  },  noteDate: {
+  },
+  noteDate: {
     fontSize: 12,
     color: '#666',
   },
-  // 关闭按钮文本样式
-  closeButtonText: {
-    fontWeight: '600',
-    fontSize: 16
+  // 选项菜单样式
+  optionsMenuContainer: {
+    position: 'relative',
+  },
+  optionsButton: {
+    padding: 8,
+    borderRadius: 20,
+  },
+  optionsMenu: {
+    position: 'absolute',
+    top: 40,
+    right: 0,
+    width: 160,
+    borderRadius: 10,
+    borderWidth: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 3,
+    elevation: 5,
+    zIndex: 1000,
+  },
+  optionItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eaeaea',
+  },
+  optionIcon: {
+    width: 22,
+    marginRight: 12,
+    textAlign: 'center'
+  },
+  optionText: {
+    fontSize: 16,
+    fontWeight: '500',
   }
 });
