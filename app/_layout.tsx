@@ -6,10 +6,12 @@ import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
+// 确保i18n初始化正确
 import '../i18n';
 
 import { useColorScheme } from '@/components/useColorScheme';
 
+// 使用命名导出而非默认导出可以减少一些潜在问题
 export {
   // Catch any errors thrown by the Layout component.
   ErrorBoundary,
@@ -55,7 +57,7 @@ function RootLayoutNav() {
       <Stack>
         <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="note-edit" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
+        {/* 已移除modal页面 */}
       </Stack>
     </ThemeProvider>
   );

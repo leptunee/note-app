@@ -13,13 +13,25 @@ const NOTES_KEY = 'NOTES';
 export function useNotes() {
   const [notes, setNotes] = useState<Note[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [lastRefreshTime, setLastRefreshTime] = useState(0);
+
+  // 刷新笔记列表的函数，添加防抖动处理
+  const refreshNotes = () => {
+    const now = Date.now();
+    // 如果距离上次刷新不足500毫秒，则忽略此次刷新请求
+    if (now - lastRefreshTime < 500) return;
+    
+    setLastRefreshTime(now);
+    setRefreshTrigger(prev => prev + 1);
+  };
 
   useEffect(() => {
     AsyncStorage.getItem(NOTES_KEY).then(data => {
       if (data) setNotes(JSON.parse(data));
       setLoading(false);
     });
-  }, []);
+  }, [refreshTrigger]);
 
   const saveNotes = async (newNotes: Note[]) => {
     setNotes(newNotes);
@@ -40,6 +52,5 @@ export function useNotes() {
     const newNotes = notes.filter(n => n.id !== id);
     await saveNotes(newNotes);
   };
-
-  return { notes, loading, addNote, updateNote, deleteNote };
+  return { notes, loading, addNote, updateNote, deleteNote, refreshNotes };
 }

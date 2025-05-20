@@ -1,11 +1,10 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, useColorScheme, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, useColorScheme } from 'react-native';
 import { useNotes } from '@/components/useNotes';
 import { useTranslation } from 'react-i18next';
 import Colors from '@/constants/Colors';
 import { v4 as uuidv4 } from 'uuid';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
 
 export default function NoteEditScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -28,7 +27,7 @@ export default function NoteEditScreen() {
         setContent(note.content);
         // 检查加载的标题是否超过限制
         if (note.title.length > MAX_TITLE_LENGTH) {
-          setTitleError(String(t('titleTooLong', { max: MAX_TITLE_LENGTH })));
+          setTitleError(t('titleTooLong', { max: MAX_TITLE_LENGTH }));
         }
       }
     }
@@ -40,7 +39,7 @@ export default function NoteEditScreen() {
     
     // 验证标题长度
     if (title.length > MAX_TITLE_LENGTH) {
-      setTitleError(String(t('titleTooLong', { max: MAX_TITLE_LENGTH })));
+      setTitleError(t('titleTooLong', { max: MAX_TITLE_LENGTH }));
       return;
     }
     
@@ -79,33 +78,14 @@ export default function NoteEditScreen() {
     <View style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#000' : '#fff' }]}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
-          <Text style={[styles.actionText, { color: Colors[colorScheme].tint }]}>{String(t('back'))}</Text>
+          <Text style={[styles.actionText, { color: Colors[colorScheme].tint }]}>{t('back')}</Text>
         </TouchableOpacity>
         <Text style={[styles.title, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
-          {isNewNote ? String(t('add')) : String(t('edit'))}
+          {isNewNote ? t('add') : t('edit')}
         </Text>
-        <View style={styles.headerActions}>
-          {!isNewNote && (
-            <TouchableOpacity 
-              style={styles.iconButton} 
-              onPress={() => {
-                Alert.alert(
-                  String(t('deleteConfirmTitle')),
-                  String(t('deleteConfirmMessage')),
-                  [
-                    { text: String(t('cancel')), style: 'cancel' },
-                    { text: String(t('delete')), onPress: handleDelete, style: 'destructive' }
-                  ]
-                );
-              }}
-            >
-              <FontAwesome name="trash-o" size={20} color="#ff3b30" />
-            </TouchableOpacity>
-          )}
-          <TouchableOpacity onPress={handleSave} style={{marginLeft: 15}}>
-            <Text style={[styles.actionText, { color: Colors[colorScheme].tint }]}>{String(t('save'))}</Text>
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity onPress={handleSave}>
+          <Text style={[styles.actionText, { color: Colors[colorScheme].tint }]}>{t('save')}</Text>
+        </TouchableOpacity>
       </View>
       
       <TextInput
@@ -114,12 +94,12 @@ export default function NoteEditScreen() {
           color: colorScheme === 'dark' ? '#fff' : '#000',
           borderColor: titleError ? '#ff3b30' : colorScheme === 'dark' ? '#444' : '#ddd'
         }]}
-        placeholder={String(t('title'))}
+        placeholder={t('title')}
         value={title}
         onChangeText={(text) => {
           setTitle(text);
           if (text.length > MAX_TITLE_LENGTH) {
-            setTitleError(String(t('titleTooLong', { max: MAX_TITLE_LENGTH })));
+            setTitleError(t('titleTooLong', { max: MAX_TITLE_LENGTH }));
           } else {
             setTitleError('');
           }
@@ -139,13 +119,22 @@ export default function NoteEditScreen() {
             color: colorScheme === 'dark' ? '#fff' : '#000',
             borderColor: colorScheme === 'dark' ? '#444' : '#ddd'
           }]}
-          placeholder={String(t('content'))}
+          placeholder={t('content')}
           value={content}
           onChangeText={setContent}
           placeholderTextColor={colorScheme === 'dark' ? '#888' : '#888'}
           multiline
         />
       </ScrollView>
+      
+      {id && (
+        <TouchableOpacity 
+          style={styles.deleteButton} 
+          onPress={handleDelete}
+        >
+          <Text style={styles.deleteButtonText}>{t('delete')}</Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 }
@@ -161,13 +150,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 20,
-  },
-  headerActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  iconButton: {
-    padding: 5,
   },
   title: {
     fontSize: 24,
