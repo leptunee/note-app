@@ -19,9 +19,11 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#ffffff",
+        "package": "com.leptunee.noteApp"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.leptunee.noteApp"
     },
     "web": {
       "bundler": "metro",
@@ -33,6 +35,13 @@
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "51043b3f-610d-4cf3-b8f0-ddad81ce93c1"
+      }
+    },
+    "owner": "leptunee"
   }
 }
