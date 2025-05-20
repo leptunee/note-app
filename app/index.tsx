@@ -1,60 +1,36 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, useColorScheme } from 'react-native';
+import React from 'react';
+import { View, Text, TouchableOpacity, FlatList, StyleSheet, useColorScheme } from 'react-native';
 import { useNotes } from '@/components/useNotes';
 import { useTranslation } from 'react-i18next';
-import { v4 as uuidv4 } from 'uuid';
 import { useRouter } from 'expo-router';
 import Colors from '@/constants/Colors';
+import FontAwesome from '@expo/vector-icons/FontAwesome';
 
 export default function NotesScreen() {
-  const { notes, addNote } = useNotes();
+  const { notes } = useNotes();
   const { t } = useTranslation();
   const router = useRouter();
-  const [title, setTitle] = useState('');
-  const [content, setContent] = useState('');
   const colorScheme = useColorScheme() ?? 'light';
-
-  const handleAdd = () => {
-    if (!title.trim()) return;
-    addNote({ id: uuidv4(), title, content, createdAt: Date.now() });
-    setTitle('');
-    setContent('');
-  };
   
   // 截断长内容，只显示前若干个字符
   const truncateContent = (text: string, maxLength: number = 80) => {
     if (text.length <= maxLength) return text;
     return text.substring(0, maxLength) + '...';
   };
+
   return (
     <View style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#000' : '#fff' }]}>
-      <Text style={[styles.header, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>{t('notes')}</Text>
-      <TextInput
-        style={[styles.input, { 
-          backgroundColor: colorScheme === 'dark' ? '#333' : '#f5f5f5',
-          color: colorScheme === 'dark' ? '#fff' : '#000',
-          borderColor: colorScheme === 'dark' ? '#444' : '#ddd'
-        }]}
-        placeholder={t('title')}
-        value={title}
-        onChangeText={setTitle}
-        placeholderTextColor={colorScheme === 'dark' ? '#888' : '#888'}
-      />
-      <TextInput
-        style={[styles.input, styles.contentInput, { 
-          backgroundColor: colorScheme === 'dark' ? '#333' : '#f5f5f5',
-          color: colorScheme === 'dark' ? '#fff' : '#000',
-          borderColor: colorScheme === 'dark' ? '#444' : '#ddd'
-        }]}
-        placeholder={t('content')}
-        value={content}
-        onChangeText={setContent}
-        placeholderTextColor={colorScheme === 'dark' ? '#888' : '#888'}
-        multiline
-      />
-      <TouchableOpacity style={styles.addButton} onPress={handleAdd}>
-        <Text style={styles.addButtonText}>{t('add')}</Text>
-      </TouchableOpacity>      <FlatList
+      <View style={styles.headerContainer}>
+        <Text style={[styles.header, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>{t('notes')}</Text>
+        <TouchableOpacity
+          style={[styles.addIconButton, { backgroundColor: Colors[colorScheme].tint }]}
+          onPress={() => router.push('/note-edit')}
+        >
+          <FontAwesome name="plus" size={20} color="#fff" />
+        </TouchableOpacity>
+      </View>
+
+      <FlatList
         data={notes}
         keyExtractor={item => item.id}
         renderItem={({ item }) => (
@@ -90,34 +66,34 @@ const styles = StyleSheet.create({
     padding: 16,
     paddingTop: 60, // 增加顶部间距，为状态栏留出空间
   },
+  headerContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
   header: {
     fontSize: 28,
     fontWeight: 'bold',
-    marginBottom: 20,
   },
-  input: {
-    borderWidth: 1,
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 12,
-    fontSize: 16,
-  },
-  contentInput: {
-    height: 100,
-    textAlignVertical: 'top',
-  },
-  addButton: {
-    backgroundColor: '#007BFF',
-    borderRadius: 8,
-    padding: 14,
+  addIconButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 24,
-    elevation: 2,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
   },
-  addButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
-    fontSize: 16,
+  errorText: {
+    color: '#ff3b30',
+    fontSize: 12,
+    marginTop: -8,
+    marginBottom: 8,
+    paddingHorizontal: 4,
   },
   noteItem: {
     padding: 16,

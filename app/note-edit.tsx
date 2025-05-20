@@ -4,15 +4,19 @@ import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, useCol
 import { useNotes } from '@/components/useNotes';
 import { useTranslation } from 'react-i18next';
 import Colors from '@/constants/Colors';
+import { v4 as uuidv4 } from 'uuid';
 
 export default function NoteEditScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { notes, updateNote, deleteNote } = useNotes();
+  const { notes, addNote, updateNote, deleteNote } = useNotes();
   const { t } = useTranslation();
   const router = useRouter();
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
+  const [titleError, setTitleError] = useState('');
   const colorScheme = useColorScheme() ?? 'light';
+  const MAX_TITLE_LENGTH = 64; // 最大标题长度限制为64个汉字
+  const isNewNote = !id;
   
   // 当页面加载时，如果有id，则查找对应的笔记
   useEffect(() => {
@@ -21,15 +25,26 @@ export default function NoteEditScreen() {
       if (note) {
         setTitle(note.title);
         setContent(note.content);
+        // 检查加载的标题是否超过限制
+        if (note.title.length > MAX_TITLE_LENGTH) {
+          setTitleError(t('titleTooLong', { max: MAX_TITLE_LENGTH }));
+        }
       }
     }
-  }, [id, notes]);
+  }, [id, notes, t]);
   
   // 保存笔记并返回主界面
   const handleSave = () => {
     if (!title.trim()) return;
     
+    // 验证标题长度
+    if (title.length > MAX_TITLE_LENGTH) {
+      setTitleError(t('titleTooLong', { max: MAX_TITLE_LENGTH }));
+      return;
+    }
+    
     if (id) {
+      // 更新现有笔记
       const note = notes.find(n => n.id === id);
       if (note) {
         updateNote({
@@ -38,6 +53,14 @@ export default function NoteEditScreen() {
           content,
         });
       }
+    } else {
+      // 创建新笔记
+      addNote({
+        id: uuidv4(),
+        title,
+        content,
+        createdAt: Date.now()
+      });
     }
     
     router.back();
@@ -57,7 +80,9 @@ export default function NoteEditScreen() {
         <TouchableOpacity onPress={() => router.back()}>
           <Text style={[styles.actionText, { color: Colors[colorScheme].tint }]}>{t('back')}</Text>
         </TouchableOpacity>
-        <Text style={[styles.title, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>{t('edit')}</Text>
+        <Text style={[styles.title, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
+          {isNewNote ? t('add') : t('edit')}
+        </Text>
         <TouchableOpacity onPress={handleSave}>
           <Text style={[styles.actionText, { color: Colors[colorScheme].tint }]}>{t('save')}</Text>
         </TouchableOpacity>
@@ -67,13 +92,25 @@ export default function NoteEditScreen() {
         style={[styles.input, { 
           backgroundColor: colorScheme === 'dark' ? '#333' : '#f5f5f5',
           color: colorScheme === 'dark' ? '#fff' : '#000',
-          borderColor: colorScheme === 'dark' ? '#444' : '#ddd'
+          borderColor: titleError ? '#ff3b30' : colorScheme === 'dark' ? '#444' : '#ddd'
         }]}
         placeholder={t('title')}
         value={title}
-        onChangeText={setTitle}
+        onChangeText={(text) => {
+          setTitle(text);
+          if (text.length > MAX_TITLE_LENGTH) {
+            setTitleError(t('titleTooLong', { max: MAX_TITLE_LENGTH }));
+          } else {
+            setTitleError('');
+          }
+        }}
+        maxLength={MAX_TITLE_LENGTH + 10} // 稍微给一点余量，以便显示错误
         placeholderTextColor={colorScheme === 'dark' ? '#888' : '#888'}
       />
+      
+      {titleError ? (
+        <Text style={styles.errorText}>{titleError}</Text>
+      ) : null}
       
       <ScrollView style={styles.scrollView}>
         <TextInput
@@ -135,6 +172,13 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
+  },
+  errorText: {
+    color: '#ff3b30',
+    fontSize: 12,
+    marginTop: -8,
+    marginBottom: 8,
+    paddingHorizontal: 4,
   },
   deleteButton: {
     backgroundColor: '#ff3b30',
