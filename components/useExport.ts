@@ -245,12 +245,11 @@ export function useExport() {  /**
         Alert.alert('错误', '无法获取笔记视图');
         return false;
       }
-      
-      // 使用更安全的截图配置，避免宽高问题
+        // 使用更安全的截图配置，避免宽高问题
       const uri = await captureRef(viewRef, {
         format: 'png',
         quality: 1.0,
-        result: 'file', // 使用file而非data-uri
+        result: 'data-uri', // 使用data-uri避免文件类型问题
         snapshotContentContainer: false // 不使用内容容器大小
       });
 
