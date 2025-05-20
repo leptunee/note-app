@@ -3,6 +3,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { View, Alert, useColorScheme } from 'react-native';
 import { useNotes } from '@/components/useNotes';
 import { useExport } from '@/components/useExport';
+import { useHistory } from '@/components/useHistory';
 import { useTranslation } from 'react-i18next';
 import { v4 as uuidv4 } from 'uuid';
 import { 
@@ -20,31 +21,32 @@ export default function NoteEditScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const [title, setTitle] = useState('');
-  const [content, setContent] = useState('');
+  // 使用自定义Hook管理内容及历史记录
+  const { 
+    value: content, 
+    setValue: updateContent, 
+    undo: handleUndo, 
+    redo: handleRedo,
+    reset: resetContentHistory,
+    canUndo,
+    canRedo
+  } = useHistory<string>('');
   const [titleError, setTitleError] = useState('');
   const [showExportModal, setShowExportModal] = useState(false);
   const [showOptionsMenu, setShowOptionsMenu] = useState(false);
-  // 历史记录状态
-  const [contentHistory, setContentHistory] = useState<string[]>([]);
-  const [currentHistoryIndex, setCurrentHistoryIndex] = useState(-1);
   const colorScheme = useColorScheme() ?? 'light';
   const MAX_TITLE_LENGTH = 64; // 最大标题长度限制为64个汉字
   const isNewNote = !id;
   const noteViewRef = useRef(null);
-  
-  // 判断是否可以撤销和重做
-  const canUndo = currentHistoryIndex > 0;
-  const canRedo = currentHistoryIndex < contentHistory.length - 1;
-    // 当页面加载时，如果有id，则查找对应的笔记
+  // 当页面加载时，如果有id，则查找对应的笔记
   useEffect(() => {
     if (id) {
       const note = notes.find(n => n.id === id);
       if (note) {
         setTitle(note.title);
-        setContent(note.content);
-        // 初始化历史记录
-        setContentHistory([note.content]);
-        setCurrentHistoryIndex(0);
+        // 重置内容历史
+        resetContentHistory(note.content);
+        
         // 检查加载的标题是否超过限制
         if (note.title.length > MAX_TITLE_LENGTH) {
           setTitleError(String(t('titleTooLong', { max: MAX_TITLE_LENGTH })));
@@ -52,10 +54,9 @@ export default function NoteEditScreen() {
       }
     } else {
       // 如果是新笔记，则初始化为空的历史记录
-      setContentHistory(['']);
-      setCurrentHistoryIndex(0);
+      resetContentHistory('');
     }
-  }, [id, notes, t]);
+  }, [id, notes, t, resetContentHistory]);
   
   // 保存笔记并返回主界面
   const handleSave = () => {
@@ -224,39 +225,9 @@ export default function NoteEditScreen() {
       setTitleError('');
     }
   };
-  
-  // 处理内容变化，同时更新历史记录
+    // 内容变化处理函数，使用useHistory Hook中的setValue
   const handleContentChange = (text: string) => {
-    // 添加新的内容到历史记录中
-    if (text !== content) {
-      // 如果当前不是在历史记录的最后位置，需要截断历史记录
-      if (currentHistoryIndex < contentHistory.length - 1) {
-        setContentHistory(prevHistory => prevHistory.slice(0, currentHistoryIndex + 1));
-      }
-      
-      // 添加新版本的内容
-      setContentHistory(prevHistory => [...prevHistory, text]);
-      setCurrentHistoryIndex(prevIndex => prevIndex + 1);
-      setContent(text);
-    }
-  };
-  
-  // 撤销操作
-  const handleUndo = () => {
-    if (canUndo) {
-      const newIndex = currentHistoryIndex - 1;
-      setCurrentHistoryIndex(newIndex);
-      setContent(contentHistory[newIndex]);
-    }
-  };
-  
-  // 重做操作
-  const handleRedo = () => {
-    if (canRedo) {
-      const newIndex = currentHistoryIndex + 1;
-      setCurrentHistoryIndex(newIndex);
-      setContent(contentHistory[newIndex]);
-    }
+    updateContent(text);
   };
   
   return (
@@ -279,8 +250,7 @@ export default function NoteEditScreen() {
         titleError={titleError}
         maxLength={MAX_TITLE_LENGTH}
         onChangeTitle={handleTitleChange}
-      />
-        <NoteContent 
+      />      <NoteContent 
         title={title}
         content={content}
         onChangeContent={handleContentChange}
