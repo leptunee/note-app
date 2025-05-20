@@ -24,23 +24,36 @@ export default function NoteEditScreen() {
   const [titleError, setTitleError] = useState('');
   const [showExportModal, setShowExportModal] = useState(false);
   const [showOptionsMenu, setShowOptionsMenu] = useState(false);
+  // 历史记录状态
+  const [contentHistory, setContentHistory] = useState<string[]>([]);
+  const [currentHistoryIndex, setCurrentHistoryIndex] = useState(-1);
   const colorScheme = useColorScheme() ?? 'light';
   const MAX_TITLE_LENGTH = 64; // 最大标题长度限制为64个汉字
   const isNewNote = !id;
   const noteViewRef = useRef(null);
   
-  // 当页面加载时，如果有id，则查找对应的笔记
+  // 判断是否可以撤销和重做
+  const canUndo = currentHistoryIndex > 0;
+  const canRedo = currentHistoryIndex < contentHistory.length - 1;
+    // 当页面加载时，如果有id，则查找对应的笔记
   useEffect(() => {
     if (id) {
       const note = notes.find(n => n.id === id);
       if (note) {
         setTitle(note.title);
         setContent(note.content);
+        // 初始化历史记录
+        setContentHistory([note.content]);
+        setCurrentHistoryIndex(0);
         // 检查加载的标题是否超过限制
         if (note.title.length > MAX_TITLE_LENGTH) {
           setTitleError(String(t('titleTooLong', { max: MAX_TITLE_LENGTH })));
         }
       }
+    } else {
+      // 如果是新笔记，则初始化为空的历史记录
+      setContentHistory(['']);
+      setCurrentHistoryIndex(0);
     }
   }, [id, notes, t]);
   
@@ -202,8 +215,7 @@ export default function NoteEditScreen() {
       return () => clearTimeout(timer);
     }
   }, [showOptionsMenu]);
-  
-  // 处理标题变化
+    // 处理标题变化
   const handleTitleChange = (text: string) => {
     setTitle(text);
     if (text.length > MAX_TITLE_LENGTH) {
@@ -213,14 +225,51 @@ export default function NoteEditScreen() {
     }
   };
   
+  // 处理内容变化，同时更新历史记录
+  const handleContentChange = (text: string) => {
+    // 添加新的内容到历史记录中
+    if (text !== content) {
+      // 如果当前不是在历史记录的最后位置，需要截断历史记录
+      if (currentHistoryIndex < contentHistory.length - 1) {
+        setContentHistory(prevHistory => prevHistory.slice(0, currentHistoryIndex + 1));
+      }
+      
+      // 添加新版本的内容
+      setContentHistory(prevHistory => [...prevHistory, text]);
+      setCurrentHistoryIndex(prevIndex => prevIndex + 1);
+      setContent(text);
+    }
+  };
+  
+  // 撤销操作
+  const handleUndo = () => {
+    if (canUndo) {
+      const newIndex = currentHistoryIndex - 1;
+      setCurrentHistoryIndex(newIndex);
+      setContent(contentHistory[newIndex]);
+    }
+  };
+  
+  // 重做操作
+  const handleRedo = () => {
+    if (canRedo) {
+      const newIndex = currentHistoryIndex + 1;
+      setCurrentHistoryIndex(newIndex);
+      setContent(contentHistory[newIndex]);
+    }
+  };
+  
   return (
-    <View style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#000' : '#fff' }]}>
-      <NoteHeader 
+    <View style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#000' : '#fff' }]}>      <NoteHeader 
         isNewNote={isNewNote}
         onBack={() => router.back()}
         onSave={handleSave}
         onExport={handleExport}
         onDelete={handleDelete}
+        onUndo={handleUndo}
+        onRedo={handleRedo}
+        canUndo={canUndo}
+        canRedo={canRedo}
         showOptionsMenu={showOptionsMenu}
         toggleOptionsMenu={() => setShowOptionsMenu(!showOptionsMenu)}
       />
@@ -231,11 +280,10 @@ export default function NoteEditScreen() {
         maxLength={MAX_TITLE_LENGTH}
         onChangeTitle={handleTitleChange}
       />
-      
-      <NoteContent 
+        <NoteContent 
         title={title}
         content={content}
-        onChangeContent={setContent}
+        onChangeContent={handleContentChange}
         noteViewRef={noteViewRef}
       />
       
