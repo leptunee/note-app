@@ -6,7 +6,16 @@ export type Note = {
   title: string;
   content: string;
   createdAt: number;
+  pageSettings?: PageSettings; // 新增页面设置字段
 };
+
+// 新增页面设置类型
+export interface PageSettings {
+  themeId: string;
+  backgroundImageUri?: string;
+  backgroundImageOpacity?: number;
+  marginValue: number; // 用于滑块，例如 0-100，具体数值代表的边距在组件中转换
+}
 
 const NOTES_KEY = 'NOTES';
 
@@ -39,12 +48,21 @@ export function useNotes() {
   };
 
   const addNote = async (note: Note) => {
-    const newNotes = [note, ...notes];
+    const defaultPageSettings: PageSettings = {
+      themeId: 'default', // 默认主题
+      marginValue: 20, // 默认边距值 (例如，可以映射为中等边距)
+      backgroundImageOpacity: 1, // 默认透明度
+    };
+    const noteWithDefaults = {
+      ...note,
+      pageSettings: note.pageSettings || defaultPageSettings,
+    };
+    const newNotes = [noteWithDefaults, ...notes];
     await saveNotes(newNotes);
   };
 
   const updateNote = async (note: Note) => {
-    const newNotes = notes.map(n => n.id === note.id ? note : n);
+    const newNotes = notes.map(n => (n.id === note.id ? { ...n, ...note } : n));
     await saveNotes(newNotes);
   };
 

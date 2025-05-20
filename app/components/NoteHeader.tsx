@@ -18,6 +18,7 @@ interface NoteHeaderProps {
   canRedo: boolean;
   showOptionsMenu: boolean;
   toggleOptionsMenu: () => void;
+  onPageSettings: () => void;
 }
 
 export const NoteHeader: React.FC<NoteHeaderProps> = ({
@@ -31,23 +32,31 @@ export const NoteHeader: React.FC<NoteHeaderProps> = ({
   canUndo,
   canRedo,
   showOptionsMenu,
-  toggleOptionsMenu
+  toggleOptionsMenu,
+  onPageSettings
 }) => {
   const { t } = useTranslation();
   const colorScheme = useColorScheme() ?? 'light';
 
   return (
-    <View style={styles.header}>
-      <TouchableOpacity onPress={onBack}>
+    <View style={styles.header}>      <TouchableOpacity onPress={onBack}>
         <Text style={[styles.actionText, { color: Colors[colorScheme].tint }]}>
           {String(t('back'))}
         </Text>
       </TouchableOpacity>
       
-      <Text style={[styles.title, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
-        {isNewNote ? String(t('add')) : String(t('edit'))}
-      </Text>
-        <View style={styles.headerActions}>
+      <View style={styles.headerActions}>
+        <TouchableOpacity 
+          onPress={onPageSettings}
+          style={styles.pageSettingsButton}
+        >
+          <FontAwesome 
+            name="sliders" 
+            size={18} 
+            color={Colors[colorScheme].tint} 
+          />
+        </TouchableOpacity>
+        
         <TouchableOpacity 
           onPress={onUndo}
           style={styles.iconButton}

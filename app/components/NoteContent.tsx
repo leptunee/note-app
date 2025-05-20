@@ -8,16 +8,32 @@ interface NoteContentProps {
   content: string;
   onChangeContent: (text: string) => void;
   noteViewRef: React.RefObject<any>;
+  textColor?: string; // 可选的文本颜色参数
+  marginSize?: 'small' | 'medium' | 'large'; // 页边距大小
+  editorBackgroundColor?: string; // 编辑器背景色
+  editorBorderColor?: string; // 编辑器边框色
 }
 
 export const NoteContent: React.FC<NoteContentProps> = ({
   title,
   content,
   onChangeContent,
-  noteViewRef
+  noteViewRef,
+  textColor,
+  marginSize = 'medium', // 默认中等边距
+  editorBackgroundColor,
+  editorBorderColor
 }) => {
   const { t } = useTranslation();
   const colorScheme = useColorScheme() ?? 'light';
+
+  const getInternalPadding = () => {
+    switch (marginSize) {
+      case 'small': return 8;
+      case 'large': return 24;
+      default: return 12; // 中等或默认 (styles.input的原始padding是12)
+    }
+  };
   
   return (
     <View style={styles.contentContainer}>
@@ -45,14 +61,18 @@ export const NoteContent: React.FC<NoteContentProps> = ({
         </View>
       </View>
       
-      {/* 实际编辑框 */}
-      <ScrollView style={styles.scrollView}>
+      {/* 实际编辑框 */}      <ScrollView style={styles.scrollView}>
         <TextInput
-          style={[styles.input, styles.contentInput, { 
-            backgroundColor: colorScheme === 'dark' ? '#333' : '#f5f5f5',
-            color: colorScheme === 'dark' ? '#fff' : '#000',
-            borderColor: colorScheme === 'dark' ? '#444' : '#ddd'
-          }]}
+          style={[
+            styles.input, 
+            styles.contentInput, 
+            { 
+              padding: getInternalPadding(), // 应用动态内边距
+              backgroundColor: editorBackgroundColor || (colorScheme === 'dark' ? '#333' : '#f5f5f5'),
+              color: textColor || (colorScheme === 'dark' ? '#fff' : '#000'),
+              borderColor: editorBorderColor || (colorScheme === 'dark' ? '#444' : '#ddd')
+            }
+          ]}
           placeholder={String(t('content'))}
           value={content}
           onChangeText={onChangeContent}

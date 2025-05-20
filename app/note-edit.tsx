@@ -1,7 +1,7 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState, useRef } from 'react';
-import { View, Alert, useColorScheme } from 'react-native';
-import { useNotes } from '@/components/useNotes';
+import { View, Alert, useColorScheme, Platform, ImageBackground } from 'react-native';
+import { useNotes, PageSettings } from '@/components/useNotes';
 import { useExport } from '@/components/useExport';
 import { useHistory } from '@/components/useHistory';
 import { useTranslation } from 'react-i18next';
@@ -11,8 +11,18 @@ import {
   TitleInput,
   NoteContent,
   ExportModal,
+  PageSettingsModal,
   styles
 } from './components';
+
+// 预定义的主题选项 - 与 PageSettingsModal.tsx 中的定义同步或后续提取到共享文件
+// 增加了 editorBackgroundColor 和 editorBorderColor (可选)
+const themes = [
+  { id: 'default', name: '默认', backgroundColor: '#ffffff', textColor: '#000000', editorBackgroundColor: '#f5f5f5', editorBorderColor: '#ddd' },
+  { id: 'dark', name: '暗黑', backgroundColor: '#121212', textColor: '#ffffff', editorBackgroundColor: '#2c2c2c', editorBorderColor: '#404040' },
+  { id: 'sepia', name: '护眼', backgroundColor: '#f8f1e3', textColor: '#5b4636', editorBackgroundColor: '#f0e8da', editorBorderColor: '#d8c8b6' },
+  { id: 'blue', name: '蓝色', backgroundColor: '#edf6ff', textColor: '#333333', editorBackgroundColor: '#e0f0ff', editorBorderColor: '#c0d8f0' },
+];
 
 export default function NoteEditScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -21,7 +31,6 @@ export default function NoteEditScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const [title, setTitle] = useState('');
-  // 使用自定义Hook管理内容及历史记录
   const { 
     value: content, 
     setValue: updateContent, 
@@ -34,99 +43,110 @@ export default function NoteEditScreen() {
   const [titleError, setTitleError] = useState('');
   const [showExportModal, setShowExportModal] = useState(false);
   const [showOptionsMenu, setShowOptionsMenu] = useState(false);
+  const [showPageSettings, setShowPageSettings] = useState(false);
+  const [pageSettings, setPageSettings] = useState<PageSettings>({
+    themeId: 'default',
+    marginValue: 20,
+    backgroundImageOpacity: 1,
+  });
   const colorScheme = useColorScheme() ?? 'light';
-  const MAX_TITLE_LENGTH = 64; // 最大标题长度限制为64个汉字
+  const MAX_TITLE_LENGTH = 64;
   const isNewNote = !id;
   const noteViewRef = useRef(null);
-  // 当页面加载时，如果有id，则查找对应的笔记
+
   useEffect(() => {
     if (id) {
       const note = notes.find(n => n.id === id);
       if (note) {
         setTitle(note.title);
-        // 重置内容历史
         resetContentHistory(note.content);
-        
-        // 检查加载的标题是否超过限制
+        if (note.pageSettings) {
+          setPageSettings(note.pageSettings);
+        } else {
+          setPageSettings({
+            themeId: 'default',
+            marginValue: 20,
+            backgroundImageOpacity: 1,
+          });
+        }
         if (note.title.length > MAX_TITLE_LENGTH) {
           setTitleError(String(t('titleTooLong', { max: MAX_TITLE_LENGTH })));
         }
       }
     } else {
-      // 如果是新笔记，则初始化为空的历史记录
       resetContentHistory('');
+      setPageSettings({
+        themeId: 'default',
+        marginValue: 20,
+        backgroundImageOpacity: 1,
+      });
     }
   }, [id, notes, t, resetContentHistory]);
-  
-  // 保存笔记并返回主界面
+
   const handleSave = () => {
     if (!title.trim()) return;
-    
-    // 验证标题长度
+
     if (title.length > MAX_TITLE_LENGTH) {
       setTitleError(String(t('titleTooLong', { max: MAX_TITLE_LENGTH })));
       return;
     }
-    
+
+    const noteData = {
+      title,
+      content,
+      pageSettings,
+    };
+
     if (id) {
-      // 更新现有笔记
       const note = notes.find(n => n.id === id);
       if (note) {
         updateNote({
           ...note,
-          title,
-          content,
+          ...noteData,
         });
       }
     } else {
-      // 创建新笔记
       addNote({
         id: uuidv4(),
-        title,
-        content,
-        createdAt: Date.now()
+        ...noteData,
+        createdAt: Date.now(),
       });
     }
-    
+
     router.back();
   };
-  
-  // 删除笔记并返回主界面
+
   const handleDelete = () => {
     if (id) {
       deleteNote(id);
     }
     router.back();
   };
-  
-  // 处理导出功能
+
   const handleExport = () => {
-    // 如果是新笔记且未保存，则不允许导出
     if (isNewNote || !title.trim()) {
       Alert.alert('提示', '请先保存笔记后再导出');
       return;
     }
-    
+
     setShowExportModal(true);
   };
-  
-  // 获取当前笔记对象
+
   const getCurrentNote = () => {
     return id 
       ? notes.find(n => n.id === id) 
-      : { id: 'temp', title, content, createdAt: Date.now() };
+      : { id: 'temp', title, content, createdAt: Date.now(), pageSettings };
   };
-  
-  // 导出为纯文本
+
   const handleExportAsTxt = async () => {
     setShowExportModal(false);
-    
+
     const currentNote = getCurrentNote();
     if (!currentNote) {
       Alert.alert('错误', '未找到笔记');
       return;
     }
-    
+
     const success = await exportAsTxt(currentNote);
     if (success) {
       Alert.alert('成功', '笔记已导出为文本文件');
@@ -134,17 +154,16 @@ export default function NoteEditScreen() {
       Alert.alert('错误', '导出笔记时出错');
     }
   };
-  
-  // 导出为 Markdown
+
   const handleExportAsMarkdown = async () => {
     setShowExportModal(false);
-    
+
     const currentNote = getCurrentNote();
     if (!currentNote) {
       Alert.alert('错误', '未找到笔记');
       return;
     }
-    
+
     const success = await exportAsMarkdown(currentNote);
     if (success) {
       Alert.alert('成功', '笔记已导出为 Markdown 文件');
@@ -152,24 +171,21 @@ export default function NoteEditScreen() {
       Alert.alert('错误', '导出笔记时出错');
     }
   };
-  
-  // 导出为图片
+
   const handleExportAsImage = async () => {
     setShowExportModal(false);
-    
+
     const currentNote = getCurrentNote();
     if (!currentNote) {
       Alert.alert('错误', '未找到笔记');
       return;
     }
-    
-    // 确保noteViewRef已正确绑定
+
     if (!noteViewRef || !noteViewRef.current) {
       Alert.alert('错误', '无法获取笔记视图');
       return;
     }
-    
-    // 显示提示
+
     Alert.alert('提示', '将把整个笔记内容截图导出', [
       { text: '取消', style: 'cancel' },
       {
@@ -188,17 +204,16 @@ export default function NoteEditScreen() {
       }
     ]);
   };
-  
-  // 导出为Word文档
+
   const handleExportAsWord = async () => {
     setShowExportModal(false);
-    
+
     const currentNote = getCurrentNote();
     if (!currentNote) {
       Alert.alert('错误', '未找到笔记');
       return;
     }
-    
+
     const success = await exportAsWord(currentNote);
     if (success) {
       Alert.alert('成功', '笔记已导出为Word兼容文档');
@@ -206,17 +221,16 @@ export default function NoteEditScreen() {
       Alert.alert('错误', '导出笔记时出错');
     }
   };
-  
-  // 点击屏幕其他区域关闭下拉菜单
+
   useEffect(() => {
     if (showOptionsMenu) {
       const timer = setTimeout(() => {
         setShowOptionsMenu(false);
-      }, 4000); // 4秒后自动关闭
+      }, 4000);
       return () => clearTimeout(timer);
     }
   }, [showOptionsMenu]);
-    // 处理标题变化
+
   const handleTitleChange = (text: string) => {
     setTitle(text);
     if (text.length > MAX_TITLE_LENGTH) {
@@ -225,13 +239,75 @@ export default function NoteEditScreen() {
       setTitleError('');
     }
   };
-    // 内容变化处理函数，使用useHistory Hook中的setValue
+
   const handleContentChange = (text: string) => {
     updateContent(text);
   };
-  
+
+  const handleOpenPageSettings = () => {
+    setShowPageSettings(true);
+  };
+
+  const handlePageSettingsChange = (settings: Partial<PageSettings>) => {
+    setPageSettings(prev => ({ ...prev, ...settings }));
+  };
+
+  const getBackgroundColor = () => {
+    if (pageSettings.backgroundImageUri) {
+      return 'transparent';
+    }
+
+    const themeDefinition = themes.find(t => t.id === pageSettings.themeId) as typeof themes[0] | undefined;
+    if (themeDefinition) {
+      return themeDefinition.backgroundColor;
+    }
+    return colorScheme === 'dark' ? '#000' : '#fff';
+  };
+
+  const getTextColor = () => {
+    const themeDefinition = themes.find(t => t.id === pageSettings.themeId) as typeof themes[0] | undefined;
+    if (themeDefinition) {
+      return themeDefinition.textColor;
+    }
+    return colorScheme === 'dark' ? '#fff' : '#000';
+  };
+
+  const getEditorBackgroundColor = () => {
+    const themeDefinition = themes.find(t => t.id === pageSettings.themeId) as typeof themes[0] | undefined;
+    if (themeDefinition) {
+      return themeDefinition.editorBackgroundColor || themeDefinition.backgroundColor;
+    }
+    return colorScheme === 'dark' ? '#333' : '#f5f5f5';
+  };
+
+  const getEditorBorderColor = () => {
+    const themeDefinition = themes.find(t => t.id === pageSettings.themeId) as typeof themes[0] | undefined;
+    if (themeDefinition) {
+      return themeDefinition.editorBorderColor || (colorScheme === 'dark' ? '#444' : '#ddd');
+    }
+    return colorScheme === 'dark' ? '#444' : '#ddd';
+  };
+
+  const getContentPadding = () => {
+    const minPadding = 4;
+    const maxPadding = 40;
+    return minPadding + (pageSettings.marginValue / 100) * (maxPadding - minPadding);
+  };
+
   return (
-    <View style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#000' : '#fff' }]}>      <NoteHeader 
+    <View style={[
+      styles.container, 
+      { backgroundColor: getBackgroundColor() }
+    ]}>      
+      {pageSettings.backgroundImageUri && (
+        <ImageBackground
+          source={{ uri: pageSettings.backgroundImageUri }}
+          style={styles.backgroundImage}
+          imageStyle={{ opacity: pageSettings.backgroundImageOpacity }}
+          resizeMode="cover"
+        />
+      )}
+      <NoteHeader 
         isNewNote={isNewNote}
         onBack={() => router.back()}
         onSave={handleSave}
@@ -243,19 +319,29 @@ export default function NoteEditScreen() {
         canRedo={canRedo}
         showOptionsMenu={showOptionsMenu}
         toggleOptionsMenu={() => setShowOptionsMenu(!showOptionsMenu)}
+        onPageSettings={handleOpenPageSettings}
       />
-      
       <TitleInput 
         title={title}
         titleError={titleError}
         maxLength={MAX_TITLE_LENGTH}
         onChangeTitle={handleTitleChange}
-      />      <NoteContent 
-        title={title}
-        content={content}
-        onChangeContent={handleContentChange}
-        noteViewRef={noteViewRef}
       />
+      
+      <View style={{
+        flex: 1,
+        padding: getContentPadding(),
+      }}>
+        <NoteContent 
+          title={title}
+          content={content}
+          onChangeContent={handleContentChange}
+          noteViewRef={noteViewRef}
+          textColor={getTextColor()}
+          editorBackgroundColor={getEditorBackgroundColor()}
+          editorBorderColor={getEditorBorderColor()}
+        />
+      </View>
       
       <ExportModal 
         isVisible={showExportModal}
@@ -264,6 +350,13 @@ export default function NoteEditScreen() {
         onExportAsWord={handleExportAsWord}
         onExportAsMarkdown={handleExportAsMarkdown}
         onExportAsImage={handleExportAsImage}
+      />
+      
+      <PageSettingsModal
+        isVisible={showPageSettings}
+        onClose={() => setShowPageSettings(false)}
+        currentSettings={pageSettings}
+        onSettingsChange={handlePageSettingsChange}
       />
     </View>
   );

@@ -9,6 +9,73 @@ export const styles = StyleSheet.create({
     paddingTop: 60, // 增加顶部间距，为状态栏留出空间
   },
   
+  // 页面设置相关样式
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 10,
+  },
+  optionGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
+  themeOption: {
+    width: '47%',
+    height: 40,
+    borderRadius: 6,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 10,
+    borderWidth: 2,
+  },
+  colorOption: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 10,
+    marginBottom: 10,
+    borderWidth: 2,
+  },
+  marginOptions: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+  },
+  marginOption: {
+    alignItems: 'center',
+    borderWidth: 1,
+    borderRadius: 6,
+    padding: 10,
+    width: '30%',
+  },
+  selectedMargin: {
+    borderColor: Colors.light.tint,
+    borderWidth: 2,
+  },
+  marginPreview: {
+    width: 50,
+    height: 50,
+    backgroundColor: '#e0e0e0',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  marginInner: {
+    backgroundColor: '#aaa',
+    width: '100%',
+    height: '100%',
+  },
+  pageSettingsButton: {
+    padding: 10,
+    borderRadius: 5,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: 80,
+    borderWidth: 1,
+  },
+  
   // 头部样式
   header: {
     flexDirection: 'row',
@@ -222,5 +289,15 @@ export const styles = StyleSheet.create({
   optionText: {
     fontSize: 16,
     fontWeight: '500',
-  }
+  },
+  
+  // 新增背景图片样式
+  backgroundImage: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    bottom: 0,
+    right: 0,
+    zIndex: -1, // 确保在内容之下
+  },
 });
