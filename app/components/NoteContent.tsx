@@ -7,33 +7,29 @@ interface NoteContentProps {
   title: string;
   content: string;
   onChangeContent: (text: string) => void;
+  onChangeTitle: (text: string) => void; // 添加 onChangeTitle
   noteViewRef: React.RefObject<any>;
   textColor?: string; // 可选的文本颜色参数
-  marginSize?: 'small' | 'medium' | 'large'; // 页边距大小
   editorBackgroundColor?: string; // 编辑器背景色
   editorBorderColor?: string; // 编辑器边框色
+  maxLength?: number; // 添加 maxLength
+  titleError?: string; // 添加 titleError
 }
 
 export const NoteContent: React.FC<NoteContentProps> = ({
   title,
   content,
   onChangeContent,
+  onChangeTitle, // 添加 onChangeTitle
   noteViewRef,
   textColor,
-  marginSize = 'medium', // 默认中等边距
   editorBackgroundColor,
-  editorBorderColor
+  editorBorderColor,
+  maxLength, // 添加 maxLength
+  titleError, // 添加 titleError
 }) => {
   const { t } = useTranslation();
   const colorScheme = useColorScheme() ?? 'light';
-
-  const getInternalPadding = () => {
-    switch (marginSize) {
-      case 'small': return 8;
-      case 'large': return 24;
-      default: return 12; // 中等或默认 (styles.input的原始padding是12)
-    }
-  };
   
   return (
     <View style={styles.contentContainer}>
@@ -61,13 +57,37 @@ export const NoteContent: React.FC<NoteContentProps> = ({
         </View>
       </View>
       
+      {/* 标题输入 */}
+      <TextInput
+        style={[
+          {
+            // 自定义标题输入样式
+            backgroundColor: editorBackgroundColor || (colorScheme === 'dark' ? '#2c2c2c' : '#f5f5f5'), // 与内容编辑器背景色一致或略作区分
+            color: textColor || (colorScheme === 'dark' ? '#fff' : '#000'),
+            borderColor: titleError ? 'red' : (editorBorderColor || (colorScheme === 'dark' ? '#404040' : '#ddd')),
+            borderWidth: 1,
+            borderRadius: 5, // 轻微圆角
+            paddingHorizontal: 12,
+            paddingVertical: 10,
+            fontSize: 20, 
+            fontWeight: 'bold',
+            marginBottom: 10, // 与下方内容编辑器的间距
+          }
+        ]}
+        placeholder={String(t('title'))}
+        value={title}
+        onChangeText={onChangeTitle}
+        maxLength={maxLength}
+        placeholderTextColor={colorScheme === 'dark' ? '#888' : '#888'}
+      />
+      {titleError ? <Text style={styles.errorText}>{titleError}</Text> : null}
+
       {/* 实际编辑框 */}      <ScrollView style={styles.scrollView}>
         <TextInput
           style={[
             styles.input, 
             styles.contentInput, 
             { 
-              padding: getInternalPadding(), // 应用动态内边距
               backgroundColor: editorBackgroundColor || (colorScheme === 'dark' ? '#333' : '#f5f5f5'),
               color: textColor || (colorScheme === 'dark' ? '#fff' : '#000'),
               borderColor: editorBorderColor || (colorScheme === 'dark' ? '#444' : '#ddd')

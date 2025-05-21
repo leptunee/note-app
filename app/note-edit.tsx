@@ -8,7 +8,6 @@ import { useTranslation } from 'react-i18next';
 import { v4 as uuidv4 } from 'uuid';
 import { 
   NoteHeader, 
-  TitleInput,
   NoteContent,
   ExportModal,
   PageSettingsModal,
@@ -321,12 +320,6 @@ export default function NoteEditScreen() {
         toggleOptionsMenu={() => setShowOptionsMenu(!showOptionsMenu)}
         onPageSettings={handleOpenPageSettings}
       />
-      <TitleInput 
-        title={title}
-        titleError={titleError}
-        maxLength={MAX_TITLE_LENGTH}
-        onChangeTitle={handleTitleChange}
-      />
       
       <View style={{
         flex: 1,
@@ -336,6 +329,9 @@ export default function NoteEditScreen() {
           title={title}
           content={content}
           onChangeContent={handleContentChange}
+          onChangeTitle={handleTitleChange}
+          titleError={titleError}
+          maxLength={MAX_TITLE_LENGTH}
           noteViewRef={noteViewRef}
           textColor={getTextColor()}
           editorBackgroundColor={getEditorBackgroundColor()}
