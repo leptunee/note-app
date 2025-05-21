@@ -5,6 +5,9 @@ import FontAwesome from '@expo/vector-icons/FontAwesome';
 import Colors from '@/constants/Colors';
 import { useTranslation } from 'react-i18next';
 
+// 统一图标大小常量
+const ICON_SIZE = 20;
+
 interface OptionsMenuProps {
   isVisible: boolean;
   onHide: () => void;
@@ -25,10 +28,10 @@ export const OptionsMenu: React.FC<OptionsMenuProps> = ({
     <View style={styles.optionsMenuContainer}>
       {/* 按钮总是显示，不受isVisible状态影响 */}
       <TouchableOpacity 
-        style={styles.optionsButton} 
+        style={styles.headerIconButton} 
         onPress={onHide}
       >
-        <FontAwesome name="ellipsis-v" size={18} color={Colors[colorScheme].tint} />
+        <FontAwesome name="ellipsis-v" size={ICON_SIZE} color={Colors[colorScheme].tint} />
       </TouchableOpacity>
       
       {/* 下拉菜单根据isVisible状态显示或隐藏 */}
@@ -44,7 +47,7 @@ export const OptionsMenu: React.FC<OptionsMenuProps> = ({
               onExport();
             }}
           >
-            <FontAwesome name="download" size={18} color={colorScheme === 'dark' ? '#fff' : '#000'} style={styles.optionIcon} />
+            <FontAwesome name="download" size={ICON_SIZE} color={colorScheme === 'dark' ? '#fff' : '#000'} style={styles.optionIcon} />
             <Text style={[styles.optionText, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>导出笔记</Text>
           </TouchableOpacity>
           
@@ -62,7 +65,7 @@ export const OptionsMenu: React.FC<OptionsMenuProps> = ({
               );
             }}
           >
-            <FontAwesome name="trash-o" size={18} color="#ff3b30" style={styles.optionIcon} />
+            <FontAwesome name="trash-o" size={ICON_SIZE} color="#ff3b30" style={styles.optionIcon} />
             <Text style={[styles.optionText, { color: '#ff3b30' }]}>删除笔记</Text>
           </TouchableOpacity>
         </View>

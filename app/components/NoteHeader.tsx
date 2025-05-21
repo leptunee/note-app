@@ -6,6 +6,9 @@ import Colors from '@/constants/Colors';
 import { OptionsMenu } from './OptionsMenu';
 import { FontAwesome } from '@expo/vector-icons';
 
+// 统一图标大小常量
+const ICON_SIZE = 20;
+
 interface NoteHeaderProps {
   isNewNote: boolean;
   onBack: () => void;
@@ -39,8 +42,14 @@ export const NoteHeader: React.FC<NoteHeaderProps> = ({
   const colorScheme = useColorScheme() ?? 'light';
 
   return (
-    <View style={styles.header}>      <TouchableOpacity onPress={onBack}>
-        <Text style={[styles.actionText, { color: Colors[colorScheme].tint }]}>
+    <View style={styles.header}>      
+      <TouchableOpacity onPress={onBack} style={styles.headerButton}>
+        <FontAwesome 
+          name="chevron-left" 
+          size={ICON_SIZE} 
+          color={Colors[colorScheme].tint} 
+        />
+        <Text style={[styles.actionText, { color: Colors[colorScheme].tint, marginLeft: 5 }]}>
           {String(t('back'))}
         </Text>
       </TouchableOpacity>
@@ -48,37 +57,37 @@ export const NoteHeader: React.FC<NoteHeaderProps> = ({
       <View style={styles.headerActions}>
         <TouchableOpacity 
           onPress={onPageSettings}
-          style={styles.pageSettingsButton}
+          style={styles.headerIconButton}
         >
           <FontAwesome 
             name="sliders" 
-            size={18} 
+            size={ICON_SIZE} 
             color={Colors[colorScheme].tint} 
           />
         </TouchableOpacity>
         
         <TouchableOpacity 
           onPress={onUndo}
-          style={styles.iconButton}
+          style={styles.headerIconButton}
           disabled={!canUndo}
           activeOpacity={canUndo ? 0.7 : 1}
         >
           <FontAwesome 
             name="undo" 
-            size={18} 
+            size={ICON_SIZE} 
             color={canUndo ? Colors[colorScheme].tint : '#888'} 
           />
         </TouchableOpacity>
         
         <TouchableOpacity 
           onPress={onRedo}
-          style={[styles.iconButton, { marginLeft: 10 }]}
+          style={styles.headerIconButton}
           disabled={!canRedo}
           activeOpacity={canRedo ? 0.7 : 1}
         >
           <FontAwesome 
             name="repeat" 
-            size={18} 
+            size={ICON_SIZE} 
             color={canRedo ? Colors[colorScheme].tint : '#888'} 
           />
         </TouchableOpacity>
@@ -92,12 +101,17 @@ export const NoteHeader: React.FC<NoteHeaderProps> = ({
           />
         )}
         
-        <TouchableOpacity onPress={onSave} style={{marginLeft: 15}}>
-          <Text style={[styles.actionText, { color: Colors[colorScheme].tint }]}>
+        <TouchableOpacity onPress={onSave} style={styles.saveButton}>
+          <FontAwesome 
+            name="check" 
+            size={ICON_SIZE} 
+            color={Colors[colorScheme].tint} 
+          />
+          <Text style={[styles.actionText, { color: Colors[colorScheme].tint, marginLeft: 5 }]}>
             {String(t('save'))}
           </Text>
         </TouchableOpacity>
       </View>
     </View>
   );
-};
+}

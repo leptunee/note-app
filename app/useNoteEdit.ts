@@ -6,8 +6,9 @@ import { useExport } from '@/components/useExport';
 import { useHistory } from '@/components/useHistory';
 import { useTranslation } from 'react-i18next';
 import { v4 as uuidv4 } from 'uuid';
+import { type ToastRef } from './components'; // Import ToastRef type from components
 
-export function useNoteEdit(themes: any[]) {
+export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef | null>) { // toastRef type now matches what note-edit.tsx provides
   const { id } = useLocalSearchParams<{ id: string }>();
   const { notes, addNote, updateNote, deleteNote } = useNotes();
   const { exportAsTxt, exportAsMarkdown, exportAsImage, exportAsWord } = useExport();
@@ -103,92 +104,42 @@ export function useNoteEdit(themes: any[]) {
   };
 
   const handleExport = () => {
-    if (isNewNote || !title.trim()) {
-      Alert.alert('提示', '请先保存笔记后再导出');
-      return;
-    }
+    setShowOptionsMenu(false);
     setShowExportModal(true);
   };
 
-  const getCurrentNote = () => {
-    return id
-      ? notes.find(n => n.id === id)
-      : { id: 'temp', title, content, createdAt: Date.now(), pageSettings };
-  };
-
+  // Modify export functions to use toastRef and return ExportResult
   const handleExportAsTxt = async () => {
-    setShowExportModal(false);
-    const currentNote = getCurrentNote();
-    if (!currentNote) {
-      Alert.alert('错误', '未找到笔记');
-      return;
-    }
-    const success = await exportAsTxt(currentNote);
-    if (success) {
-      Alert.alert('成功', '笔记已导出为文本文件');
-    } else {
-      Alert.alert('错误', '导出笔记时出错');
-    }
+    const note = notes.find(n => n.id === id) || { id: 'temp', title, content, createdAt: Date.now(), pageSettings };
+    const result = await exportAsTxt(note);
+    toastRef?.current?.show(result.message, result.success ? 'success' : 'error');
+    return result;
   };
 
   const handleExportAsMarkdown = async () => {
-    setShowExportModal(false);
-    const currentNote = getCurrentNote();
-    if (!currentNote) {
-      Alert.alert('错误', '未找到笔记');
-      return;
-    }
-    const success = await exportAsMarkdown(currentNote);
-    if (success) {
-      Alert.alert('成功', '笔记已导出为 Markdown 文件');
-    } else {
-      Alert.alert('错误', '导出笔记时出错');
-    }
+    const note = notes.find(n => n.id === id) || { id: 'temp', title, content, createdAt: Date.now(), pageSettings };
+    const result = await exportAsMarkdown(note);
+    toastRef?.current?.show(result.message, result.success ? 'success' : 'error');
+    return result;
   };
 
   const handleExportAsImage = async () => {
-    setShowExportModal(false);
-    const currentNote = getCurrentNote();
-    if (!currentNote) {
-      Alert.alert('错误', '未找到笔记');
-      return;
+    if (!noteViewRef.current) {
+      const message = '无法获取笔记视图以截图。';
+      toastRef?.current?.show(message, 'error');
+      return { success: false, message };
     }
-    if (!noteViewRef || !noteViewRef.current) {
-      Alert.alert('错误', '无法获取笔记视图');
-      return;
-    }
-    Alert.alert('提示', '将把整个笔记内容截图导出', [
-      { text: '取消', style: 'cancel' },
-      {
-        text: '确定',
-        onPress: async () => {
-          try {
-            const success = await exportAsImage(noteViewRef, currentNote);
-            if (!success) {
-              Alert.alert('错误', '导出笔记时出错');
-            }
-          } catch (error) {
-            console.error('截图过程出错:', error);
-            Alert.alert('错误', '截图过程出错，请重试');
-          }
-        }
-      }
-    ]);
+    const note = notes.find(n => n.id === id) || { id: 'temp', title, content, createdAt: Date.now(), pageSettings };
+    const result = await exportAsImage(noteViewRef, note);
+    toastRef?.current?.show(result.message, result.success ? 'success' : 'error');
+    return result;
   };
 
   const handleExportAsWord = async () => {
-    setShowExportModal(false);
-    const currentNote = getCurrentNote();
-    if (!currentNote) {
-      Alert.alert('错误', '未找到笔记');
-      return;
-    }
-    const success = await exportAsWord(currentNote);
-    if (success) {
-      Alert.alert('成功', '笔记已导出为Word兼容文档');
-    } else {
-      Alert.alert('错误', '导出笔记时出错');
-    }
+    const note = notes.find(n => n.id === id) || { id: 'temp', title, content, createdAt: Date.now(), pageSettings };
+    const result = await exportAsWord(note);
+    toastRef?.current?.show(result.message, result.success ? 'success' : 'error');
+    return result;
   };
 
   useEffect(() => {

@@ -87,6 +87,26 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
+  headerButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 8,
+    borderRadius: 8,
+  },
+  headerIconButton: {
+    padding: 8,
+    marginHorizontal: 4,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  saveButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginLeft: 10,
+    padding: 8,
+    borderRadius: 8,
+  },
   iconButton: {
     padding: 5,
   },
@@ -251,14 +271,15 @@ export const styles = StyleSheet.create({
     fontSize: 12,
     color: '#666',
   },
-  
-  // 选项菜单样式
+    // 选项菜单样式
   optionsMenuContainer: {
     position: 'relative',
   },
   optionsButton: {
     padding: 8,
-    borderRadius: 20,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   optionsMenu: {
     position: 'absolute',
@@ -282,7 +303,7 @@ export const styles = StyleSheet.create({
     borderBottomColor: '#eaeaea',
   },
   optionIcon: {
-    width: 22,
+    width: 24,
     marginRight: 12,
     textAlign: 'center'
   },
@@ -299,5 +320,27 @@ export const styles = StyleSheet.create({
     bottom: 0,
     right: 0,
     zIndex: -1, // 确保在内容之下
+  },
+
+  // 底部工具栏样式
+  bottomToolbar: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    backgroundColor: 'rgba(250, 250, 250, 0.9)',
+    borderTopWidth: 1,
+    borderTopColor: '#eaeaea',
+    paddingVertical: 10,
+    paddingHorizontal: 5,
+  },
+  toolbarGroup: {
+    flexDirection: 'row',
+  },
+  toolbarButton: {
+    padding: 10,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginHorizontal: 2,
   },
 });

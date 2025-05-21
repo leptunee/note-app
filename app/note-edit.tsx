@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { View, ImageBackground } from 'react-native';
-import { NoteHeader, NoteContent, ExportModal, PageSettingsModal, styles } from './components';
+import { NoteHeader, NoteContent, ExportModal, PageSettingsModal, styles, Toast, type ToastRef } from './components';
 import { useNoteEdit } from './useNoteEdit';
 import { themes, getBackgroundColor, getTextColor, getEditorBackgroundColor, getEditorBorderColor, getContentPadding } from './noteEditUtils';
 
 export default function NoteEditScreen() {
+  const toastRef = useRef<ToastRef>(null); // Correctly typed toastRef
   const {
     title,
     content,
@@ -35,7 +36,7 @@ export default function NoteEditScreen() {
     handlePageSettingsChange,
     MAX_TITLE_LENGTH,
     colorScheme,
-  } = useNoteEdit(themes);
+  } = useNoteEdit(themes, toastRef); // Pass toastRef to useNoteEdit
 
   return (
     <View style={[
@@ -92,6 +93,7 @@ export default function NoteEditScreen() {
         currentSettings={pageSettings}
         onSettingsChange={handlePageSettingsChange}
       />
+      <Toast ref={toastRef} /> {/* Add Toast component here for global access */}
     </View>
   );
 }
