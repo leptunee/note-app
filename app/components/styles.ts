@@ -118,11 +118,8 @@ export const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
-  
-  // 输入框样式
+    // 输入框样式
   input: {
-    borderWidth: 1,
-    borderRadius: 8,
     padding: 12,
     marginBottom: 12,
     fontSize: 16,
@@ -130,6 +127,7 @@ export const styles = StyleSheet.create({
   contentInput: {
     minHeight: 300,
     textAlignVertical: 'top',
+    borderWidth: 0, // 确保无边框
   },
   scrollView: {
     flex: 1,

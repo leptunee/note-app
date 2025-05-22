@@ -31,10 +31,22 @@ export const NoteContent: React.FC<NoteContentProps> = ({
   const { t } = useTranslation();
   const colorScheme = useColorScheme() ?? 'light';
   
+  // 获取格式化的日期
+  const getFormattedDate = () => {
+    const date = new Date();
+    const options: Intl.DateTimeFormatOptions = { 
+      year: 'numeric', 
+      month: 'short', 
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    };
+    return date.toLocaleDateString(undefined, options);
+  };
+  
   return (
     <View style={styles.contentContainer}>
-      {/* 隐藏的导出视图 - 仅用于导出图片 */}
-      <View 
+      {/* 隐藏的导出视图 - 仅用于导出图片 */}      <View 
         ref={noteViewRef} 
         collapsable={false} 
         style={[
@@ -42,11 +54,11 @@ export const NoteContent: React.FC<NoteContentProps> = ({
           { position: 'absolute', opacity: 0, width: 1, left: -9999, zIndex: -1 }
         ]}
       >        <View style={[styles.noteHeader, { backgroundColor: '#f8f8f8' }]}>
-          <Text style={[styles.noteTitle, { color: '#000', fontSize: 20, fontWeight: 'bold' }]}>
+          <Text style={[styles.noteTitle, { color: '#000', fontSize: 24, fontWeight: 'bold' }]}>
             {title || String(t('untitledNote'))}
           </Text>
           <Text style={[styles.noteDate, { color: '#666', marginTop: 4 }]}>
-            {new Date().toLocaleDateString()}
+            {getFormattedDate()}
           </Text>
         </View>
         
@@ -56,22 +68,18 @@ export const NoteContent: React.FC<NoteContentProps> = ({
           </Text>
         </View>
       </View>
-      
-      {/* 标题输入 */}
+        {/* 标题输入 - 无边框样式 */}
       <TextInput
         style={[
           {
-            // 自定义标题输入样式
-            backgroundColor: editorBackgroundColor || (colorScheme === 'dark' ? '#2c2c2c' : '#f5f5f5'), // 与内容编辑器背景色一致或略作区分
+            // 自定义标题输入样式 - 无边框
+            backgroundColor: 'transparent', // 透明背景
             color: textColor || (colorScheme === 'dark' ? '#fff' : '#000'),
-            borderColor: titleError ? 'red' : (editorBorderColor || (colorScheme === 'dark' ? '#404040' : '#ddd')),
-            borderWidth: 1,
-            borderRadius: 5, // 轻微圆角
             paddingHorizontal: 12,
             paddingVertical: 10,
-            fontSize: 20, 
+            fontSize: 24, // 稍微增大字号
             fontWeight: 'bold',
-            marginBottom: 10, // 与下方内容编辑器的间距
+            marginBottom: 0,
           }
         ]}
         placeholder={String(t('title'))}
@@ -79,18 +87,25 @@ export const NoteContent: React.FC<NoteContentProps> = ({
         onChangeText={onChangeTitle}
         maxLength={maxLength}
         placeholderTextColor={colorScheme === 'dark' ? '#888' : '#888'}
-      />
-      {titleError ? <Text style={styles.errorText}>{titleError}</Text> : null}
-
-      {/* 实际编辑框 */}      <ScrollView style={styles.scrollView}>
+      />      {/* 日期和字数统计 */}
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 12, marginBottom: 16 }}>
+        <Text style={{ color: colorScheme === 'dark' ? '#999' : '#888', fontSize: 12 }}>
+          {getFormattedDate()}
+        </Text>        <Text style={{ color: colorScheme === 'dark' ? '#999' : '#888', fontSize: 12 }}>
+          {content.length} {content.length > 0 ? String(t('characters')) : String(t('character'))}
+        </Text>
+      </View>
+      {titleError ? <Text style={styles.errorText}>{titleError}</Text> : null}      {/* 实际编辑框 - 无边框样式 */}      <ScrollView style={styles.scrollView}>
         <TextInput
           style={[
-            styles.input, 
             styles.contentInput, 
             { 
-              backgroundColor: editorBackgroundColor || (colorScheme === 'dark' ? '#333' : '#f5f5f5'),
+              backgroundColor: 'transparent', // 透明背景
               color: textColor || (colorScheme === 'dark' ? '#fff' : '#000'),
-              borderColor: editorBorderColor || (colorScheme === 'dark' ? '#444' : '#ddd')
+              padding: 12,
+              borderWidth: 0, // 移除边框
+              fontSize: 16,
+              lineHeight: 24,
             }
           ]}
           placeholder={String(t('content'))}

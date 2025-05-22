@@ -13,7 +13,9 @@ export type Note = {
 export interface PageSettings {
   themeId: string;
   backgroundImageUri?: string;
-  backgroundImageOpacity?: number;
+  backgroundImageOpacity: number; // 修改为必须属性
+  backgroundImageFilter?: string; // 新增背景滤镜选项
+  backgroundImageBlur?: number; // 新增背景模糊选项
   marginValue: number; // 用于滑块，例如 0-100，具体数值代表的边距在组件中转换
 }
 
@@ -45,13 +47,13 @@ export function useNotes() {
   const saveNotes = async (newNotes: Note[]) => {
     setNotes(newNotes);
     await AsyncStorage.setItem(NOTES_KEY, JSON.stringify(newNotes));
-  };
-
-  const addNote = async (note: Note) => {
+  };  const addNote = async (note: Note) => {
     const defaultPageSettings: PageSettings = {
       themeId: 'default', // 默认主题
       marginValue: 20, // 默认边距值 (例如，可以映射为中等边距)
-      backgroundImageOpacity: 1, // 默认透明度
+      backgroundImageOpacity: 0.5, // 默认透明度设为50%
+      backgroundImageBlur: 0, // 默认无模糊
+      // 移除了默认背景图片
     };
     const noteWithDefaults = {
       ...note,

@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { View, ImageBackground } from 'react-native';
+import { View, ImageBackground, Platform } from 'react-native';
 import { NoteHeader, NoteContent, ExportModal, PageSettingsModal, styles, Toast, type ToastRef } from './components';
 import { useNoteEdit } from './useNoteEdit';
 import { themes, getBackgroundColor, getTextColor, getEditorBackgroundColor, getEditorBorderColor, getContentPadding } from './noteEditUtils';
@@ -42,12 +42,19 @@ export default function NoteEditScreen() {
     <View style={[
       styles.container,
       { backgroundColor: getBackgroundColor(pageSettings, colorScheme) }
-    ]}>
-      {pageSettings.backgroundImageUri && (
+    ]}>      {pageSettings.backgroundImageUri && (
         <ImageBackground
           source={{ uri: pageSettings.backgroundImageUri }}
-          style={styles.backgroundImage}
-          imageStyle={{ opacity: pageSettings.backgroundImageOpacity }}
+          style={[
+            styles.backgroundImage,
+            Platform.OS === 'web' && pageSettings.backgroundImageBlur ? 
+              { filter: `blur(${pageSettings.backgroundImageBlur}px)` } : {}
+          ]}
+          imageStyle={{ 
+            opacity: pageSettings.backgroundImageOpacity,
+            ...(Platform.OS !== 'web' && pageSettings.backgroundImageBlur ? 
+                { filter: `blur(${pageSettings.backgroundImageBlur}px)` } : {})
+          }}
           resizeMode="cover"
         />
       )}

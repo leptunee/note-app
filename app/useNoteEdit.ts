@@ -27,11 +27,12 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
   const [titleError, setTitleError] = useState('');
   const [showExportModal, setShowExportModal] = useState(false);
   const [showOptionsMenu, setShowOptionsMenu] = useState(false);
-  const [showPageSettings, setShowPageSettings] = useState(false);
-  const [pageSettings, setPageSettings] = useState<PageSettings>({
+  const [showPageSettings, setShowPageSettings] = useState(false);  const [pageSettings, setPageSettings] = useState<PageSettings>({
     themeId: 'default',
     marginValue: 20,
-    backgroundImageOpacity: 1,
+    backgroundImageOpacity: 0.5, // 默认透明度设为50%
+    backgroundImageBlur: 0, // 默认无模糊
+    // 移除了默认背景图片
   });
   const colorScheme = useColorScheme() ?? 'light';
   const MAX_TITLE_LENGTH = 64;
@@ -43,26 +44,28 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
       const note = notes.find(n => n.id === id);
       if (note) {
         setTitle(note.title);
-        resetContentHistory(note.content);
-        if (note.pageSettings) {
+        resetContentHistory(note.content);      if (note.pageSettings) {
           setPageSettings(note.pageSettings);
         } else {
           setPageSettings({
             themeId: 'default',
             marginValue: 20,
-            backgroundImageOpacity: 1,
+            backgroundImageOpacity: 0.5, // 默认透明度设为50%
+            backgroundImageBlur: 0, // 默认无模糊
+            // 移除了默认背景图片
           });
         }
         if (note.title.length > MAX_TITLE_LENGTH) {
           setTitleError(String(t('titleTooLong', { max: MAX_TITLE_LENGTH })));
         }
-      }
-    } else {
+      }    } else {
       resetContentHistory('');
       setPageSettings({
         themeId: 'default',
         marginValue: 20,
-        backgroundImageOpacity: 1,
+        backgroundImageOpacity: 0.5, // 默认透明度设为50%
+        backgroundImageBlur: 0, // 默认无模糊
+        // 移除了默认背景图片
       });
     }
   }, [id, notes, t, resetContentHistory]);
