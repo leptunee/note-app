@@ -2,8 +2,7 @@ import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import { Platform, NativeModules } from 'react-native';
 
-const resources = {    
-  zh: {
+const resources = {      zh: {
     translation: {
       notes: '我的笔记',
       add: '添加笔记',
@@ -18,9 +17,13 @@ const resources = {
       deleteConfirmTitle: '确认删除',
       deleteConfirmMessage: '确定要删除这条笔记吗？此操作不可恢复。',
       cancel: '取消',
+      lastEdited: '最后编辑',
+      characters: '字符',
+      character: '字符',
+      untitledNote: '无标题笔记',
+      noContent: '无内容',
     },
-  },
-  en: {
+  },  en: {
     translation: {
       notes: 'My Notes',
       add: 'Add Note',
@@ -35,6 +38,11 @@ const resources = {
       deleteConfirmTitle: 'Confirm Delete',
       deleteConfirmMessage: 'Are you sure you want to delete this note? This action cannot be undone.',
       cancel: 'Cancel',
+      lastEdited: 'Last edited',
+      characters: 'characters',
+      character: 'character',
+      untitledNote: 'Untitled Note',
+      noContent: 'No content',
     },
   },
 };

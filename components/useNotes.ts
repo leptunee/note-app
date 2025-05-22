@@ -6,6 +6,7 @@ export type Note = {
   title: string;
   content: string;
   createdAt: number;
+  updatedAt: number; // 添加最后编辑时间
   pageSettings?: PageSettings; // 新增页面设置字段
 };
 

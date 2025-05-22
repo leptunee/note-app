@@ -27,7 +27,9 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
   const [titleError, setTitleError] = useState('');
   const [showExportModal, setShowExportModal] = useState(false);
   const [showOptionsMenu, setShowOptionsMenu] = useState(false);
-  const [showPageSettings, setShowPageSettings] = useState(false);  const [pageSettings, setPageSettings] = useState<PageSettings>({
+  const [showPageSettings, setShowPageSettings] = useState(false);
+  const [lastEditedTime, setLastEditedTime] = useState<number | undefined>(undefined);
+  const [pageSettings, setPageSettings] = useState<PageSettings>({
     themeId: 'default',
     marginValue: 20,
     backgroundImageOpacity: 0.5, // 默认透明度设为50%
@@ -38,13 +40,14 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
   const MAX_TITLE_LENGTH = 64;
   const isNewNote = !id;
   const noteViewRef = useRef(null);
-
   useEffect(() => {
     if (id) {
       const note = notes.find(n => n.id === id);
       if (note) {
         setTitle(note.title);
-        resetContentHistory(note.content);      if (note.pageSettings) {
+        resetContentHistory(note.content);
+        setLastEditedTime(note.updatedAt);
+        if (note.pageSettings) {
           setPageSettings(note.pageSettings);
         } else {
           setPageSettings({
@@ -58,7 +61,8 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
         if (note.title.length > MAX_TITLE_LENGTH) {
           setTitleError(String(t('titleTooLong', { max: MAX_TITLE_LENGTH })));
         }
-      }    } else {
+      }
+    } else {
       resetContentHistory('');
       setPageSettings({
         themeId: 'default',
@@ -81,19 +85,23 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
       content,
       pageSettings,
     };
+    
     if (id) {
       const note = notes.find(n => n.id === id);
       if (note) {
         updateNote({
           ...note,
           ...noteData,
+          updatedAt: Date.now(), // 记录最后编辑时间
         });
       }
     } else {
+      const now = Date.now();
       addNote({
         id: uuidv4(),
         ...noteData,
-        createdAt: Date.now(),
+        createdAt: now,
+        updatedAt: now, // 新建笔记时，创建时间和更新时间相同
       });
     }
     router.back();
@@ -113,14 +121,16 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
 
   // Modify export functions to use toastRef and return ExportResult
   const handleExportAsTxt = async () => {
-    const note = notes.find(n => n.id === id) || { id: 'temp', title, content, createdAt: Date.now(), pageSettings };
+    const now = Date.now();
+    const note = notes.find(n => n.id === id) || { id: 'temp', title, content, createdAt: now, updatedAt: now, pageSettings };
     const result = await exportAsTxt(note);
     toastRef?.current?.show(result.message, result.success ? 'success' : 'error');
     return result;
   };
 
   const handleExportAsMarkdown = async () => {
-    const note = notes.find(n => n.id === id) || { id: 'temp', title, content, createdAt: Date.now(), pageSettings };
+    const now = Date.now();
+    const note = notes.find(n => n.id === id) || { id: 'temp', title, content, createdAt: now, updatedAt: now, pageSettings };
     const result = await exportAsMarkdown(note);
     toastRef?.current?.show(result.message, result.success ? 'success' : 'error');
     return result;
@@ -132,14 +142,16 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
       toastRef?.current?.show(message, 'error');
       return { success: false, message };
     }
-    const note = notes.find(n => n.id === id) || { id: 'temp', title, content, createdAt: Date.now(), pageSettings };
+    const now = Date.now();
+    const note = notes.find(n => n.id === id) || { id: 'temp', title, content, createdAt: now, updatedAt: now, pageSettings };
     const result = await exportAsImage(noteViewRef, note);
     toastRef?.current?.show(result.message, result.success ? 'success' : 'error');
     return result;
   };
 
   const handleExportAsWord = async () => {
-    const note = notes.find(n => n.id === id) || { id: 'temp', title, content, createdAt: Date.now(), pageSettings };
+    const now = Date.now();
+    const note = notes.find(n => n.id === id) || { id: 'temp', title, content, createdAt: now, updatedAt: now, pageSettings };
     const result = await exportAsWord(note);
     toastRef?.current?.show(result.message, result.success ? 'success' : 'error');
     return result;
@@ -153,18 +165,20 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
       return () => clearTimeout(timer);
     }
   }, [showOptionsMenu]);
-
   const handleTitleChange = (text: string) => {
     setTitle(text);
+    // 更新最后编辑时间
+    setLastEditedTime(Date.now());
     if (text.length > MAX_TITLE_LENGTH) {
       setTitleError(String(t('titleTooLong', { max: MAX_TITLE_LENGTH })));
     } else {
       setTitleError('');
     }
   };
-
   const handleContentChange = (text: string) => {
     updateContent(text);
+    // 更新最后编辑时间
+    setLastEditedTime(Date.now());
   };
 
   const handleOpenPageSettings = () => {
@@ -174,7 +188,6 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
   const handlePageSettingsChange = (settings: Partial<PageSettings>) => {
     setPageSettings(prev => ({ ...prev, ...settings }));
   };
-
   return {
     title,
     setTitle,
@@ -196,6 +209,7 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
     setPageSettings,
     isNewNote,
     noteViewRef,
+    lastEditedTime,  // 添加最后编辑时间
     handleSave,
     handleDelete,
     handleExport,

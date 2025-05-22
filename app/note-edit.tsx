@@ -17,12 +17,12 @@ export default function NoteEditScreen() {
     showExportModal,
     setShowExportModal,
     showOptionsMenu,
-    setShowOptionsMenu,
-    showPageSettings,
+    setShowOptionsMenu,    showPageSettings,
     setShowPageSettings,
     pageSettings,
     isNewNote,
     noteViewRef,
+    lastEditedTime,
     handleSave,
     handleDelete,
     handleExport,
@@ -72,8 +72,7 @@ export default function NoteEditScreen() {
         toggleOptionsMenu={() => setShowOptionsMenu(!showOptionsMenu)}
         onPageSettings={handleOpenPageSettings}
       />
-      <View style={{ flex: 1, padding: getContentPadding(pageSettings.marginValue) }}>
-        <NoteContent
+      <View style={{ flex: 1, padding: getContentPadding(pageSettings.marginValue) }}>        <NoteContent
           title={title}
           content={content}
           onChangeContent={handleContentChange}
@@ -84,6 +83,7 @@ export default function NoteEditScreen() {
           textColor={getTextColor(pageSettings, colorScheme)}
           editorBackgroundColor={getEditorBackgroundColor(pageSettings, colorScheme)}
           editorBorderColor={getEditorBorderColor(pageSettings, colorScheme)}
+          lastEditedAt={lastEditedTime}
         />
       </View>
       <ExportModal

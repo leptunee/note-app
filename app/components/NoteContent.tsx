@@ -16,32 +16,48 @@ interface NoteContentProps {
   titleError?: string; // 添加 titleError
 }
 
+interface NoteContentProps {
+  title: string;
+  content: string;
+  onChangeContent: (text: string) => void;
+  onChangeTitle: (text: string) => void;
+  noteViewRef: React.RefObject<any>;
+  textColor?: string;
+  editorBackgroundColor?: string;
+  editorBorderColor?: string;
+  maxLength?: number;
+  titleError?: string;
+  lastEditedAt?: number; // 添加最后编辑时间属性
+}
+
 export const NoteContent: React.FC<NoteContentProps> = ({
   title,
   content,
   onChangeContent,
-  onChangeTitle, // 添加 onChangeTitle
+  onChangeTitle,
   noteViewRef,
   textColor,
   editorBackgroundColor,
   editorBorderColor,
-  maxLength, // 添加 maxLength
-  titleError, // 添加 titleError
-}) => {
-  const { t } = useTranslation();
+  maxLength,
+  titleError,
+  lastEditedAt, // 添加最后编辑时间
+}) => {  const { t } = useTranslation();
   const colorScheme = useColorScheme() ?? 'light';
   
   // 获取格式化的日期
-  const getFormattedDate = () => {
-    const date = new Date();
-    const options: Intl.DateTimeFormatOptions = { 
-      year: 'numeric', 
-      month: 'short', 
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    };
-    return date.toLocaleDateString(undefined, options);
+  const getFormattedDate = (timestamp?: number) => {
+    const date = timestamp ? new Date(timestamp) : new Date();
+    
+    // 自定义格式化为 YYYY/MM/DD HH:MM
+    const year = date.getFullYear();
+    const month = date.getMonth() + 1; // getMonth() 返回 0-11
+    const day = date.getDate();
+    const hour = date.getHours().toString().padStart(2, '0');
+    const minute = date.getMinutes().toString().padStart(2, '0');
+    
+    // 格式化为 YYYY/MM/DD HH:MM
+    return `${year}/${month}/${day} ${hour}:${minute}`;
   };
   
   return (
@@ -56,9 +72,8 @@ export const NoteContent: React.FC<NoteContentProps> = ({
       >        <View style={[styles.noteHeader, { backgroundColor: '#f8f8f8' }]}>
           <Text style={[styles.noteTitle, { color: '#000', fontSize: 24, fontWeight: 'bold' }]}>
             {title || String(t('untitledNote'))}
-          </Text>
-          <Text style={[styles.noteDate, { color: '#666', marginTop: 4 }]}>
-            {getFormattedDate()}
+          </Text>        <Text style={[styles.noteDate, { color: '#666', marginTop: 4 }]}>
+            {lastEditedAt ? `${t('lastEdited')}: ${getFormattedDate(lastEditedAt)}` : getFormattedDate()}
           </Text>
         </View>
         
@@ -90,7 +105,7 @@ export const NoteContent: React.FC<NoteContentProps> = ({
       />      {/* 日期和字数统计 */}
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 12, marginBottom: 16 }}>
         <Text style={{ color: colorScheme === 'dark' ? '#999' : '#888', fontSize: 12 }}>
-          {getFormattedDate()}
+          {lastEditedAt ? `${t('lastEdited')}: ${getFormattedDate(lastEditedAt)}` : getFormattedDate()}
         </Text>        <Text style={{ color: colorScheme === 'dark' ? '#999' : '#888', fontSize: 12 }}>
           {content.length} {content.length > 0 ? String(t('characters')) : String(t('character'))}
         </Text>
