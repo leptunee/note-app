@@ -37,8 +37,17 @@ export default function NotesScreen() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#000' : '#fff' }]}>
-      <View style={styles.headerContainer}>
+    <View style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#000' : '#fff' }]}>      <View style={styles.headerContainer}>
+        <TouchableOpacity
+          style={styles.aboutButton}
+          onPress={() => router.push('/about')}
+        >
+          <FontAwesome 
+            name="info-circle" 
+            size={24} 
+            color={colorScheme === 'dark' ? '#fff' : '#000'} 
+          />
+        </TouchableOpacity>
         <Text style={[styles.header, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>{String(t('notes'))}</Text>
         <TouchableOpacity
           style={[styles.addIconButton, { backgroundColor: Colors[colorScheme].tint }]}
@@ -61,12 +70,11 @@ export default function NotesScreen() {
           >
             <Text style={[styles.noteTitle, { color: colorScheme === 'dark' ? '#fff' : '#333' }]}>
               {item.title}
-            </Text>
-            <Text 
+            </Text>            <Text 
               style={[styles.noteContent, { color: colorScheme === 'dark' ? '#ccc' : '#666' }]} 
-              numberOfLines={2}
+              numberOfLines={1}
             >
-              {truncateContent(item.content)}
+              {truncateContent(item.content, 60)}
             </Text>
             <Text style={[styles.noteDate, { color: colorScheme === 'dark' ? '#888' : '#999' }]}>
               {new Date(item.createdAt).toLocaleDateString()}
@@ -89,10 +97,12 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 20,
-  },
-  header: {
+  },  header: {
     fontSize: 28,
     fontWeight: 'bold',
+  },
+  aboutButton: {
+    padding: 8,
   },
   addIconButton: {
     width: 40,
@@ -112,14 +122,11 @@ const styles = StyleSheet.create({
     marginTop: -8,
     marginBottom: 8,
     paddingHorizontal: 4,
-  },
-  noteItem: {
+  },  noteItem: {
     padding: 16,
     borderRadius: 10,
     marginBottom: 16,
     borderLeftWidth: 4,
-    height: 110, // 固定高度
-    justifyContent: 'space-between',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -130,11 +137,10 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 6,
-  },
-  noteContent: {
+  },  noteContent: {
     fontSize: 14,
-    flex: 1,
     lineHeight: 20,
+    marginBottom: 8,
   },
   noteDate: {
     fontSize: 12,
