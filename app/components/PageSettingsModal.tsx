@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   View, 
   Text, 
@@ -34,6 +34,12 @@ interface PageSettingsModalProps {
   onSettingsChange: (settings: Partial<PageSettings>) => void;
 }
 
+interface AspectRatioOption {
+  id: string;
+  name: string;
+  value: [number, number];
+}
+
 const themes: PageTheme[] = [
   { id: 'default', name: '默认', backgroundColor: '#ffffff', textColor: '#000000', editorBackgroundColor: '#f5f5f5', editorBorderColor: '#ddd' },
   { id: 'dark', name: '暗黑', backgroundColor: '#121212', textColor: '#ffffff', editorBackgroundColor: '#2c2c2c', editorBorderColor: '#404040' },
@@ -51,6 +57,19 @@ export const PageSettingsModal: React.FC<PageSettingsModalProps> = ({
   const colorScheme = useColorScheme() ?? 'light';
   const isDark = colorScheme === 'dark';
   const screenHeight = Dimensions.get('window').height;
+  
+  // 定义裁切比例选项
+  const aspectRatioOptions: AspectRatioOption[] = [
+    { id: 'original', name: '原始比例', value: [0, 0] },
+    { id: '1:1', name: '1:1 (正方形)', value: [1, 1] },
+    { id: '4:3', name: '4:3 (经典)', value: [4, 3] },
+    { id: '16:9', name: '16:9 (宽屏)', value: [16, 9] },
+    { id: '3:4', name: '3:4 (竖屏)', value: [3, 4] },
+    { id: '9:16', name: '9:16 (全屏)', value: [9, 16] },
+  ];
+  
+  // 增加当前选择的裁切比例状态
+  const [selectedAspectRatio, setSelectedAspectRatio] = useState<string>('4:3');
 
   const handleChooseImage = async () => {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -59,12 +78,22 @@ export const PageSettingsModal: React.FC<PageSettingsModalProps> = ({
       return;
     }
 
-    const pickerResult = await ImagePicker.launchImageLibraryAsync({
+    // 获取选定的裁切比例
+    const aspectRatio = aspectRatioOptions.find(option => option.id === selectedAspectRatio)?.value || [4, 3];
+    
+    // 根据是否为原始比例调整选项
+    const pickerOptions: ImagePicker.ImagePickerOptions = {
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
-      aspect: [4, 3],
       quality: 1,
-    });
+    };
+    
+    // 只有当不是原始比例时才添加aspect属性
+    if (aspectRatio[0] !== 0 && aspectRatio[1] !== 0) {
+      pickerOptions.aspect = aspectRatio;
+    }
+
+    const pickerResult = await ImagePicker.launchImageLibraryAsync(pickerOptions);
 
     if (!pickerResult.canceled && pickerResult.assets && pickerResult.assets.length > 0) {
       onSettingsChange({ 
@@ -181,19 +210,57 @@ export const PageSettingsModal: React.FC<PageSettingsModalProps> = ({
               <Text style={[styles.sectionTitle, { color: isDark ? '#fff' : '#333' }]}>
                 自定义背景图片
               </Text>
+              
+              {/* 裁切比例选项 */}
+              <Text style={[styles.optionLabel, { color: isDark ? '#ddd' : '#555', marginBottom: 8 }]}>
+                裁切比例
+              </Text>
+              <View style={styles.optionGrid}>
+                {aspectRatioOptions.map((option) => (
+                  <TouchableOpacity
+                    key={option.id}
+                    style={[
+                      styles.aspectRatioOption,
+                      {
+                        backgroundColor: isDark ? '#333' : '#f0f0f0',
+                        borderColor: selectedAspectRatio === option.id 
+                          ? Colors[colorScheme].tint 
+                          : isDark ? '#444' : '#ddd',
+                        borderWidth: selectedAspectRatio === option.id ? 2 : 1,
+                        padding: 8,
+                        borderRadius: 8,
+                        margin: 4,
+                        minWidth: 80,
+                      },
+                    ]}
+                    onPress={() => setSelectedAspectRatio(option.id)}
+                  >
+                    <Text style={{ 
+                      color: isDark ? '#fff' : '#333',
+                      textAlign: 'center',
+                      fontSize: 13,
+                    }}>
+                      {option.name}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+              
               {currentSettings.backgroundImageUri && (
-                <View style={{ alignItems: 'center', marginBottom: 10 }}>
+                <View style={{ alignItems: 'center', marginVertical: 10 }}>
                   <Text style={{ color: isDark ? '#ccc' : '#555', marginBottom: 5 }}>
                     当前已设置背景图片
                   </Text>
                 </View>
               )}
+              
               <TouchableOpacity
                 style={[
                   styles.pageSettingsButton,
                   {
                     backgroundColor: isDark ? '#333' : Colors.light.tint,
                     borderColor: isDark ? '#555' : Colors.light.tint,
+                    marginTop: 10,
                   },
                 ]}
                 onPress={handleChooseImage}
@@ -202,7 +269,7 @@ export const PageSettingsModal: React.FC<PageSettingsModalProps> = ({
                   {currentSettings.backgroundImageUri ? '更换自定义图片' : '选择自定义图片'}
                 </Text>
               </TouchableOpacity>
-
+              
               {currentSettings.backgroundImageUri && (
                 <TouchableOpacity
                   style={[
