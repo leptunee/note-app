@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
 import { View, ImageBackground, Platform } from 'react-native';
-import { NoteHeader, NoteContent, ExportModal, PageSettingsModal, styles, Toast, type ToastRef } from './components';
+import { NoteHeader, RichTextContent, ExportModal, PageSettingsModal, styles, Toast, type ToastRef } from './components';
 import { useNoteEdit } from './useNoteEdit';
 import { themes, getBackgroundColor, getTextColor, getEditorBackgroundColor, getEditorBorderColor, getContentPadding } from './noteEditUtils';
 
@@ -57,8 +57,7 @@ export default function NoteEditScreen() {
           }}
           resizeMode="cover"
         />
-      )}
-      <NoteHeader
+      )}      <NoteHeader
         isNewNote={isNewNote}
         onBack={handleSave}
         onSave={handleSave}
@@ -72,7 +71,8 @@ export default function NoteEditScreen() {
         toggleOptionsMenu={() => setShowOptionsMenu(!showOptionsMenu)}
         onPageSettings={handleOpenPageSettings}
       />
-      <View style={{ flex: 1, padding: getContentPadding(pageSettings.marginValue) }}>        <NoteContent
+      <View style={{ flex: 1, padding: getContentPadding(pageSettings.marginValue) }}>
+        <RichTextContent
           title={title}
           content={content}
           onChangeContent={handleContentChange}

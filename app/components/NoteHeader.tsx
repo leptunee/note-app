@@ -52,9 +52,7 @@ export const NoteHeader: React.FC<NoteHeaderProps> = ({
         <Text style={[styles.actionText, { color: Colors[colorScheme].tint, marginLeft: 5 }]}>
           {String(t('back'))}
         </Text>
-      </TouchableOpacity>
-      
-      <View style={styles.headerActions}>
+      </TouchableOpacity>      <View style={styles.headerActions}>
         <TouchableOpacity 
           onPress={onPageSettings}
           style={styles.headerIconButton}

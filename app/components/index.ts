@@ -2,7 +2,7 @@
 export { NoteHeader } from './NoteHeader';
 export { OptionsMenu } from './OptionsMenu';
 export { ExportModal } from './ExportModal';
-export { NoteContent } from './NoteContent';
+export { RichTextContent } from './RichTextContent';
 export { PageSettingsModal } from './PageSettingsModal';
 export { BottomToolbar } from './BottomToolbar';
 export { styles } from './styles';
