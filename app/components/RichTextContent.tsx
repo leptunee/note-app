@@ -151,11 +151,11 @@ export const RichTextContent: React.FC<RichTextContentProps> = ({
         contentContainerStyle={{ flexGrow: 1 }}
         resetScrollToCoords={{ x: 0, y: 0 }}
         scrollEnabled={true}
-      >
-        <View style={{ 
+      >        <View style={{ 
           flex: 1,
           backgroundColor: 'transparent',
           paddingHorizontal: 10,
+          paddingTop: 10,
           paddingBottom: 0,
         }}>
           <RichText 

@@ -69,9 +69,14 @@ export default function NoteEditScreen() {
         canRedo={canRedo}
         showOptionsMenu={showOptionsMenu}
         toggleOptionsMenu={() => setShowOptionsMenu(!showOptionsMenu)}
-        onPageSettings={handleOpenPageSettings}
-      />
-      <View style={{ flex: 1, padding: getContentPadding(pageSettings.marginValue) }}>
+        onPageSettings={handleOpenPageSettings}      />
+      <View style={{ 
+        flex: 1, 
+        paddingLeft: getContentPadding(pageSettings.marginValue),
+        paddingRight: getContentPadding(pageSettings.marginValue),
+        paddingTop: getContentPadding(pageSettings.marginValue),
+        paddingBottom: 0
+      }}>
         <RichTextContent
           title={title}
           content={content}
