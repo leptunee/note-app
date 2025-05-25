@@ -29,11 +29,12 @@ export default function NotesScreen() {
       };
     }, []) // 移除 refreshNotes 依赖，防止循环更新
   );
-  
-  // 截断长内容，只显示前若干个字符
+    // 截断长内容，只显示前若干个字符
   const truncateContent = (text: string, maxLength: number = 80) => {
-    if (text.length <= maxLength) return text;
-    return text.substring(0, maxLength) + '...';
+    // 先移除HTML标签，获取纯文本内容
+    const plainText = text.replace(/<[^>]*>/g, '').trim();
+    if (plainText.length <= maxLength) return plainText;
+    return plainText.substring(0, maxLength) + '...';
   };
 
   return (
