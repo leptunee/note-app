@@ -1,7 +1,6 @@
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { Note } from './useNotes';
-import * as Print from 'expo-print';
 import * as MediaLibrary from 'expo-media-library';
 import { Platform } from 'react-native';
 import { captureRef } from 'react-native-view-shot';
