@@ -75,13 +75,12 @@ export const styles = StyleSheet.create({
     minWidth: 80,
     borderWidth: 1,
   },
-  
-  // 头部样式
+    // 头部样式
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 8,
   },
   headerActions: {
     flexDirection: 'row',

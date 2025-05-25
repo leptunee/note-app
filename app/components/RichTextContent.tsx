@@ -57,7 +57,7 @@ export const RichTextContent: React.FC<RichTextContentProps> = ({
     autofocus: false,
     avoidIosKeyboard: true,
     initialContent: content || '',
-  });  // 监听内容变化并保存
+  });// 监听内容变化并保存
   React.useEffect(() => {
     const intervalId = setInterval(async () => {
       try {
@@ -104,59 +104,61 @@ export const RichTextContent: React.FC<RichTextContentProps> = ({
           <Text style={{ color: '#000', fontSize: 16, lineHeight: 24 }}>
             {content ? content.replace(/<[^>]*>/g, '') : String(t('noContent'))}
           </Text>
-        </View>
-      </View>      <KeyboardAwareScrollView 
-        contentContainerStyle={{ flexGrow: 1, paddingBottom: 20 }}
+        </View>      </View>
+
+      {/* 标题输入区域 */}
+      <TextInput
+        style={[
+          {
+            backgroundColor: 'transparent',
+            color: textColor || (colorScheme === 'dark' ? '#fff' : '#000'),
+            paddingHorizontal: 12,
+            paddingVertical: 6,
+            fontSize: 24,
+            fontWeight: 'bold',
+            marginBottom: 2,
+          }
+        ]}
+        placeholder={String(t('title'))}
+        value={title}
+        onChangeText={onChangeTitle}
+        maxLength={maxLength}
+        placeholderTextColor={colorScheme === 'dark' ? '#888' : '#888'}
+        scrollEnabled={false}
+      />
+      
+      {/* 日期和字数统计 */}
+      <View style={{ 
+        flexDirection: 'row', 
+        justifyContent: 'space-between', 
+        paddingHorizontal: 12, 
+        marginBottom: 0
+      }}>
+        <Text style={{ color: colorScheme === 'dark' ? '#999' : '#888', fontSize: 12 }}>
+          {lastEditedAt ? `${t('lastEdited')}: ${getFormattedDate(lastEditedAt)}` : getFormattedDate()}
+        </Text>
+        <Text style={{ color: colorScheme === 'dark' ? '#999' : '#888', fontSize: 12 }}>
+          {getPlainTextLength(content)} {getPlainTextLength(content) > 0 ? String(t('characters')) : String(t('character'))}
+        </Text>
+      </View>
+        {titleError ? <Text style={styles.errorText}>{titleError}</Text> : null}
+
+      {/* 富文本编辑器 */}
+      <KeyboardAwareScrollView 
+        contentContainerStyle={{ flexGrow: 1 }}
         enableOnAndroid={true}
-        extraScrollHeight={100}
+        // extraScrollHeight={100}
         keyboardShouldPersistTaps="handled"
         enableAutomaticScroll={true}
         showsVerticalScrollIndicator={false}
         style={{ flex: 1 }}
-      >
-        {/* 标题输入区域 */}
-        <TextInput
-          style={[
-            {
-              backgroundColor: 'transparent',
-              color: textColor || (colorScheme === 'dark' ? '#fff' : '#000'),
-              paddingHorizontal: 12,
-              paddingVertical: 10,
-              fontSize: 24,
-              fontWeight: 'bold',
-              marginBottom: 0,
-            }
-          ]}
-          placeholder={String(t('title'))}
-          value={title}
-          onChangeText={onChangeTitle}
-          maxLength={maxLength}
-          placeholderTextColor={colorScheme === 'dark' ? '#888' : '#888'}
-          scrollEnabled={false}
-        />
-        
-        {/* 日期和字数统计 */}
-        <View style={{ 
-          flexDirection: 'row', 
-          justifyContent: 'space-between', 
-          paddingHorizontal: 12, 
-          marginBottom: 16 
-        }}>
-          <Text style={{ color: colorScheme === 'dark' ? '#999' : '#888', fontSize: 12 }}>
-            {lastEditedAt ? `${t('lastEdited')}: ${getFormattedDate(lastEditedAt)}` : getFormattedDate()}
-          </Text>
-          <Text style={{ color: colorScheme === 'dark' ? '#999' : '#888', fontSize: 12 }}>
-            {getPlainTextLength(content)} {getPlainTextLength(content) > 0 ? String(t('characters')) : String(t('character'))}
-          </Text>
-        </View>
-        
-        {titleError ? <Text style={styles.errorText}>{titleError}</Text> : null}        {/* 富文本编辑器 */}
-        <View style={{ 
+      >        <View style={{ 
           flex: 1,
           backgroundColor: 'transparent',
           padding: 12,
           minHeight: 300,
-        }}>          <RichText 
+          overflow: 'hidden',
+        }}><RichText 
             editor={editor}
             style={{
               backgroundColor: 'transparent',
@@ -171,17 +173,6 @@ export const RichTextContent: React.FC<RichTextContentProps> = ({
           />
         </View>
       </KeyboardAwareScrollView>
-
-      {/* 工具栏 */}
-      <View style={{
-        backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f8f8f8',
-        borderTopWidth: 1,
-        borderTopColor: colorScheme === 'dark' ? '#333' : '#e0e0e0',
-      }}>
-        <Toolbar 
-          editor={editor}
-        />
-      </View>
     </View>
   );
 };
