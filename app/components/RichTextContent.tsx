@@ -55,7 +55,7 @@ export const RichTextContent: React.FC<RichTextContentProps> = ({
   };  // 创建编辑器桥接
   const editor = useEditorBridge({
     autofocus: false,
-    avoidIosKeyboard: true,
+    avoidIosKeyboard: false,
     initialContent: content || '',
   });// 监听内容变化并保存
   React.useEffect(() => {
@@ -126,13 +126,12 @@ export const RichTextContent: React.FC<RichTextContentProps> = ({
         placeholderTextColor={colorScheme === 'dark' ? '#888' : '#888'}
         scrollEnabled={false}
       />
-      
-      {/* 日期和字数统计 */}
+        {/* 日期和字数统计 */}
       <View style={{ 
         flexDirection: 'row', 
         justifyContent: 'space-between', 
         paddingHorizontal: 12, 
-        marginBottom: 0
+        marginBottom: 8
       }}>
         <Text style={{ color: colorScheme === 'dark' ? '#999' : '#888', fontSize: 12 }}>
           {lastEditedAt ? `${t('lastEdited')}: ${getFormattedDate(lastEditedAt)}` : getFormattedDate()}
@@ -141,34 +140,38 @@ export const RichTextContent: React.FC<RichTextContentProps> = ({
           {getPlainTextLength(content)} {getPlainTextLength(content) > 0 ? String(t('characters')) : String(t('character'))}
         </Text>
       </View>
-        {titleError ? <Text style={styles.errorText}>{titleError}</Text> : null}
-
-      {/* 富文本编辑器 */}
+        {titleError ? <Text style={styles.errorText}>{titleError}</Text> : null}{/* 富文本编辑器 */}
       <KeyboardAwareScrollView 
-        contentContainerStyle={{ flexGrow: 1 }}
         enableOnAndroid={true}
-        // extraScrollHeight={100}
+        extraScrollHeight={0}
         keyboardShouldPersistTaps="handled"
         enableAutomaticScroll={true}
         showsVerticalScrollIndicator={false}
         style={{ flex: 1 }}
-      >        <View style={{ 
+        contentContainerStyle={{ flexGrow: 1 }}
+        resetScrollToCoords={{ x: 0, y: 0 }}
+        scrollEnabled={true}
+      >
+        <View style={{ 
           flex: 1,
           backgroundColor: 'transparent',
-          padding: 12,
-          minHeight: 300,
-          overflow: 'hidden',
-        }}><RichText 
+          paddingHorizontal: 10,
+          paddingBottom: 0,
+        }}>
+          <RichText 
             editor={editor}
             style={{
               backgroundColor: 'transparent',
               borderWidth: 0,
               padding: 0,
               margin: 0,
+              flex: 1,
+              minHeight: 200,
             }}
             containerStyle={{
               backgroundColor: 'transparent',
               padding: 0,
+              flex: 1,
             }}
           />
         </View>
