@@ -1,9 +1,10 @@
 {
   "expo": {
     "name": "TakeNotes",
-    "slug": "TakeNotes",
+    "slug": "noteApp",
     "version": "1.0.0",
-    "orientation": "portrait",    "icon": "./assets/images/icon.png",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
     "scheme": "takenotes",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -14,7 +15,8 @@
     },
     "ios": {
       "supportsTablet": true
-    },    "android": {
+    },
+    "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"

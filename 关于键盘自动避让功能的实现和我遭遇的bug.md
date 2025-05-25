@@ -142,3 +142,11 @@ import { KeyboardAwareScrollView } from'react-native-keyboard-aware-scroll-view'
 3. https://reactnative.dev/docs/keyboardavoidingview
 4. https://stackoverflow.com/questions/45466026/keyboard-aware-scroll-view-android-issue
 5. https://github.com/APSL/react-native-keyboard-aware-scroll-view/issues/227
+
+# 5/25 更新
+
+目前已经解决了键盘避让功能无法正确实现的问题。
+
+解决方案：采用@10play/tentap-editor的富文本编辑框组件替代了textinput组件。在这个组件下，react-native-keyboard-aware-scroll-view组件可以完美实现键盘避让功能。
+
+具体实现方法：参见[RichTextContent.tsx](./app/components/RichTextContent.tsx)
