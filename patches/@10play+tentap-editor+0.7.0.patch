@@ -1,0 +1,23 @@
+diff --git a/node_modules/@10play/tentap-editor/package.json b/node_modules/@10play/tentap-editor/package.json
+index d6f8cfb..0000000 100644
+--- a/node_modules/@10play/tentap-editor/package.json
++++ b/node_modules/@10play/tentap-editor/package.json
+@@ -12,18 +12,7 @@
+   "react-native": "src/index",
+-  "exports": {
+-    ".": {
+-      "import": "./lib/index.js",
+-      "require": "./lib/commonjs/index",
+-      "types": "./lib/typescript/src/index.d.ts"
+-    },
+-    "./web": {
+-      "import": "./lib-web/index.mjs",
+-      "require": "./lib-web/index.umd.cjs",
+-      "types": "./lib-web/typescript/webEditorUtils/index.d.ts"
+-    },
+-    "./package.json": "./package.json"
+-  },
++  "exports": {
++    ".": "./lib/commonjs/index"
++  },
+
