@@ -1,15 +1,10 @@
-const {getDefaultConfig, mergeConfig} = require('@react-native/metro-config');
+const { getDefaultConfig } = require('expo/metro-config');
 
-const defaultConfig = getDefaultConfig(__dirname);
+const config = getDefaultConfig(__dirname);
 
-const config = {
-  resolver: {
-    resolverMainFields: ['react-native', 'browser', 'main'],
-    platforms: ['ios', 'android', 'native', 'web'],
-    alias: {
-      '@10play/tentap-editor': '@10play/tentap-editor/lib/commonjs/index.js',
-    },
-  },
+config.resolver.resolverMainFields = ['react-native', 'browser', 'main'];
+config.resolver.alias = {
+  '@10play/tentap-editor': '@10play/tentap-editor/src/index',
 };
 
-module.exports = mergeConfig(defaultConfig, config);
+module.exports = config;
