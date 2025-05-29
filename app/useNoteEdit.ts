@@ -72,9 +72,7 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
         // 移除了默认背景图片
       });
     }
-  }, [id, notes, t, resetContentHistory]);
-
-  const handleSave = () => {
+  }, [id, notes, t, resetContentHistory]);  const handleSave = () => {
     if (!title.trim()) return;
     if (title.length > MAX_TITLE_LENGTH) {
       setTitleError(String(t('titleTooLong', { max: MAX_TITLE_LENGTH })));

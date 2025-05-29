@@ -54,9 +54,8 @@ export const RichTextContent: React.FC<RichTextContentProps> = ({
     return html.replace(/<[^>]*>/g, '').length;
   };  // 监听内容变化并保存 - 使用定时器但增加检查  // 监听内容变化并保存 - 完全避免频繁更新
   const [isUpdating, setIsUpdating] = React.useState(false);
-  
-  React.useEffect(() => {
-    // 使用更长的延迟和防抖机制
+    React.useEffect(() => {
+    // 减少延迟以更快响应内容变化
     const timeoutId = setTimeout(async () => {
       if (!isUpdating && editor && typeof editor.getHTML === 'function') {
         try {
@@ -65,12 +64,12 @@ export const RichTextContent: React.FC<RichTextContentProps> = ({
             setIsUpdating(true);
             onChangeContent(currentHTML);
             // 设置一个短暂的冷却期
-            setTimeout(() => setIsUpdating(false), 1000);
+            setTimeout(() => setIsUpdating(false), 500);
           }        } catch (error) {
           // Editor not ready yet, skip this update
         }
       }
-    }, 3000); // 3秒延迟，大幅减少更新频率
+    }, 1000); // 减少到1秒延迟，更快响应变化
 
     return () => clearTimeout(timeoutId);
   }, [editor, content, onChangeContent, isUpdating]);

@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { View, ImageBackground, Platform, Keyboard, KeyboardAvoidingView, Text } from 'react-native';
-import { useEditorBridge } from '@10play/tentap-editor';
+import { useEditorBridge, TenTapStarterKit } from '@10play/tentap-editor';
 import { NoteHeader, RichTextContent, ExportModal, PageSettingsModal, CustomToolbar, styles, Toast, type ToastRef } from './components';
 import { useNoteEdit } from './useNoteEdit';
 import { themes, getBackgroundColor, getTextColor, getEditorBackgroundColor, getEditorBorderColor, getContentPadding } from './noteEditUtils';
@@ -38,15 +38,36 @@ export default function NoteEditScreen() {
     handleOpenPageSettings,
     handlePageSettingsChange,
     MAX_TITLE_LENGTH,
-    colorScheme,
-  } = useNoteEdit(themes, toastRef); // Pass toastRef to useNoteEdit
+    colorScheme,  } = useNoteEdit(themes, toastRef); // Pass toastRef to useNoteEdit
   
   // 创建编辑器实例
   const editor = useEditorBridge({
     autofocus: false,
     avoidIosKeyboard: false,
     initialContent: content || '',
+    bridgeExtensions: TenTapStarterKit,
   });
+
+  // 在保存前同步编辑器内容的函数
+  const handleSaveWithSync = async () => {
+    if (editor && typeof editor.getHTML === 'function') {
+      try {
+        const latestContent = await editor.getHTML();
+        console.log('Syncing editor content before save:', latestContent);
+        // 先更新内容状态，然后保存
+        handleContentChange(latestContent);
+        // 使用 setTimeout 确保状态更新完成后再保存
+        setTimeout(() => {
+          handleSave();
+        }, 100);
+      } catch (error) {
+        console.warn('Failed to sync editor content, saving with current state:', error);
+        handleSave();
+      }
+    } else {
+      handleSave();
+    }
+  };
 
   // 等待编辑器准备就绪
   const [isEditorReady, setIsEditorReady] = useState(false);
@@ -104,11 +125,10 @@ export default function NoteEditScreen() {
             resizeMode="cover"
           />
         )}
-        
-        <NoteHeader
+          <NoteHeader
           isNewNote={isNewNote}
-          onBack={handleSave}
-          onSave={handleSave}
+          onBack={handleSaveWithSync}
+          onSave={handleSaveWithSync}
           onExport={handleExport}
           onDelete={handleDelete}
           onUndo={handleUndo}
