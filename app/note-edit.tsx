@@ -128,7 +128,7 @@ export default function NoteEditScreen() {
             paddingLeft: getContentPadding(pageSettings.marginValue),
             paddingRight: getContentPadding(pageSettings.marginValue),
             paddingTop: 0,
-            paddingBottom: isKeyboardVisible ? 60 : 0, // 调整为工具栏高度+间距
+            paddingBottom: 0, // 移除底部间距，让内容直接延伸到工具栏
           }}>
             <RichTextContent
               title={title}

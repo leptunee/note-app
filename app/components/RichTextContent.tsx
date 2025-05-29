@@ -139,8 +139,7 @@ export const RichTextContent: React.FC<RichTextContentProps> = ({
         placeholderTextColor={colorScheme === 'dark' ? '#888' : '#888'}
         scrollEnabled={false}
       />
-        {/* 日期和字数统计 */}
-      <View style={{ 
+        {/* 日期和字数统计 */}      <View style={{ 
         flexDirection: 'row', 
         justifyContent: 'space-between', 
         paddingHorizontal: 0, 
@@ -153,10 +152,8 @@ export const RichTextContent: React.FC<RichTextContentProps> = ({
           {getPlainTextLength(content)} {getPlainTextLength(content) > 0 ? String(t('characters')) : String(t('character'))}
         </Text>
       </View>
-        {titleError ? <Text style={styles.errorText}>{titleError}</Text> : null}      {/* 富文本编辑器 */}
-      <KeyboardAwareScrollView 
+        {titleError ? <Text style={styles.errorText}>{titleError}</Text> : null}      {/* 富文本编辑器 */}      <KeyboardAwareScrollView 
         enableOnAndroid={true}
-        // extraScrollHeight={80}
         keyboardShouldPersistTaps="handled"
         enableAutomaticScroll={true}
         showsVerticalScrollIndicator={true}
@@ -170,7 +167,7 @@ export const RichTextContent: React.FC<RichTextContentProps> = ({
           flex: 1,
           backgroundColor: 'transparent',
           paddingHorizontal: 0,
-          paddingTop: 4,
+          paddingTop: 0, // 移除顶部间距
           paddingBottom: 0,
         }}>
           <RichText 
