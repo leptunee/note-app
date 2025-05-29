@@ -18,6 +18,7 @@ interface RichTextContentProps {
   maxLength?: number;
   titleError?: string;
   lastEditedAt?: number;
+  editor: any; // 添加 editor prop
 }
 
 export const RichTextContent: React.FC<RichTextContentProps> = ({
@@ -30,6 +31,7 @@ export const RichTextContent: React.FC<RichTextContentProps> = ({
   maxLength,
   titleError,
   lastEditedAt,
+  editor, // 接收 editor 作为 prop
 }) => {
   const { t } = useTranslation();
   const colorScheme = useColorScheme() ?? 'light';
@@ -46,37 +48,50 @@ export const RichTextContent: React.FC<RichTextContentProps> = ({
     
     return `${year}/${month}/${day} ${hour}:${minute}`;
   };
-
   // 获取纯文本内容用于字数统计
   const getPlainTextLength = (html: string) => {
     // 简单的HTML标签移除，实际项目中可能需要更完善的处理
     return html.replace(/<[^>]*>/g, '').length;
-  };  // 创建编辑器桥接
-  const editor = useEditorBridge({
-    autofocus: false,
-    avoidIosKeyboard: false,
-    initialContent: content || '',
-  });// 监听内容变化并保存
+  };  // 监听内容变化并保存 - 使用定时器但增加检查  // 监听内容变化并保存 - 完全避免频繁更新
+  const [isUpdating, setIsUpdating] = React.useState(false);
+  
   React.useEffect(() => {
-    const intervalId = setInterval(async () => {
-      try {
-        const currentHTML = await editor.getHTML();
-        if (currentHTML !== content) {
-          onChangeContent(currentHTML);
+    // 使用更长的延迟和防抖机制
+    const timeoutId = setTimeout(async () => {
+      if (!isUpdating && editor && typeof editor.getHTML === 'function') {
+        try {
+          const currentHTML = await editor.getHTML();
+          if (currentHTML !== content) {
+            setIsUpdating(true);
+            onChangeContent(currentHTML);
+            // 设置一个短暂的冷却期
+            setTimeout(() => setIsUpdating(false), 1000);
+          }        } catch (error) {
+          // Editor not ready yet, skip this update
         }
-      } catch (error) {
-        // 编辑器可能还没有准备好，静默忽略错误
       }
-    }, 500); // 每500毫秒检查一次内容变化，比之前更频繁
+    }, 3000); // 3秒延迟，大幅减少更新频率
 
-    return () => clearInterval(intervalId);
-  }, [editor, content, onChangeContent]);
-  // 当外部内容变化时更新编辑器
+    return () => clearTimeout(timeoutId);
+  }, [editor, content, onChangeContent, isUpdating]);
+
+  // 只在初始化时设置内容，避免后续更新
   React.useEffect(() => {
-    if (content !== undefined) {
-      editor.setContent(content);
+    if (content !== undefined && editor && typeof editor.setContent === 'function' && !isUpdating) {
+      // 只在编辑器没有焦点且不是正在更新时才设置内容
+      const isFocused = typeof editor.isFocused === 'function' ? editor.isFocused() : false;
+      if (!isFocused) {
+        try {
+          const currentHTML = editor.getHTML?.();
+          // 只有内容真的不同且差异较大时才更新
+          if (currentHTML !== content && Math.abs(currentHTML?.length - content.length) > 5) {
+            editor.setContent(content);
+          }        } catch (error) {
+          // Failed to set editor content, skip
+        }
+      }
     }
-  }, [content, editor]);
+  }, [content, editor, isUpdating]);
   
   return (
     <View style={styles.contentContainer}>
@@ -138,18 +153,20 @@ export const RichTextContent: React.FC<RichTextContentProps> = ({
           {getPlainTextLength(content)} {getPlainTextLength(content) > 0 ? String(t('characters')) : String(t('character'))}
         </Text>
       </View>
-        {titleError ? <Text style={styles.errorText}>{titleError}</Text> : null}{/* 富文本编辑器 */}
+        {titleError ? <Text style={styles.errorText}>{titleError}</Text> : null}      {/* 富文本编辑器 */}
       <KeyboardAwareScrollView 
         enableOnAndroid={true}
-        extraScrollHeight={0}
+        // extraScrollHeight={80}
         keyboardShouldPersistTaps="handled"
         enableAutomaticScroll={true}
-        showsVerticalScrollIndicator={false}
+        showsVerticalScrollIndicator={true}
         style={{ flex: 1 }}
-        contentContainerStyle={{ flexGrow: 1 }}
+        contentContainerStyle={{ flexGrow: 1, paddingBottom: 0 }}
         resetScrollToCoords={{ x: 0, y: 0 }}
         scrollEnabled={true}
-      >        <View style={{ 
+        keyboardOpeningTime={250}
+        enableResetScrollToCoords={false}
+      ><View style={{ 
           flex: 1,
           backgroundColor: 'transparent',
           paddingHorizontal: 0,

@@ -1,11 +1,14 @@
-import React, { useRef } from 'react';
-import { View, ImageBackground, Platform } from 'react-native';
-import { NoteHeader, RichTextContent, ExportModal, PageSettingsModal, styles, Toast, type ToastRef } from './components';
+import React, { useRef, useState, useEffect } from 'react';
+import { View, ImageBackground, Platform, Keyboard, KeyboardAvoidingView, Text } from 'react-native';
+import { Toolbar, useEditorBridge } from '@10play/tentap-editor';
+import { NoteHeader, RichTextContent, ExportModal, PageSettingsModal, CustomToolbar, styles, Toast, type ToastRef } from './components';
 import { useNoteEdit } from './useNoteEdit';
 import { themes, getBackgroundColor, getTextColor, getEditorBackgroundColor, getEditorBorderColor, getContentPadding } from './noteEditUtils';
 
 export default function NoteEditScreen() {
   const toastRef = useRef<ToastRef>(null); // Correctly typed toastRef
+  const [isKeyboardVisible, setKeyboardVisible] = useState(false);
+  
   const {
     title,
     content,
@@ -37,75 +40,152 @@ export default function NoteEditScreen() {
     MAX_TITLE_LENGTH,
     colorScheme,
   } = useNoteEdit(themes, toastRef); // Pass toastRef to useNoteEdit
+  
+  // 创建编辑器实例
+  const editor = useEditorBridge({
+    autofocus: false,
+    avoidIosKeyboard: false,
+    initialContent: content || '',
+  });
+
+  // 等待编辑器准备就绪
+  const [isEditorReady, setIsEditorReady] = useState(false);
+
+  useEffect(() => {
+    // 检查编辑器是否准备就绪
+    const checkEditorReady = () => {
+      if (editor && typeof editor.getHTML === 'function') {
+        setIsEditorReady(true);
+      } else {
+        setTimeout(checkEditorReady, 100); // 100ms后重试
+      }
+    };
+    
+    checkEditorReady();
+  }, [editor]);
+  // 键盘显示/隐藏监听
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+  
+  useEffect(() => {
+    const keyboardDidShowListener = Keyboard.addListener('keyboardDidShow', (event) => {
+      setKeyboardVisible(true);
+      setKeyboardHeight(event.endCoordinates.height);
+    });
+    const keyboardDidHideListener = Keyboard.addListener('keyboardDidHide', () => {
+      setKeyboardVisible(false);
+      setKeyboardHeight(0);
+    });
+
+    return () => {
+      keyboardDidShowListener?.remove();
+      keyboardDidHideListener?.remove();
+    };
+  }, []);
 
   return (
-    <View style={[
-      styles.container,
-      { backgroundColor: getBackgroundColor(pageSettings, colorScheme) }
-    ]}>      {pageSettings.backgroundImageUri && (
-        <ImageBackground
-          source={{ uri: pageSettings.backgroundImageUri }}
-          style={[
-            styles.backgroundImage,
-            Platform.OS === 'web' && pageSettings.backgroundImageBlur ? 
-              { filter: `blur(${pageSettings.backgroundImageBlur}px)` } : {}
-          ]}
-          imageStyle={{ 
-            opacity: pageSettings.backgroundImageOpacity,
-            ...(Platform.OS !== 'web' && pageSettings.backgroundImageBlur ? 
-                { filter: `blur(${pageSettings.backgroundImageBlur}px)` } : {})
-          }}
-          resizeMode="cover"
+    <View style={{ flex: 1 }}>
+      <View style={[
+        styles.container,
+        { backgroundColor: getBackgroundColor(pageSettings, colorScheme) }
+      ]}>
+        {pageSettings.backgroundImageUri && (
+          <ImageBackground
+            source={{ uri: pageSettings.backgroundImageUri }}
+            style={[
+              styles.backgroundImage,
+              Platform.OS === 'web' && pageSettings.backgroundImageBlur ? 
+                { filter: `blur(${pageSettings.backgroundImageBlur}px)` } : {}
+            ]}
+            imageStyle={{ 
+              opacity: pageSettings.backgroundImageOpacity,
+              ...(Platform.OS !== 'web' && pageSettings.backgroundImageBlur ? 
+                  { filter: `blur(${pageSettings.backgroundImageBlur}px)` } : {})
+            }}
+            resizeMode="cover"
+          />
+        )}
+        
+        <NoteHeader
+          isNewNote={isNewNote}
+          onBack={handleSave}
+          onSave={handleSave}
+          onExport={handleExport}
+          onDelete={handleDelete}
+          onUndo={handleUndo}
+          onRedo={handleRedo}
+          canUndo={canUndo}
+          canRedo={canRedo}
+          showOptionsMenu={showOptionsMenu}
+          toggleOptionsMenu={() => setShowOptionsMenu(!showOptionsMenu)}
+          onPageSettings={handleOpenPageSettings}
         />
-      )}      <NoteHeader
-        isNewNote={isNewNote}
-        onBack={handleSave}
-        onSave={handleSave}
-        onExport={handleExport}
-        onDelete={handleDelete}
-        onUndo={handleUndo}
-        onRedo={handleRedo}
-        canUndo={canUndo}
-        canRedo={canRedo}
-        showOptionsMenu={showOptionsMenu}
-        toggleOptionsMenu={() => setShowOptionsMenu(!showOptionsMenu)}
-        onPageSettings={handleOpenPageSettings}      />
-      <View style={{ 
-        flex: 1, 
-        paddingLeft: getContentPadding(pageSettings.marginValue),
-        paddingRight: getContentPadding(pageSettings.marginValue),
-        paddingTop: 0,
-        paddingBottom: 0
-      }}>
-        <RichTextContent
-          title={title}
-          content={content}
-          onChangeContent={handleContentChange}
-          onChangeTitle={handleTitleChange}
-          titleError={titleError}
-          maxLength={MAX_TITLE_LENGTH}
-          noteViewRef={noteViewRef}
-          textColor={getTextColor(pageSettings, colorScheme)}
-          editorBackgroundColor={getEditorBackgroundColor(pageSettings, colorScheme)}
-          editorBorderColor={getEditorBorderColor(pageSettings, colorScheme)}
-          lastEditedAt={lastEditedTime}
+          <KeyboardAvoidingView 
+          style={{ flex: 1 }}
+          behavior={Platform.OS === 'ios' ? 'height' : undefined}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+        >          <View style={{ 
+            flex: 1, 
+            paddingLeft: getContentPadding(pageSettings.marginValue),
+            paddingRight: getContentPadding(pageSettings.marginValue),
+            paddingTop: 0,
+            paddingBottom: isKeyboardVisible ? 60 : 0, // 调整为工具栏高度+间距
+          }}>
+            <RichTextContent
+              title={title}
+              content={content}
+              onChangeContent={handleContentChange}
+              onChangeTitle={handleTitleChange}
+              titleError={titleError}
+              maxLength={MAX_TITLE_LENGTH}
+              noteViewRef={noteViewRef}
+              textColor={getTextColor(pageSettings, colorScheme)}
+              editorBackgroundColor={getEditorBackgroundColor(pageSettings, colorScheme)}
+              editorBorderColor={getEditorBorderColor(pageSettings, colorScheme)}
+              lastEditedAt={lastEditedTime}
+              editor={editor}
+            />
+          </View>        </KeyboardAvoidingView>
+
+        {/* 工具栏 - 只在键盘显示时出现 */}        {isKeyboardVisible && keyboardHeight > 0 && (
+          <View style={{
+            position: 'absolute',
+            bottom: Platform.OS === 'ios' 
+              ? keyboardHeight - 34  // iOS: 键盘高度减去安全区域
+              : keyboardHeight,      // Android: 直接使用键盘高度
+            left: 0,
+            right: 0,
+            backgroundColor: '#ffffff',
+            borderTopWidth: 1,
+            borderTopColor: '#e0e0e0',
+            elevation: 8,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: -2 },
+            shadowOpacity: 0.1,
+            shadowRadius: 4,
+            zIndex: 1000,
+            paddingHorizontal: 8,
+            height: 52, // 减少工具栏高度
+          }}>
+            <CustomToolbar editor={editor} />
+          </View>
+        )}
+        
+        <ExportModal
+          isVisible={showExportModal}
+          onClose={() => setShowExportModal(false)}
+          onExportAsTxt={handleExportAsTxt}
+          onExportAsWord={handleExportAsWord}
+          onExportAsMarkdown={handleExportAsMarkdown}
+          onExportAsImage={handleExportAsImage}
         />
+        <PageSettingsModal
+          isVisible={showPageSettings}
+          onClose={() => setShowPageSettings(false)}
+          currentSettings={pageSettings}
+          onSettingsChange={handlePageSettingsChange}
+        />
+        <Toast ref={toastRef} />
       </View>
-      <ExportModal
-        isVisible={showExportModal}
-        onClose={() => setShowExportModal(false)}
-        onExportAsTxt={handleExportAsTxt}
-        onExportAsWord={handleExportAsWord}
-        onExportAsMarkdown={handleExportAsMarkdown}
-        onExportAsImage={handleExportAsImage}
-      />
-      <PageSettingsModal
-        isVisible={showPageSettings}
-        onClose={() => setShowPageSettings(false)}
-        currentSettings={pageSettings}
-        onSettingsChange={handlePageSettingsChange}
-      />
-      <Toast ref={toastRef} /> {/* Add Toast component here for global access */}
     </View>
   );
 }
