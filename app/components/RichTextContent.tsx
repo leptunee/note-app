@@ -4,7 +4,7 @@ import { RichText, Toolbar, useEditorBridge } from '@10play/tentap-editor';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { styles } from './styles';
 import { useTranslation } from 'react-i18next';
-import { BottomToolbar } from './BottomToolbar';
+
 
 interface RichTextContentProps {
   title: string;
@@ -27,8 +27,6 @@ export const RichTextContent: React.FC<RichTextContentProps> = ({
   onChangeTitle,
   noteViewRef,
   textColor,
-  editorBackgroundColor,
-  editorBorderColor,
   maxLength,
   titleError,
   lastEditedAt,
@@ -79,44 +77,6 @@ export const RichTextContent: React.FC<RichTextContentProps> = ({
       editor.setContent(content);
     }
   }, [content, editor]);
-
-  // 工具栏处理函数
-  const handleBold = () => {
-    editor.toggleBold();
-  };
-
-  const handleItalic = () => {
-    editor.toggleItalic();
-  };
-
-  const handleUnderline = () => {
-    editor.toggleUnderline();
-  };
-
-  const handleBulletList = () => {
-    editor.toggleBulletList();
-  };
-
-  const handleNumberedList = () => {
-    editor.toggleOrderedList();
-  };
-
-  const handleImage = () => {
-    // 这里可以添加图片插入逻辑
-    console.log('Image button pressed');
-  };
-
-  const handleAlignLeft = () => {
-    editor.setTextAlign('left');
-  };
-
-  const handleAlignCenter = () => {
-    editor.setTextAlign('center');
-  };
-
-  const handleAlignRight = () => {
-    editor.setTextAlign('right');
-  };
   
   return (
     <View style={styles.contentContainer}>
@@ -150,8 +110,8 @@ export const RichTextContent: React.FC<RichTextContentProps> = ({
           {
             backgroundColor: 'transparent',
             color: textColor || (colorScheme === 'dark' ? '#fff' : '#000'),
-            paddingHorizontal: 12,
-            paddingVertical: 6,
+            paddingHorizontal: 0,
+            paddingVertical: 4,
             fontSize: 24,
             fontWeight: 'bold',
             marginBottom: 2,
@@ -168,8 +128,8 @@ export const RichTextContent: React.FC<RichTextContentProps> = ({
       <View style={{ 
         flexDirection: 'row', 
         justifyContent: 'space-between', 
-        paddingHorizontal: 12, 
-        marginBottom: 8
+        paddingHorizontal: 0, 
+        marginBottom: 6
       }}>
         <Text style={{ color: colorScheme === 'dark' ? '#999' : '#888', fontSize: 12 }}>
           {lastEditedAt ? `${t('lastEdited')}: ${getFormattedDate(lastEditedAt)}` : getFormattedDate()}
@@ -192,7 +152,7 @@ export const RichTextContent: React.FC<RichTextContentProps> = ({
       >        <View style={{ 
           flex: 1,
           backgroundColor: 'transparent',
-          paddingHorizontal: 10,
+          paddingHorizontal: 0,
           paddingTop: 10,
           paddingBottom: 0,
         }}>

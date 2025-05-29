@@ -74,7 +74,7 @@ export default function NoteEditScreen() {
         flex: 1, 
         paddingLeft: getContentPadding(pageSettings.marginValue),
         paddingRight: getContentPadding(pageSettings.marginValue),
-        paddingTop: getContentPadding(pageSettings.marginValue),
+        paddingTop: 0,
         paddingBottom: 0
       }}>
         <RichTextContent
