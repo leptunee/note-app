@@ -71,8 +71,6 @@ const styles = StyleSheet.create({
   toolbar: {
     flexDirection: 'row',
     backgroundColor: '#ffffff',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
     justifyContent: 'space-around',
     alignItems: 'center',
     minHeight: 44,

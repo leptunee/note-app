@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { View, ImageBackground, Platform, Keyboard, KeyboardAvoidingView, Text } from 'react-native';
-import { Toolbar, useEditorBridge } from '@10play/tentap-editor';
+import { useEditorBridge } from '@10play/tentap-editor';
 import { NoteHeader, RichTextContent, ExportModal, PageSettingsModal, CustomToolbar, styles, Toast, type ToastRef } from './components';
 import { useNoteEdit } from './useNoteEdit';
 import { themes, getBackgroundColor, getTextColor, getEditorBackgroundColor, getEditorBorderColor, getContentPadding } from './noteEditUtils';

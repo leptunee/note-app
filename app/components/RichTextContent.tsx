@@ -156,6 +156,7 @@ export const RichTextContent: React.FC<RichTextContentProps> = ({
         enableOnAndroid={true}
         keyboardShouldPersistTaps="handled"
         enableAutomaticScroll={true}
+        extraScrollHeight={ 40 }
         showsVerticalScrollIndicator={true}
         style={{ flex: 1 }}
         contentContainerStyle={{ flexGrow: 1, paddingBottom: 0 }}
