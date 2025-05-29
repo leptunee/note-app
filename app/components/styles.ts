@@ -319,26 +319,4 @@ export const styles = StyleSheet.create({  // 容器相关样式
     right: 0,
     zIndex: -1, // 确保在内容之下
   },
-
-  // 底部工具栏样式
-  bottomToolbar: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    backgroundColor: 'rgba(250, 250, 250, 0.9)',
-    borderTopWidth: 1,
-    borderTopColor: '#eaeaea',
-    paddingVertical: 10,
-    paddingHorizontal: 5,
-  },
-  toolbarGroup: {
-    flexDirection: 'row',
-  },
-  toolbarButton: {
-    padding: 10,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginHorizontal: 2,
-  },
 });

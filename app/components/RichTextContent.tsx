@@ -1,9 +1,10 @@
 import React from 'react';
-import { View, Text, TextInput, useColorScheme } from 'react-native';
+import { View, Text, TextInput, useColorScheme, KeyboardAvoidingView, Platform } from 'react-native';
 import { RichText, Toolbar, useEditorBridge } from '@10play/tentap-editor';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { styles } from './styles';
 import { useTranslation } from 'react-i18next';
+import { BottomToolbar } from './BottomToolbar';
 
 interface RichTextContentProps {
   title: string;
@@ -72,13 +73,50 @@ export const RichTextContent: React.FC<RichTextContentProps> = ({
 
     return () => clearInterval(intervalId);
   }, [editor, content, onChangeContent]);
-
   // 当外部内容变化时更新编辑器
   React.useEffect(() => {
     if (content !== undefined) {
       editor.setContent(content);
     }
   }, [content, editor]);
+
+  // 工具栏处理函数
+  const handleBold = () => {
+    editor.toggleBold();
+  };
+
+  const handleItalic = () => {
+    editor.toggleItalic();
+  };
+
+  const handleUnderline = () => {
+    editor.toggleUnderline();
+  };
+
+  const handleBulletList = () => {
+    editor.toggleBulletList();
+  };
+
+  const handleNumberedList = () => {
+    editor.toggleOrderedList();
+  };
+
+  const handleImage = () => {
+    // 这里可以添加图片插入逻辑
+    console.log('Image button pressed');
+  };
+
+  const handleAlignLeft = () => {
+    editor.setTextAlign('left');
+  };
+
+  const handleAlignCenter = () => {
+    editor.setTextAlign('center');
+  };
+
+  const handleAlignRight = () => {
+    editor.setTextAlign('right');
+  };
   
   return (
     <View style={styles.contentContainer}>

@@ -4,6 +4,5 @@ export { OptionsMenu } from './OptionsMenu';
 export { ExportModal } from './ExportModal';
 export { RichTextContent } from './RichTextContent';
 export { PageSettingsModal } from './PageSettingsModal';
-export { BottomToolbar } from './BottomToolbar';
 export { styles } from './styles';
 export { default as Toast, type ToastRef } from './Toast'; // Export Toast and ToastRef
