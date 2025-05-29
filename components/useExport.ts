@@ -11,7 +11,41 @@ import { captureRef } from 'react-native-view-shot';
 export interface ExportResult {
   success: boolean;
   message: string;
+  htmlFilePath?: string; // 用于图片导出时的临时HTML文件路径
+  fileName?: string; // 用于图片导出时的目标文件名
 }
+
+/**
+ * 从 HTML 内容中提取纯文本，去除所有 HTML 标签和图片
+ * @param html HTML 字符串
+ * @returns 纯文本字符串
+ */
+const extractPlainTextFromHTML = (html: string): string => {
+  if (!html) return '';
+  
+  // 移除图片标签（包括 base64 图片）
+  let cleanText = html.replace(/<img[^>]*>/gi, '');
+  
+  // 移除所有 HTML 标签
+  cleanText = cleanText.replace(/<[^>]*>/g, '');
+  
+  // 解码 HTML 实体
+  cleanText = cleanText
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&amp;/g, '&')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'");
+  
+  // 清理多余的空白字符
+  cleanText = cleanText
+    .replace(/\s+/g, ' ')  // 将多个空白字符替换为单个空格
+    .replace(/\n\s*\n/g, '\n\n')  // 保留段落分隔
+    .trim();
+  
+  return cleanText;
+};
 
 /**
  * 笔记导出功能 Hook
@@ -25,9 +59,12 @@ export function useExport() {
    */
   const exportAsTxt = async (note: Note): Promise<ExportResult> => {
     try {
+      // 从 HTML 内容中提取纯文本
+      const plainTextContent = extractPlainTextFromHTML(note.content);
+      
       // 构建文件内容 - 添加更多信息
       const dateStr = new Date(note.createdAt).toLocaleString();
-      const content = `标题: ${note.title}\n创建时间: ${dateStr}\n\n${note.content}\n\n- 来自笔记应用`;
+      const content = `标题: ${note.title}\n创建时间: ${dateStr}\n\n${plainTextContent}\n\n- 来自笔记应用`;
 
       // 创建文件名 (使用时间戳避免文件名冲突)
       const fileName = `${note.title.replace(/[\\/:*?"<>|]/g, '_')}_${Date.now()}.txt`;
@@ -229,9 +266,7 @@ export function useExport() {
       console.error('导出Markdown笔记时出错:', error);
       return { success: false, message: '导出Markdown失败，请重试。' };
     }
-  };
-
-  /**
+  };  /**
    * 将笔记导出为图片(.png)
    * @param viewRef React.RefObject 需要截图的视图引用
    * @param note 要导出的笔记信息
@@ -255,42 +290,130 @@ export function useExport() {
       }
 
       // 临时显示导出视图以进行截图
+      let totalHeight = 800; // 默认高度
       try {
         if (viewRef.current) {
-          // 恢复正常大小和可见性以便截图
+          // 使用改进的高度计算逻辑，与RichTextContent.tsx保持一致
+          const contentLength = note.content ? note.content.replace(/<[^>]*>/g, '').length : 0;
+          const imageCount = (note.content.match(/<img[^>]*>/gi) || []).length;
+          
+          // 计算各种块级元素数量
+          const paragraphCount = (note.content.match(/<p[^>]*>/gi) || []).length;
+          const divCount = (note.content.match(/<div[^>]*>/gi) || []).length;
+          const brCount = (note.content.match(/<br\s*\/?>/gi) || []).length;
+          const headingCount = (note.content.match(/<h[1-6][^>]*>/gi) || []).length;
+          
+          // 计算列表相关元素
+          const listItemCount = (note.content.match(/<li[^>]*>/gi) || []).length;
+          const listCount = (note.content.match(/<[uo]l[^>]*>/gi) || []).length;
+          
+          // 更精确的段落计数：包括所有可能导致换行的元素
+          const totalBlockElements = Math.max(1, paragraphCount + divCount + headingCount + listCount);
+          
+          console.log('Export content analysis:', {
+            contentLength,
+            imageCount,
+            paragraphCount,
+            divCount,
+            brCount,
+            headingCount,
+            listItemCount,
+            listCount,
+            totalBlockElements
+          });
+          
+          // 基础高度计算（与RichTextContent.tsx中calculateContentHeight函数完全相同）
+          let webViewHeight = 300; // 增加基础高度
+          
+          // 文本高度：更保守的估算，每40个字符约一行，每行约28px
+          webViewHeight += Math.ceil(contentLength / 40) * 28;
+          
+          // 块级元素间距：每个块级元素额外16px
+          webViewHeight += totalBlockElements * 16;
+          
+          // 换行符：每个<br>标签额外20px
+          webViewHeight += brCount * 20;
+          
+          // 列表项高度：每个列表项约32px（包含项目符号和间距）
+          webViewHeight += listItemCount * 32;
+          
+          // 列表容器：每个列表额外20px的上下边距
+          webViewHeight += listCount * 20;
+          
+          // 标题额外高度：标题通常比普通文本更高
+          webViewHeight += headingCount * 20;
+          
+          // 图片高度：每张图片平均250px + 20px margin（更保守的估算）
+          webViewHeight += imageCount * 270;
+          
+          // 增加50%的缓冲空间以确保完整显示
+          webViewHeight = Math.ceil(webViewHeight * 1.5);
+          
+          // 限制在合理范围内（最小500px，最大8000px）
+          webViewHeight = Math.max(500, Math.min(8000, webViewHeight));
+          
+          // 头部高度（约120px）+ WebView高度 + 内容区padding(32px)
+          const headerHeight = 120;
+          const contentPadding = 32;
+          totalHeight = headerHeight + webViewHeight + contentPadding;
+          
+          console.log('Export view size calculation:', { 
+            contentLength,
+            imageCount,
+            totalBlockElements,
+            webViewHeight,
+            headerHeight,
+            totalHeight
+          });
+
+          // 设置导出视图的样式
           viewRef.current.setNativeProps({
             style: {
               position: 'absolute',
               opacity: 1,
-              height: 'auto',
-              minHeight: 400,
-              width: 300, // 固定宽度，避免布局问题
+              height: totalHeight,
+              width: 450,
               left: 0,
               top: 0,
               backgroundColor: 'white',
               borderRadius: 8,
-              padding: 10,
+              padding: 0,
               zIndex: 999,
+              overflow: 'visible',
             }
           });
         }
-
-        // 给渲染足够的时间
-        await new Promise(resolve => setTimeout(resolve, 300));
+        
+        // 给WebView充足的时间来完全加载和渲染内容
+        console.log('Waiting for WebView to fully render content...');
+        
+        // 基于内容复杂度动态调整等待时间，增加更长的等待时间
+        const hasImages = (note.content.match(/<img[^>]*>/gi) || []).length > 0;
+        const isLongContent = note.content.length > 5000;
+        const isVeryLongContent = note.content.length > 10000;
+        
+        let waitTime = 5000; // 增加基础等待时间到5秒
+        if (hasImages) waitTime += 3000; // 有图片额外加3秒
+        if (isLongContent) waitTime += 3000; // 长内容额外加3秒
+        if (isVeryLongContent) waitTime += 5000; // 超长内容额外加5秒
+        
+        console.log(`Calculated wait time: ${waitTime}ms (hasImages: ${hasImages}, isLongContent: ${isLongContent}, isVeryLongContent: ${isVeryLongContent})`);
+        await new Promise(resolve => setTimeout(resolve, waitTime));
       } catch (error) {
         console.error('设置视图样式时出错:', error);
       }
 
-      // 使用更安全的截图配置 - 先获取为base64，再写入文件
+      // 使用更安全的截图配置
       const fileName = `${note.title.replace(/[\\/:*?"<>|]/g, '_')}_${Date.now()}.png`;
       const fileUri = `${FileSystem.cacheDirectory}${fileName}`;
-
-      // 先截图为base64
+      
+      console.log('Starting capture with optimized options...');
+      
+      // 使用高质量截图配置
       const base64Image = await captureRef(viewRef, {
         format: 'png',
-        quality: 1.0,
+        quality: 0.9, // 提高质量到0.9
         result: 'base64',
-        snapshotContentContainer: false
       });
 
       // 将base64数据写入文件系统
@@ -308,6 +431,7 @@ export function useExport() {
               position: 'absolute',
               opacity: 0,
               width: 1,
+              height: 1,
               left: -9999,
               zIndex: -1
             }
