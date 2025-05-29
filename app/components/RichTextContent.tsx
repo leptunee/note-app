@@ -129,7 +129,7 @@ export const RichTextContent: React.FC<RichTextContentProps> = ({
         flexDirection: 'row', 
         justifyContent: 'space-between', 
         paddingHorizontal: 0, 
-        marginBottom: 6
+        marginBottom: 2
       }}>
         <Text style={{ color: colorScheme === 'dark' ? '#999' : '#888', fontSize: 12 }}>
           {lastEditedAt ? `${t('lastEdited')}: ${getFormattedDate(lastEditedAt)}` : getFormattedDate()}
@@ -153,7 +153,7 @@ export const RichTextContent: React.FC<RichTextContentProps> = ({
           flex: 1,
           backgroundColor: 'transparent',
           paddingHorizontal: 0,
-          paddingTop: 10,
+          paddingTop: 4,
           paddingBottom: 0,
         }}>
           <RichText 
