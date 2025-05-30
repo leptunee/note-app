@@ -74,12 +74,8 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
       });
     }
   }, [id, notes, t, resetContentHistory]);
-
   const handleSave = (currentContentOverride?: string) => {
     const contentToUse = typeof currentContentOverride === 'string' ? currentContentOverride : content;
-    
-    console.log('handleSave called. Title:', title.substring(0,50), 'Content to use:', contentToUse.substring(0,50));
-    
     const finalTitle = title.trim() || String(t('untitledNote'));
     
     if (finalTitle.length > MAX_TITLE_LENGTH) {
@@ -88,24 +84,19 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
     }
 
     if (!finalTitle.trim() && !contentToUse.trim()) {
-      console.log('No content to save, returning to previous screen');
       router.back();
       return;
     }
-    
-    const noteData = {
+      const noteData = {
       title: finalTitle,
       content: contentToUse,
       pageSettings,
     };
     
-    console.log('Saving note data. Title:', noteData.title.substring(0,50), 'Content:', noteData.content.substring(0,50));
-    
     try {
       if (id) {
         const note = notes.find(n => n.id === id);
         if (note) {
-          console.log('Updating existing note with id:', id);
           updateNote({
             ...note,
             ...noteData,
@@ -121,19 +112,15 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
           createdAt: now,
           updatedAt: now,
         };
-        console.log('Adding new note. ID:', newNoteId, 'Title:', newNote.title.substring(0,50), 'Content:', newNote.content.substring(0,50));
         addNote(newNote);
-      }
-      
+      }      
       if (autoSaveTimer) {
         clearTimeout(autoSaveTimer);
         setAutoSaveTimer(null);
       }
       
-      console.log('Note saved successfully');
       router.back();
     } catch (error) {
-      console.error('Error saving note:', error);
       toastRef?.current?.show('保存失败，请重试', 'error');
     }
   };

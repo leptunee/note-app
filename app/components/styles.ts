@@ -16,11 +16,24 @@ export const styles = StyleSheet.create({  // 容器相关样式
     fontWeight: '600',
     marginBottom: 10,
   },
-  optionGrid: {
+  optionLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    marginBottom: 8,
+  },  optionGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
     marginBottom: 10,
+  },
+  aspectRatioOption: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: 60,
+    minHeight: 40,
+    borderRadius: 8,
+    marginRight: 8,
+    marginBottom: 8,
   },
   themeOption: {
     width: '47%',

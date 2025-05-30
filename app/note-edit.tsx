@@ -64,24 +64,16 @@ export default function NoteEditScreen() {
 
     return checkEditorReady();
   }, [editor]);
-
   // 在保存前同步编辑器内容的函数
   const handleSaveWithSync = async () => {
-    console.log('handleSaveWithSync called');
-    
     if (editor && typeof editor.getHTML === 'function') {
       try {
-        console.log('Getting latest content from editor for save');
         const latestContent = await editor.getHTML();
-        console.log('Latest content from editor for save:', latestContent.substring(0, 100) + '...');
-        
         handleSave(latestContent);
       } catch (error) {
-        console.warn('Failed to sync editor content, saving with current state from useNoteEdit:', error);
         handleSave();
       }
     } else {
-      console.log('Editor not ready or no getHTML method, saving with current state from useNoteEdit');
       handleSave();
     }
   };
@@ -166,10 +158,9 @@ export default function NoteEditScreen() {
             <CustomToolbar
               editor={editor}
               isVisible={isKeyboardVisible}
-              backgroundColor={getEditorBackgroundColor(pageSettings, colorScheme)}
             />
           </View>
-        )}        <ExportModal
+        )}<ExportModal
           isVisible={showExportModal}
           onClose={() => setShowExportModal(false)}
           onExportAsTxt={handleExportAsTxt}

@@ -20,19 +20,16 @@ export function useEditorContent({
   const debounceTimeoutRef = useRef<number | null>(null);
   // 只在首次初始化时设置内容，或者当外部内容发生显著变化时更新
   useEffect(() => {
-    if (!editor || !editor.setContent) return;
-
-    const initializeContent = async () => {
+    if (!editor || !editor.setContent) return;    const initializeContent = async () => {
       try {
         // 如果还没有初始化，进行初始化
         if (!hasBeenInitialized) {
-          console.log('Initializing editor content for the first time');
           editor.setContent(initialContent);
           lastContentRef.current = initialContent;
           setHasBeenInitialized(true);
           return;
         }
-
+        
         // 如果已经初始化，只有在外部内容显著不同且编辑器未聚焦时才更新
         const currentHTML = (await editor.getHTML?.()) || '';
         const contentLengthDiff = Math.abs(currentHTML.length - initialContent.length);
@@ -40,14 +37,13 @@ export function useEditorContent({
                            currentHTML !== initialContent && 
                            !editor.isFocused?.() && // 编辑器未聚焦
                            !isUpdating; // 不在更新过程中
-
+        
         if (shouldUpdate) {
-          console.log('Updating editor content due to external change');
           editor.setContent(initialContent);
           lastContentRef.current = initialContent;
         }
       } catch (error) {
-        console.log('Failed to initialize/update editor content:', error);
+        // 静默处理初始化错误
       }
     };
 
@@ -58,9 +54,7 @@ export function useEditorContent({
 
   // 监听编辑器内容变化，使用防抖
   useEffect(() => {
-    if (!editor?.on || !hasBeenInitialized) return;
-
-    const handleContentUpdate = () => {
+    if (!editor?.on || !hasBeenInitialized) return;    const handleContentUpdate = () => {
       // 清除之前的防抖定时器
       if (debounceTimeoutRef.current) {
         clearTimeout(debounceTimeoutRef.current);
@@ -72,14 +66,14 @@ export function useEditorContent({
 
           const currentHTML = await editor.getHTML();
           if (currentHTML !== lastContentRef.current) {
-            console.log('Editor content changed, notifying parent');
             lastContentRef.current = currentHTML;
-            setIsUpdating(true);            onContentChange(currentHTML);
+            setIsUpdating(true);
+            onContentChange(currentHTML);
             // 使用 Promise 来延迟设置状态
             Promise.resolve().then(() => setIsUpdating(false));
           }
         } catch (error) {
-          console.log('Failed to get editor content:', error);
+          // 静默处理错误
         }
       }, debounceMs);
     };
@@ -96,20 +90,17 @@ export function useEditorContent({
   }, [editor, onContentChange, isUpdating, debounceMs, hasBeenInitialized]);
   // 添加编辑器失焦同步
   useEffect(() => {
-    if (!editor?.on || !hasBeenInitialized) return;
-
-    const handleBlur = async () => {
+    if (!editor?.on || !hasBeenInitialized) return;    const handleBlur = async () => {
       try {
         if (isUpdating) return;
-
+        
         const currentHTML = await editor.getHTML();
         if (currentHTML !== lastContentRef.current) {
-          console.log('Editor blur, syncing content');
           lastContentRef.current = currentHTML;
           onContentChange(currentHTML);
         }
       } catch (error) {
-        console.log('Failed to sync content on blur:', error);
+        // 静默处理错误
       }
     };
 
