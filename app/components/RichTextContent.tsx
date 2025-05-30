@@ -122,7 +122,6 @@ export const RichTextContent: React.FC<RichTextContentProps> = ({
   const getPlainTextLength = (html: string) => {
     return html.replace(/<[^>]*>/g, '').length;
   };
-
   // 监听内容变化并保存
   const [isUpdating, setIsUpdating] = React.useState(false);
   React.useEffect(() => {
@@ -131,19 +130,19 @@ export const RichTextContent: React.FC<RichTextContentProps> = ({
         try {
           const currentHTML = await editor.getHTML();
           if (currentHTML !== content) {
+            console.log('Content changed, updating:', currentHTML.substring(0, 100) + '...');
             setIsUpdating(true);
             onChangeContent(currentHTML);
-            setTimeout(() => setIsUpdating(false), 500);
+            setTimeout(() => setIsUpdating(false), 200); // 减少延迟
           }
         } catch (error) {
-          // Editor not ready yet, skip this update
+          console.log('Editor not ready yet, skipping update:', error);
         }
       }
-    }, 1000);
+    }, 500); // 减少延迟以提高响应性
 
     return () => clearTimeout(timeoutId);
   }, [editor, content, onChangeContent, isUpdating]);
-
   // 只在初始化时设置内容
   React.useEffect(() => {
     if (content !== undefined && editor && typeof editor.setContent === 'function' && !isUpdating) {
@@ -151,15 +150,40 @@ export const RichTextContent: React.FC<RichTextContentProps> = ({
       if (!isFocused) {
         try {
           const currentHTML = editor.getHTML?.();
-          if (currentHTML !== content && Math.abs(currentHTML?.length - content.length) > 5) {
+          if (currentHTML !== content && Math.abs((currentHTML?.length || 0) - content.length) > 5) {
+            console.log('Setting editor content:', content.substring(0, 100) + '...');
             editor.setContent(content);
           }
         } catch (error) {
-          // Failed to set editor content, skip
+          console.log('Failed to set editor content:', error);
         }
       }
     }
   }, [content, editor, isUpdating]);
+
+  // 添加编辑器焦点失去时的内容同步
+  React.useEffect(() => {
+    if (editor && typeof editor.on === 'function') {
+      const handleBlur = async () => {
+        try {
+          const currentHTML = await editor.getHTML();
+          if (currentHTML !== content) {
+            console.log('Editor lost focus, syncing content');
+            onChangeContent(currentHTML);
+          }
+        } catch (error) {
+          console.log('Failed to sync content on blur:', error);
+        }
+      };
+
+      // 监听编辑器失焦事件
+      editor.on?.('blur', handleBlur);
+      
+      return () => {
+        editor.off?.('blur', handleBlur);
+      };
+    }
+  }, [editor, content, onChangeContent]);
   
   // 计算WebView的高度
   const webViewHeight = calculateContentHeight(content);

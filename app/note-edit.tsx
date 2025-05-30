@@ -48,24 +48,43 @@ export default function NoteEditScreen() {
     bridgeExtensions: TenTapStarterKit,
   });
 
+  // Effect to set initial content when editor is ready and content is loaded
+  useEffect(() => {
+    if (editor && typeof editor.setContent === 'function' && content !== undefined && isEditorReady) {
+      // Only set content if it's different from current editor content or if editor is empty
+      try {
+        const currentEditorHTML = editor.getHTML?.();
+        if (currentEditorHTML !== content ) {
+          console.log('Setting initial editor content:', content.substring(0,100));
+          editor.setContent(content);
+        }
+      } catch (e) {
+        // May fail if editor is not fully ready, setContent will be tried again
+        console.log("error setting content", e)
+      }
+    }
+  }, [editor, content, isEditorReady]);
+
   // 在保存前同步编辑器内容的函数
   const handleSaveWithSync = async () => {
+    console.log('handleSaveWithSync called');
+    
     if (editor && typeof editor.getHTML === 'function') {
       try {
+        console.log('Getting latest content from editor for save');
         const latestContent = await editor.getHTML();
-        console.log('Syncing editor content before save:', latestContent);
-        // 先更新内容状态，然后保存
-        handleContentChange(latestContent);
-        // 使用 setTimeout 确保状态更新完成后再保存
-        setTimeout(() => {
-          handleSave();
-        }, 100);
+        console.log('Latest content from editor for save:', latestContent.substring(0, 100) + '...');
+        
+        // Call handleSave with the latest content from the editor
+        handleSave(latestContent);
+
       } catch (error) {
-        console.warn('Failed to sync editor content, saving with current state:', error);
-        handleSave();
+        console.warn('Failed to sync editor content, saving with current state from useNoteEdit:', error);
+        handleSave(); // Fallback to saving with content from useNoteEdit state
       }
     } else {
-      handleSave();
+      console.log('Editor not ready or no getHTML method, saving with current state from useNoteEdit');
+      handleSave(); // Fallback to saving with content from useNoteEdit state
     }
   };
 

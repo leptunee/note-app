@@ -16,7 +16,7 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
   const router = useRouter();
   const [title, setTitle] = useState('');
   const {
-    value: content,
+    value: content, // This is the reactive content state from useHistory
     setValue: updateContent,
     undo: handleUndo,
     redo: handleRedo,
@@ -29,6 +29,7 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
   const [showOptionsMenu, setShowOptionsMenu] = useState(false);
   const [showPageSettings, setShowPageSettings] = useState(false);
   const [lastEditedTime, setLastEditedTime] = useState<number | undefined>(undefined);
+  const [autoSaveTimer, setAutoSaveTimer] = useState<any>(null);
   const [pageSettings, setPageSettings] = useState<PageSettings>({
     themeId: 'default',
     marginValue: 20,
@@ -72,37 +73,69 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
         // 移除了默认背景图片
       });
     }
-  }, [id, notes, t, resetContentHistory]);  const handleSave = () => {
-    if (!title.trim()) return;
-    if (title.length > MAX_TITLE_LENGTH) {
+  }, [id, notes, t, resetContentHistory]);
+
+  const handleSave = (currentContentOverride?: string) => {
+    const contentToUse = typeof currentContentOverride === 'string' ? currentContentOverride : content;
+    
+    console.log('handleSave called. Title:', title.substring(0,50), 'Content to use:', contentToUse.substring(0,50));
+    
+    const finalTitle = title.trim() || String(t('untitledNote'));
+    
+    if (finalTitle.length > MAX_TITLE_LENGTH) {
       setTitleError(String(t('titleTooLong', { max: MAX_TITLE_LENGTH })));
       return;
     }
+
+    if (!finalTitle.trim() && !contentToUse.trim()) {
+      console.log('No content to save, returning to previous screen');
+      router.back();
+      return;
+    }
+    
     const noteData = {
-      title,
-      content,
+      title: finalTitle,
+      content: contentToUse,
       pageSettings,
     };
     
-    if (id) {
-      const note = notes.find(n => n.id === id);
-      if (note) {
-        updateNote({
-          ...note,
+    console.log('Saving note data. Title:', noteData.title.substring(0,50), 'Content:', noteData.content.substring(0,50));
+    
+    try {
+      if (id) {
+        const note = notes.find(n => n.id === id);
+        if (note) {
+          console.log('Updating existing note with id:', id);
+          updateNote({
+            ...note,
+            ...noteData,
+            updatedAt: Date.now(),
+          });
+        }
+      } else {
+        const now = Date.now();
+        const newNoteId = uuidv4();
+        const newNote = {
+          id: newNoteId,
           ...noteData,
-          updatedAt: Date.now(), // 记录最后编辑时间
-        });
+          createdAt: now,
+          updatedAt: now,
+        };
+        console.log('Adding new note. ID:', newNoteId, 'Title:', newNote.title.substring(0,50), 'Content:', newNote.content.substring(0,50));
+        addNote(newNote);
       }
-    } else {
-      const now = Date.now();
-      addNote({
-        id: uuidv4(),
-        ...noteData,
-        createdAt: now,
-        updatedAt: now, // 新建笔记时，创建时间和更新时间相同
-      });
+      
+      if (autoSaveTimer) {
+        clearTimeout(autoSaveTimer);
+        setAutoSaveTimer(null);
+      }
+      
+      console.log('Note saved successfully');
+      router.back();
+    } catch (error) {
+      console.error('Error saving note:', error);
+      toastRef?.current?.show('保存失败，请重试', 'error');
     }
-    router.back();
   };
 
   const handleDelete = () => {
@@ -155,6 +188,33 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
     return result;
   };
 
+  // 自动保存功能 - 在内容变化后延迟保存
+  const triggerAutoSave = () => {
+    // 清除之前的定时器
+    if (autoSaveTimer) {
+      clearTimeout(autoSaveTimer);
+    }
+    
+    // 设置新的定时器，3秒后自动保存
+    const timer = setTimeout(() => {
+      if (title.trim() || content.trim()) {
+        console.log('Auto-saving note...');
+        handleSave();
+      }
+    }, 3000);
+    
+    setAutoSaveTimer(timer);
+  };
+
+  // 清理定时器
+  useEffect(() => {
+    return () => {
+      if (autoSaveTimer) {
+        clearTimeout(autoSaveTimer);
+      }
+    };
+  }, [autoSaveTimer]);
+
   useEffect(() => {
     if (showOptionsMenu) {
       const timer = setTimeout(() => {
@@ -162,8 +222,7 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
       }, 4000);
       return () => clearTimeout(timer);
     }
-  }, [showOptionsMenu]);
-  const handleTitleChange = (text: string) => {
+  }, [showOptionsMenu]);  const handleTitleChange = (text: string) => {
     setTitle(text);
     // 更新最后编辑时间
     setLastEditedTime(Date.now());
@@ -172,11 +231,13 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
     } else {
       setTitleError('');
     }
+    // 触发自动保存
+    triggerAutoSave();
   };
   const handleContentChange = (text: string) => {
-    updateContent(text);
-    // 更新最后编辑时间
+    updateContent(text); // Updates the 'content' state from useHistory
     setLastEditedTime(Date.now());
+    triggerAutoSave();
   };
 
   const handleOpenPageSettings = () => {
