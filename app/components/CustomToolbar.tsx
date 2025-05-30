@@ -1,14 +1,26 @@
 import React from 'react';
-import { View, TouchableOpacity, Text, StyleSheet, Alert } from 'react-native';
+import { View, TouchableOpacity, Text, StyleSheet, Alert, useColorScheme } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
 import { FontAwesome } from '@expo/vector-icons';
 
 interface CustomToolbarProps {
   editor: any;
+  isVisible?: boolean; // 新增可见性控制
+  backgroundColor?: string; // 新增背景色控制
 }
 
-export const CustomToolbar: React.FC<CustomToolbarProps> = ({ editor }) => {
+export const CustomToolbar: React.FC<CustomToolbarProps> = ({ 
+  editor, 
+  isVisible = true, 
+  backgroundColor 
+}) => {
+  const colorScheme = useColorScheme();
+
+  // 如果不可见，直接返回null
+  if (!isVisible) {
+    return null;
+  }
   const handleBold = () => {
     try {
       if (editor && typeof editor.toggleBold === 'function') {
@@ -180,25 +192,56 @@ export const CustomToolbar: React.FC<CustomToolbarProps> = ({ editor }) => {
       Alert.alert('错误', '选择图片时出现错误');
     }
   };  return (
-    <View style={styles.toolbar}>
-      <TouchableOpacity style={styles.button} onPress={handleBold}>
-        <Text style={styles.buttonText}>B</Text>
+    <View style={[
+      styles.toolbar,
+      {
+        backgroundColor: backgroundColor || (colorScheme === 'dark' ? '#2c2c2c' : '#ffffff'),
+        borderTopWidth: 1,
+        borderTopColor: colorScheme === 'dark' ? '#404040' : '#e0e0e0',
+      }
+    ]}>
+      <TouchableOpacity style={[styles.button, {
+        backgroundColor: colorScheme === 'dark' ? '#404040' : '#f0f0f0'
+      }]} onPress={handleBold}>
+        <Text style={[styles.buttonText, {
+          color: colorScheme === 'dark' ? '#ffffff' : '#333333'
+        }]}>B</Text>
       </TouchableOpacity>
       
-      <TouchableOpacity style={styles.button} onPress={handleItalic}>
-        <Text style={[styles.buttonText, { fontStyle: 'italic' }]}>I</Text>
+      <TouchableOpacity style={[styles.button, {
+        backgroundColor: colorScheme === 'dark' ? '#404040' : '#f0f0f0'
+      }]} onPress={handleItalic}>
+        <Text style={[styles.buttonText, { 
+          fontStyle: 'italic',
+          color: colorScheme === 'dark' ? '#ffffff' : '#333333'
+        }]}>I</Text>
       </TouchableOpacity>
       
-      <TouchableOpacity style={styles.button} onPress={handleUnderline}>
-        <Text style={[styles.buttonText, { textDecorationLine: 'underline' }]}>U</Text>
+      <TouchableOpacity style={[styles.button, {
+        backgroundColor: colorScheme === 'dark' ? '#404040' : '#f0f0f0'
+      }]} onPress={handleUnderline}>
+        <Text style={[styles.buttonText, { 
+          textDecorationLine: 'underline',
+          color: colorScheme === 'dark' ? '#ffffff' : '#333333'
+        }]}>U</Text>
       </TouchableOpacity>
       
-      <TouchableOpacity style={styles.button} onPress={handleBulletList}>
-        <Text style={styles.buttonText}>•</Text>
+      <TouchableOpacity style={[styles.button, {
+        backgroundColor: colorScheme === 'dark' ? '#404040' : '#f0f0f0'
+      }]} onPress={handleBulletList}>
+        <Text style={[styles.buttonText, {
+          color: colorScheme === 'dark' ? '#ffffff' : '#333333'
+        }]}>•</Text>
       </TouchableOpacity>
       
-      <TouchableOpacity style={styles.button} onPress={handleImagePicker}>
-        <FontAwesome name="image" size={16} color="#333333" />
+      <TouchableOpacity style={[styles.button, {
+        backgroundColor: colorScheme === 'dark' ? '#404040' : '#f0f0f0'
+      }]} onPress={handleImagePicker}>
+        <FontAwesome 
+          name="image" 
+          size={16} 
+          color={colorScheme === 'dark' ? '#ffffff' : '#333333'} 
+        />
       </TouchableOpacity>
     </View>
   );
@@ -207,24 +250,28 @@ export const CustomToolbar: React.FC<CustomToolbarProps> = ({ editor }) => {
 const styles = StyleSheet.create({
   toolbar: {
     flexDirection: 'row',
-    backgroundColor: '#ffffff',
     justifyContent: 'space-around',
     alignItems: 'center',
-    minHeight: 44,
+    minHeight: 50,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
   },
   button: {
     paddingHorizontal: 12,
     paddingVertical: 8,
-    backgroundColor: '#f0f0f0',
-    borderRadius: 4,
+    borderRadius: 6,
     marginHorizontal: 4,
     minWidth: 40,
     alignItems: 'center',
     justifyContent: 'center',
+    elevation: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
   },
   buttonText: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#333333',
   },
 });
