@@ -50,7 +50,6 @@ export const CustomToolbar: React.FC<CustomToolbarProps> = ({
       console.warn('Underline toggle failed:', error);
     }
   };
-
   const handleBulletList = () => {
     try {
       if (editor && typeof editor.toggleBulletList === 'function') {
@@ -59,7 +58,17 @@ export const CustomToolbar: React.FC<CustomToolbarProps> = ({
     } catch (error) {
       console.warn('Bullet list toggle failed:', error);
     }
-  };  const insertImages = async (images: ImagePicker.ImagePickerAsset[]) => {
+  };
+
+  const handleOrderedList = () => {
+    try {
+      if (editor && typeof editor.toggleOrderedList === 'function') {
+        editor.toggleOrderedList();
+      }
+    } catch (error) {
+      console.warn('Ordered list toggle failed:', error);
+    }
+  };const insertImages = async (images: ImagePicker.ImagePickerAsset[]) => {
     if (!editor) return;
 
     try {
@@ -197,39 +206,53 @@ export const CustomToolbar: React.FC<CustomToolbarProps> = ({
         borderTopWidth: 1,
         borderTopColor: colorScheme === 'dark' ? '#404040' : '#e0e0e0',
       }
-    ]}>
-      <TouchableOpacity style={[styles.button, {
+    ]}>      <TouchableOpacity style={[styles.button, {
         backgroundColor: colorScheme === 'dark' ? '#404040' : '#f0f0f0'
       }]} onPress={handleBold}>
-        <Text style={[styles.buttonText, {
-          color: colorScheme === 'dark' ? '#ffffff' : '#333333'
-        }]}>B</Text>
+        <FontAwesome 
+          name="bold" 
+          size={14} 
+          color={colorScheme === 'dark' ? '#ffffff' : '#333333'} 
+        />
       </TouchableOpacity>
       
       <TouchableOpacity style={[styles.button, {
         backgroundColor: colorScheme === 'dark' ? '#404040' : '#f0f0f0'
       }]} onPress={handleItalic}>
-        <Text style={[styles.buttonText, { 
-          fontStyle: 'italic',
-          color: colorScheme === 'dark' ? '#ffffff' : '#333333'
-        }]}>I</Text>
+        <FontAwesome 
+          name="italic" 
+          size={14} 
+          color={colorScheme === 'dark' ? '#ffffff' : '#333333'} 
+        />
       </TouchableOpacity>
       
       <TouchableOpacity style={[styles.button, {
         backgroundColor: colorScheme === 'dark' ? '#404040' : '#f0f0f0'
       }]} onPress={handleUnderline}>
-        <Text style={[styles.buttonText, { 
-          textDecorationLine: 'underline',
-          color: colorScheme === 'dark' ? '#ffffff' : '#333333'
-        }]}>U</Text>
+        <FontAwesome 
+          name="underline" 
+          size={14} 
+          color={colorScheme === 'dark' ? '#ffffff' : '#333333'} 
+        />
+      </TouchableOpacity>
+        <TouchableOpacity style={[styles.button, {
+        backgroundColor: colorScheme === 'dark' ? '#404040' : '#f0f0f0'
+      }]} onPress={handleBulletList}>
+        <FontAwesome 
+          name="list-ul" 
+          size={14} 
+          color={colorScheme === 'dark' ? '#ffffff' : '#333333'} 
+        />
       </TouchableOpacity>
       
       <TouchableOpacity style={[styles.button, {
         backgroundColor: colorScheme === 'dark' ? '#404040' : '#f0f0f0'
-      }]} onPress={handleBulletList}>
-        <Text style={[styles.buttonText, {
-          color: colorScheme === 'dark' ? '#ffffff' : '#333333'
-        }]}>•</Text>
+      }]} onPress={handleOrderedList}>
+        <FontAwesome 
+          name="list-ol" 
+          size={14} 
+          color={colorScheme === 'dark' ? '#ffffff' : '#333333'} 
+        />
       </TouchableOpacity>
       
       <TouchableOpacity style={[styles.button, {
@@ -237,7 +260,7 @@ export const CustomToolbar: React.FC<CustomToolbarProps> = ({
       }]} onPress={handleImagePicker}>
         <FontAwesome 
           name="image" 
-          size={16} 
+          size={14} 
           color={colorScheme === 'dark' ? '#ffffff' : '#333333'} 
         />
       </TouchableOpacity>
@@ -250,16 +273,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'center',
-    minHeight: 50,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
+    minHeight: 42,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
   },
   button: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    width: 36,
+    height: 36,
     borderRadius: 6,
-    marginHorizontal: 4,
-    minWidth: 40,
+    marginHorizontal: 2,
     alignItems: 'center',
     justifyContent: 'center',
     elevation: 1,
@@ -269,7 +291,7 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
   },
   buttonText: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: 'bold',
   },
 });
