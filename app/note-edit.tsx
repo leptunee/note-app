@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect, useCallback } from 'react';
+import React, { useRef, useState, useEffect, useCallback, useMemo } from 'react';
 import { View, ImageBackground, Platform, Keyboard, KeyboardAvoidingView, Text, TextInput } from 'react-native';
 import { useEditorBridge, TenTapStarterKit } from '@10play/tentap-editor';
 import { NoteHeader, RichTextContent, ExportModal, PageSettingsModal, CustomToolbar, styles, Toast, ExportView, type ToastRef } from './components';
@@ -171,7 +171,6 @@ export default function NoteEditScreen() {
       }, 100);
     }, 200);
   };
-
   // 键盘显示/隐藏监听
   useEffect(() => {
     const keyboardDidShowListener = Keyboard.addListener('keyboardDidShow', (event) => {
@@ -187,7 +186,31 @@ export default function NoteEditScreen() {
       keyboardDidShowListener?.remove();
       keyboardDidHideListener?.remove();
     };
-  }, []);  return (
+  }, []);
+
+  // 使用 useMemo 缓存计算的样式值，避免无限重新渲染
+  const contentPadding = useMemo(() => {
+    return getContentPadding(pageSettings.marginValue);
+  }, [pageSettings.marginValue]);
+
+  const backgroundStyles = useMemo(() => ({
+    opacity: pageSettings.backgroundImageOpacity,
+  }), [pageSettings.backgroundImageOpacity]);
+  const containerBackgroundColor = useMemo(() => {
+    return getBackgroundColor(pageSettings, colorScheme);
+  }, [pageSettings, colorScheme]);
+
+  const textColor = useMemo(() => {
+    return getTextColor(pageSettings, colorScheme);
+  }, [pageSettings, colorScheme]);
+
+  const editorBackgroundColor = useMemo(() => {
+    return getEditorBackgroundColor(pageSettings, colorScheme);
+  }, [pageSettings, colorScheme]);
+
+  const editorBorderColor = useMemo(() => {
+    return getEditorBorderColor(pageSettings, colorScheme);
+  }, [pageSettings, colorScheme]);return (
     <View style={{ flex: 1 }}>
       {/* 导出视图 - 独立渲染，不受任何容器约束 */}
       <ExportView
@@ -195,49 +218,57 @@ export default function NoteEditScreen() {
         title={title}
         content={content}
         lastEditedAt={lastEditedTime}
-      />
-      
-      <View style={[
+      />        <View style={[
         styles.container,
-        { backgroundColor: getBackgroundColor(pageSettings, colorScheme) }
-      ]}>
-        {pageSettings.backgroundImageUri && (
+        { backgroundColor: containerBackgroundColor }
+      ]}>        {pageSettings.backgroundImageUri && (
           <ImageBackground
             source={{ uri: pageSettings.backgroundImageUri }}
-            style={styles.backgroundImage}
+            style={[
+              styles.backgroundImage,
+              backgroundStyles
+            ]}
             resizeMode="cover"
-          >
-            <View style={{ opacity: pageSettings.backgroundImageOpacity }} />
-          </ImageBackground>
-        )}
-
-        <KeyboardAvoidingView
+            blurRadius={pageSettings.backgroundImageBlur || 0}
+          />
+        )}        <KeyboardAvoidingView
           style={{ flex: 1 }}
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
         >
-          <View style={{ flex: 1, paddingHorizontal: 16 }}>            <NoteHeader
-              isNewNote={isNewNote}
-              onBack={handleBack}
-              onSave={handleSaveWithSync}
-              onExport={handleExport}
-              onDelete={handleDelete}
-              onUndo={handleUndo}
-              onRedo={handleRedo}
-              canUndo={canUndo}
-              canRedo={canRedo}
-              showOptionsMenu={showOptionsMenu}
-              toggleOptionsMenu={() => setShowOptionsMenu(!showOptionsMenu)}
-              onPageSettings={handleOpenPageSettings}
-            />            {editor && isEditorReady && (              <RichTextContent
+          {/* Header 不受页边距影响 */}
+          <NoteHeader
+            isNewNote={isNewNote}
+            onBack={handleBack}
+            onSave={handleSaveWithSync}
+            onExport={handleExport}
+            onDelete={handleDelete}
+            onUndo={handleUndo}
+            onRedo={handleRedo}
+            canUndo={canUndo}
+            canRedo={canRedo}
+            showOptionsMenu={showOptionsMenu}
+            toggleOptionsMenu={() => setShowOptionsMenu(!showOptionsMenu)}
+            onPageSettings={handleOpenPageSettings}
+          />
+          
+          {/* 内容区域受页边距影响 */}
+          <View style={{ 
+            flex: 1, 
+            paddingHorizontal: contentPadding,
+            paddingTop: 0,
+            paddingBottom: 0
+          }}>
+            {editor && isEditorReady && (
+              <RichTextContent
                 title={title}
                 content={content}
                 onChangeContent={handleContentChange}
                 onChangeTitle={handleTitleChange}
                 noteViewRef={noteViewRef}
-                textColor={getTextColor(pageSettings, colorScheme)}
-                editorBackgroundColor={getEditorBackgroundColor(pageSettings, colorScheme)}
-                editorBorderColor={getEditorBorderColor(pageSettings, colorScheme)}
+                textColor={textColor}
+                editorBackgroundColor={editorBackgroundColor}
+                editorBorderColor={editorBorderColor}
                 maxLength={MAX_TITLE_LENGTH}
                 titleError={titleError}
                 lastEditedAt={lastEditedTime}
@@ -246,7 +277,7 @@ export default function NoteEditScreen() {
               />
             )}
           </View>
-        </KeyboardAvoidingView>        {/* 工具栏 - 只在键盘弹起时显示，并固定在键盘上方 */}
+        </KeyboardAvoidingView>{/* 工具栏 - 只在键盘弹起时显示，并固定在键盘上方 */}
         {editor && isEditorReady && isKeyboardVisible && (
           <View style={{
             position: 'absolute',

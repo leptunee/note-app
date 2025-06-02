@@ -325,20 +325,17 @@ export const PageSettingsModal: React.FC<PageSettingsModalProps> = ({
                   thumbTintColor={Colors[colorScheme].tint}
                 />
               </View>
-            )}
-
-            {/* 页边距设置 */}
+            )}            {/* 页边距设置 */}
             <View style={{ marginBottom: 20 }}>
               <Text style={[styles.sectionTitle, { color: isDark ? '#fff' : '#333' }]}>
-                页边距 ({(currentSettings.marginValue / 100 * 36 + 4).toFixed(0)}px)
-              </Text>
-              <Slider
+                左右页边距 ({currentSettings.marginValue}px)
+              </Text>              <Slider
                 style={{ width: '100%', height: 40 }}
-                minimumValue={0}
-                maximumValue={100}
+                minimumValue={8}
+                maximumValue={40}
                 step={1}
                 value={currentSettings.marginValue}
-                onValueChange={(value: number) => onSettingsChange({ marginValue: value })}
+                onValueChange={(value: number) => onSettingsChange({ marginValue: Math.round(value) })}
                 minimumTrackTintColor={Colors[colorScheme].tint}
                 maximumTrackTintColor={isDark ? '#555' : '#ccc'}
                 thumbTintColor={Colors[colorScheme].tint}

@@ -42,7 +42,10 @@ export function getEditorBorderColor(pageSettings: any, colorScheme: string) {
 }
 
 export function getContentPadding(marginValue: number) {
-  const minPadding = 4;
+  // marginValue 直接表示像素值，范围：8px 到 40px
+  const minPadding = 8;
   const maxPadding = 40;
-  return minPadding + (marginValue / 100) * (maxPadding - minPadding);
+  
+  // 确保值在有效范围内
+  return Math.max(minPadding, Math.min(maxPadding, marginValue));
 }

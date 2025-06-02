@@ -26,10 +26,9 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
   const [showOptionsMenu, setShowOptionsMenu] = useState(false);
   const [showPageSettings, setShowPageSettings] = useState(false);
 
-  const [lastEditedTime, setLastEditedTime] = useState<number | undefined>(undefined);
-  const [pageSettings, setPageSettings] = useState<PageSettings>({
+  const [lastEditedTime, setLastEditedTime] = useState<number | undefined>(undefined);  const [pageSettings, setPageSettings] = useState<PageSettings>({
     themeId: 'default',
-    marginValue: 20,
+    marginValue: 22,
     backgroundImageOpacity: 0.5, // 默认透明度设为50%
     backgroundImageBlur: 0, // 默认无模糊
     // 移除了默认背景图片
@@ -47,11 +46,10 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
         setContent(note.content);
         setLastEditedTime(note.updatedAt);
         if (note.pageSettings) {
-          setPageSettings(note.pageSettings);
-        } else {
+          setPageSettings(note.pageSettings);        } else {
           setPageSettings({
             themeId: 'default',
-            marginValue: 20,
+            marginValue: 22,
             backgroundImageOpacity: 0.5, // 默认透明度设为50%
             backgroundImageBlur: 0, // 默认无模糊
             // 移除了默认背景图片
@@ -61,11 +59,10 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
           setTitleError(String(t('titleTooLong', { max: MAX_TITLE_LENGTH })));
         }
       }
-    } else {
-      setContent('');
+    } else {      setContent('');
       setPageSettings({
         themeId: 'default',
-        marginValue: 20,
+        marginValue: 22,
         backgroundImageOpacity: 0.5, // 默认透明度设为50%
         backgroundImageBlur: 0, // 默认无模糊
         // 移除了默认背景图片

@@ -4,8 +4,6 @@ import Colors from '@/constants/Colors';
 export const styles = StyleSheet.create({  // 容器相关样式
   container: {
     flex: 1,
-    paddingLeft: 16,
-    paddingRight: 16,
     paddingTop: 60, // 增加顶部间距，为状态栏留出空间
     paddingBottom: 0, // 移除底部间距，让内容可以延伸到屏幕边缘
   },
@@ -88,13 +86,13 @@ export const styles = StyleSheet.create({  // 容器相关样式
     justifyContent: 'center',
     minWidth: 80,
     borderWidth: 1,
-  },
-    // 头部样式
+  },  // 头部样式
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 8,
+    paddingHorizontal: 16, // 添加水平padding
   },
   headerActions: {
     flexDirection: 'row',
