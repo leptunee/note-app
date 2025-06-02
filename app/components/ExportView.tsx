@@ -89,10 +89,9 @@ export const ExportView = forwardRef<View, ExportViewProps>(({
             showsHorizontalScrollIndicator={false}
             javaScriptEnabled={true}
             domStorageEnabled={false}
-            startInLoadingState={false}
-            originWhitelist={['*']}
+            startInLoadingState={false}            originWhitelist={['*']}
             onLoadEnd={() => {
-              console.log('Export WebView loaded successfully, height:', webViewHeight);
+              // WebView 加载完成
             }}
             onMessage={() => {}}
             injectedJavaScript={webViewInjectedScript}

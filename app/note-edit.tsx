@@ -1,14 +1,14 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
-import { View, ImageBackground, Platform, Keyboard, KeyboardAvoidingView, Text } from 'react-native';
+import { View, ImageBackground, Platform, Keyboard, KeyboardAvoidingView, Text, TextInput } from 'react-native';
 import { useEditorBridge, TenTapStarterKit } from '@10play/tentap-editor';
 import { NoteHeader, RichTextContent, ExportModal, PageSettingsModal, CustomToolbar, styles, Toast, ExportView, type ToastRef } from './components';
 import { useEditorContent } from './components/hooks/useEditorContent';
-import { useEditorDebug } from './components/hooks/useEditorDebug';
 import { useNoteEdit } from './useNoteEdit';
 import { themes, getBackgroundColor, getTextColor, getEditorBackgroundColor, getEditorBorderColor, getContentPadding } from './noteEditUtils';
 
 export default function NoteEditScreen() {
   const toastRef = useRef<ToastRef>(null);
+  const titleInputRef = useRef<TextInput>(null);
   const [isKeyboardVisible, setKeyboardVisible] = useState(false);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
   const [isEditorReady, setIsEditorReady] = useState(false);  const {
@@ -42,7 +42,7 @@ export default function NoteEditScreen() {
     handlePageSettingsChange,
     MAX_TITLE_LENGTH,
     colorScheme,
-  } = useNoteEdit(themes, toastRef);
+  } = useNoteEdit(themes, toastRef, titleInputRef);
   // 创建编辑器实例 - 使用实际的 content 作为初始内容
   const editor = useEditorBridge({
     autofocus: false,
@@ -50,72 +50,54 @@ export default function NoteEditScreen() {
     initialContent: content || '', // 使用实际的 content 状态
     bridgeExtensions: TenTapStarterKit,
   });
-
   // 撤销/重做处理函数
   const handleUndo = useCallback(() => {
     if (editor && editor.undo) {
-      console.log('执行撤销操作');
       editor.undo();
     }
   }, [editor]);
 
   const handleRedo = useCallback(() => {
     if (editor && editor.redo) {
-      console.log('执行重做操作');
       editor.redo();
     }
-  }, [editor]);  // 监听编辑器的撤销/重做状态变化
+  }, [editor]);// 监听编辑器的撤销/重做状态变化
   useEffect(() => {
-    if (!editor || !isEditorReady) return;
-
-    const updateUndoRedoState = (eventName?: string) => {
+    if (!editor || !isEditorReady) return;    const updateUndoRedoState = (eventName?: string) => {
       try {
         const newCanUndo = editor.canUndo || false;
         const newCanRedo = editor.canRedo || false;
         
-        console.log(`撤销/重做状态更新 (${eventName || '手动'}):`, { 
-          newCanUndo, 
-          newCanRedo,
-          timestamp: new Date().toISOString()
-        });
-        
         setCanUndo(newCanUndo);
         setCanRedo(newCanRedo);
       } catch (error) {
-        console.warn('更新撤销/重做状态时出错:', error);
+        // 静默处理错误
       }
-    };
-
-    // 立即检查一次状态
-    updateUndoRedoState('初始化');
+    };    // 立即检查一次状态
+    updateUndoRedoState();
 
     // 尝试使用 TenTap 的状态订阅机制
     let unsubscribe: (() => void) | null = null;
     
     if (editor._subscribeToEditorStateUpdate && typeof editor._subscribeToEditorStateUpdate === 'function') {
       try {
-        console.log('使用 TenTap 的 _subscribeToEditorStateUpdate 方法');
         unsubscribe = editor._subscribeToEditorStateUpdate(() => {
-          updateUndoRedoState('_subscribeToEditorStateUpdate');        });
-        console.log('已注册 TenTap 状态订阅器');
+          updateUndoRedoState();
+        });
       } catch (error) {
-        console.warn('注册 TenTap 状态订阅器失败:', error);
+        // 静默处理错误
       }
-    }
-      // 如果 TenTap 订阅不可用，使用定时器作为后备方案
+    }      // 如果 TenTap 订阅不可用，使用定时器作为后备方案
     let intervalId: ReturnType<typeof setInterval> | null = null;
     if (!unsubscribe) {
-      console.log('使用定时器作为状态监听后备方案');
-      intervalId = setInterval(() => updateUndoRedoState('定时器'), 1000);
+      intervalId = setInterval(() => updateUndoRedoState(), 1000);
     }
 
     return () => {
       if (unsubscribe) {
-        console.log('清理 TenTap 状态订阅器');
         unsubscribe();
       }
       if (intervalId) {
-        console.log('清理定时器');
         clearInterval(intervalId);
       }
     };
@@ -125,9 +107,7 @@ export default function NoteEditScreen() {
     editor,
     initialContent: content,
     onContentChange: handleContentChange,
-    debounceMs: 500
-  });  // 添加编辑器调试信息
-  useEditorDebug(editor);
+    debounceMs: 500  });
 
   // 检查编辑器是否准备就绪
   useEffect(() => {
@@ -141,19 +121,55 @@ export default function NoteEditScreen() {
     };
 
     return checkEditorReady();
-  }, [editor]);
-  // 在保存前同步编辑器内容的函数
+  }, [editor]);  // 在保存前同步编辑器内容的函数
   const handleSaveWithSync = async () => {
+    console.log('🚀 handleSaveWithSync called - 开始保存操作');
+    
+    // 先让编辑器失去焦点
+    try {
+      if (editor && typeof editor.blur === 'function') {
+        console.log('📝 Calling editor.blur() - 编辑器失焦');
+        editor.blur();
+      }
+    } catch (error) {
+      console.log('⚠️ Editor blur failed:', error);
+    }
+    
+    // 立即调用键盘下落
+    console.log('📱 Calling Keyboard.dismiss() immediately - 立即键盘下落');
+    Keyboard.dismiss();
+    
+    // 获取编辑器内容并保存
+    let latestContent: string | undefined;
     if (editor && typeof editor.getHTML === 'function') {
       try {
-        const latestContent = await editor.getHTML();
-        handleSave(latestContent);
+        latestContent = await editor.getHTML();
+        console.log('✅ Editor content retrieved');
       } catch (error) {
-        handleSave();
+        console.log('⚠️ Failed to get editor content:', error);
       }
     } else {
-      handleSave();
+      console.log('⚠️ Editor not available');
     }
+      // 延迟执行保存，确保键盘已经下落
+    setTimeout(() => {
+      console.log('💾 Executing delayed save operation');
+      handleSave(latestContent, true); // 显示toast，用户点击保存按钮应该有反馈
+      
+      // 保存后再次确保编辑器失焦和键盘下落
+      setTimeout(() => {
+        try {
+          if (editor && typeof editor.blur === 'function') {
+            console.log('📝 Post-save editor.blur() - 保存后编辑器失焦');
+            editor.blur();
+          }
+        } catch (error) {
+          console.log('⚠️ Post-save editor blur failed:', error);
+        }
+        console.log('📱 Post-save Keyboard.dismiss() - 保存后键盘下落');
+        Keyboard.dismiss();
+      }, 100);
+    }, 200);
   };
 
   // 键盘显示/隐藏监听
@@ -226,6 +242,7 @@ export default function NoteEditScreen() {
                 titleError={titleError}
                 lastEditedAt={lastEditedTime}
                 editor={editor}
+                titleInputRef={titleInputRef}
               />
             )}
           </View>

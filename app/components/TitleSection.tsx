@@ -1,5 +1,5 @@
 // 标题和信息栏组件
-import React from 'react';
+import React, { forwardRef } from 'react';
 import { View, Text, TextInput, useColorScheme } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { formatDate, getPlainTextLength } from './utils/contentUtils';
@@ -15,7 +15,7 @@ interface TitleSectionProps {
   lastEditedAt?: number;
 }
 
-export const TitleSection: React.FC<TitleSectionProps> = ({
+export const TitleSection = forwardRef<TextInput, TitleSectionProps>(({
   title,
   content,
   onChangeTitle,
@@ -23,7 +23,7 @@ export const TitleSection: React.FC<TitleSectionProps> = ({
   maxLength,
   titleError,
   lastEditedAt
-}) => {
+}, ref) => {
   const { t } = useTranslation();
   const colorScheme = useColorScheme() ?? 'light';
 
@@ -31,6 +31,7 @@ export const TitleSection: React.FC<TitleSectionProps> = ({
     <>
       {/* 标题输入区域 */}
       <TextInput
+        ref={ref}
         style={[
           {
             backgroundColor: 'transparent',
@@ -69,4 +70,4 @@ export const TitleSection: React.FC<TitleSectionProps> = ({
       {titleError ? <Text style={styles.errorText}>{titleError}</Text> : null}
     </>
   );
-};
+});

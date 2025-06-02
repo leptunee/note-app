@@ -162,12 +162,9 @@ export function generateWebViewHTML(content: string): string {
 }
 
 // WebView 注入脚本
-export const webViewInjectedScript = `
-  const images = document.querySelectorAll('img');
+export const webViewInjectedScript = `  const images = document.querySelectorAll('img');
   let loadedCount = 0;
   const totalImages = images.length;
-  
-  console.log('WebView: Found', totalImages, 'images');
   
   function ensureLayoutComplete() {
     document.body.offsetHeight;
@@ -195,34 +192,28 @@ export const webViewInjectedScript = `
       });
     }
   } else {
-    images.forEach((img, index) => {
-      if (img.complete && img.naturalHeight !== 0) {
+    images.forEach((img, index) => {      if (img.complete && img.naturalHeight !== 0) {
         loadedCount++;
-        console.log('WebView: Image', index, 'already loaded');
         if (loadedCount === totalImages) {
           setTimeout(ensureLayoutComplete, 200);
         }
       } else {
         img.onload = () => {
           loadedCount++;
-          console.log('WebView: Image', index, 'loaded');
           if (loadedCount === totalImages) {
             setTimeout(ensureLayoutComplete, 200);
           }
         };
         img.onerror = () => {
           loadedCount++;
-          console.log('WebView: Image', index, 'failed to load');
           if (loadedCount === totalImages) {
             setTimeout(ensureLayoutComplete, 200);
           }
         };
       }
     });
-    
-    setTimeout(() => {
+      setTimeout(() => {
       if (loadedCount < totalImages) {
-        console.log('WebView: Timeout, forcing completion');
         ensureLayoutComplete();
       }
     }, 5000);

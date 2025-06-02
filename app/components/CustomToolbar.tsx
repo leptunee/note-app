@@ -72,16 +72,14 @@ export const CustomToolbar: React.FC<CustomToolbarProps> = ({
           const base64 = await FileSystem.readAsStringAsync(image.uri, {
             encoding: FileSystem.EncodingType.Base64,
           });
-          
-          // 获取图片的 MIME 类型
+            // 获取图片的 MIME 类型
           const mimeType = image.type || 'image/jpeg';
           imageUri = `data:${mimeType};base64,${base64}`;
           
-          console.log('Image converted to base64, size:', base64.length);
         } catch (conversionError) {
           console.warn('Failed to convert to base64, using original URI:', conversionError);
           // 如果转换失败，使用原始 URI
-        }        // 尝试多种插入方法
+        }// 尝试多种插入方法
         let insertSuccess = false;
         
         // 方法1: 使用正确的 setImage API (根据文档，setImage 只接受 string 参数)

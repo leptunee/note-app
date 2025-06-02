@@ -1,13 +1,13 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { Alert, useColorScheme } from 'react-native';
+import { Alert, useColorScheme, Keyboard, TextInput } from 'react-native';
 import { useNotes, PageSettings } from '@/components/useNotes';
 import { useExport } from '@/components/useExport';
 import { useTranslation } from 'react-i18next';
 import { v4 as uuidv4 } from 'uuid';
 import { type ToastRef } from './components'; // Import ToastRef type from components
 
-export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef | null>) { // toastRef type now matches what note-edit.tsx provides
+export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef | null>, titleInputRef?: React.RefObject<TextInput | null>) {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { notes, addNote, updateNote, deleteNote } = useNotes();
   const { exportAsTxt, exportAsMarkdown, exportAsImage, exportAsWord } = useExport();
@@ -157,6 +157,14 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
 
   // Modify export functions to use toastRef and return ExportResult
   const handleExportAsTxt = async () => {
+    // 首先让标题输入框失焦
+    if (titleInputRef?.current) {
+      titleInputRef.current.blur();
+    }
+    
+    // 如果键盘弹起，自动让键盘下落
+    Keyboard.dismiss();
+    
     toastRef?.current?.show('正在导出文本文件...', 'loading');
     
     try {
@@ -174,6 +182,14 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
     }
   };
   const handleExportAsMarkdown = async () => {
+    // 首先让标题输入框失焦
+    if (titleInputRef?.current) {
+      titleInputRef.current.blur();
+    }
+    
+    // 如果键盘弹起，自动让键盘下落
+    Keyboard.dismiss();
+    
     toastRef?.current?.show('正在导出Markdown文件...', 'loading');
     
     try {
@@ -191,6 +207,14 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
     }
   };
   const handleExportAsImage = async () => {
+    // 首先让标题输入框失焦
+    if (titleInputRef?.current) {
+      titleInputRef.current.blur();
+    }
+    
+    // 如果键盘弹起，自动让键盘下落
+    Keyboard.dismiss();
+    
     // 显示loading toast
     toastRef?.current?.show('正在导出图片...', 'loading');
     
@@ -221,6 +245,14 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
     }
   };
   const handleExportAsWord = async () => {
+    // 首先让标题输入框失焦
+    if (titleInputRef?.current) {
+      titleInputRef.current.blur();
+    }
+    
+    // 如果键盘弹起，自动让键盘下落
+    Keyboard.dismiss();
+    
     toastRef?.current?.show('正在导出Word文档...', 'loading');
     
     try {

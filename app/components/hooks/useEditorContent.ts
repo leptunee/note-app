@@ -33,7 +33,7 @@ export function useEditorContent({
             const currentContent = (await editor.getHTML()) || '';
             lastContentRef.current = currentContent;
             setHasBeenInitialized(true);
-            console.log('Editor initialized with content:', currentContent.substring(0, 100));
+
           }
           return;
         }
@@ -45,14 +45,12 @@ export function useEditorContent({
         const shouldUpdate = currentHTML !== initialContent && 
                            !editor.isFocused?.() && 
                            !isUpdating;
-        
-        if (shouldUpdate) {
+          if (shouldUpdate) {
           editor.setContent(initialContent);
           lastContentRef.current = initialContent;
-          console.log('Content updated from external source');
         }
       } catch (error) {
-        console.warn('Error in content initialization:', error);
+        // 静默处理错误
       }
     };
 
@@ -60,9 +58,10 @@ export function useEditorContent({
     const timeoutId = setTimeout(initializeContent, 200);
     return () => clearTimeout(timeoutId);
   }, [editor, initialContent, hasBeenInitialized, isUpdating]);
-  // 监听编辑器内容变化，使用 TenTap 的订阅系统或轮询
+
+  // 监听编辑器内容变化，使用防抖
   useEffect(() => {
-    if (!editor || !hasBeenInitialized) return;
+    if (!editor?.on || !hasBeenInitialized) return;
     
     const handleContentUpdate = () => {
       // 清除之前的防抖定时器
@@ -82,61 +81,50 @@ export function useEditorContent({
             onContentChange(currentHTML);
             // 使用 Promise 来延迟设置状态
             Promise.resolve().then(() => setIsUpdating(false));
-          }
-        } catch (error) {
-          console.warn('Error getting editor content:', error);
+          }        } catch (error) {
+          // 静默处理错误
         }
       }, debounceMs);
     };
 
-    // 尝试使用 TenTap 的订阅系统
-    let unsubscribe: (() => void) | null = null;
-    let intervalId: ReturnType<typeof setInterval> | null = null;
-    
-    if (editor._subscribeToContentUpdate && typeof editor._subscribeToContentUpdate === 'function') {
-      try {
-        unsubscribe = editor._subscribeToContentUpdate(handleContentUpdate);
-      } catch (error) {
-        console.warn('Failed to subscribe to content updates:', error);
-      }
-    }
-    
-    // 如果订阅不可用，使用轮询作为后备
-    if (!unsubscribe) {
-      intervalId = setInterval(handleContentUpdate, debounceMs);
-    }
+    // 监听编辑器的更新事件
+    editor.on('update', handleContentUpdate);
     
     return () => {
-      if (unsubscribe) {
-        unsubscribe();
-      }
-      if (intervalId) {
-        clearInterval(intervalId);
-      }
+      editor.off?.('update', handleContentUpdate);
       if (debounceTimeoutRef.current) {
         clearTimeout(debounceTimeoutRef.current);
       }
     };
   }, [editor, onContentChange, isUpdating, debounceMs, hasBeenInitialized]);
-  // 添加编辑器失焦同步 - 注意：TenTap 编辑器不支持传统的 on/off 事件
+
+  // 添加编辑器失焦同步
   useEffect(() => {
-    if (!editor || !hasBeenInitialized) return;
+    if (!editor?.on || !hasBeenInitialized) return;
     
-    // TenTap 编辑器没有传统的事件系统，我们依赖轮询来检测内容变化
-    // 失焦事件将通过上面的订阅或轮询机制来处理
-    
-    return () => {
-      // 清理函数 - 不需要特殊处理，因为没有事件监听器
+    const handleBlur = async () => {
+      try {
+        if (isUpdating) return;
+        
+        const currentHTML = await editor.getHTML();
+        if (currentHTML !== lastContentRef.current) {
+          lastContentRef.current = currentHTML;
+          onContentChange(currentHTML);
+        }
+      } catch (error) {
+        // 静默处理错误
+      }
     };
+
+    editor.on('blur', handleBlur);
+    return () => editor.off?.('blur', handleBlur);
   }, [editor, onContentChange, isUpdating, hasBeenInitialized]);
 
   // 获取当前编辑器内容的方法
   const getCurrentContent = useCallback(async () => {
     if (!editor?.getHTML) return initialContent;
     try {
-      return await editor.getHTML();
-    } catch (error) {
-      console.warn('Failed to get current content:', error);
+      return await editor.getHTML();    } catch (error) {
       return initialContent;
     }
   }, [editor, initialContent]);

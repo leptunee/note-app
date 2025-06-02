@@ -276,9 +276,7 @@ export function useExport() {
     try {
       // 请求存储权限（仅限 Android）
       if (Platform.OS === 'android') {
-        const { status } = await MediaLibrary.requestPermissionsAsync();
-        if (status !== 'granted') {
-          console.log('需要存储权限来保存图片');
+        const { status } = await MediaLibrary.requestPermissionsAsync();        if (status !== 'granted') {
           return { success: false, message: '需要存储权限来保存图片。' };
         }
       }
@@ -321,21 +319,8 @@ export function useExport() {
           // 计算列表相关元素
           const listItemCount = (note.content.match(/<li[^>]*>/gi) || []).length;
           const listCount = (note.content.match(/<[uo]l[^>]*>/gi) || []).length;
-          
-          // 更精确的段落计数：包括所有可能导致换行的元素
+            // 更精确的段落计数：包括所有可能导致换行的元素
           const totalBlockElements = Math.max(1, paragraphCount + divCount + headingCount + listCount);
-          
-          console.log('Export content analysis:', {
-            contentLength,
-            imageCount,
-            paragraphCount,
-            divCount,
-            brCount,
-            headingCount,
-            listItemCount,
-            listCount,
-            totalBlockElements
-          });
           
           // 基础高度计算（与RichTextContent.tsx中calculateContentHeight函数完全相同）
           let webViewHeight = 300; // 增加基础高度
@@ -366,45 +351,28 @@ export function useExport() {
           
           // 限制在合理范围内（最小500px，最大8000px）
           webViewHeight = Math.max(500, Math.min(8000, webViewHeight));
-          
-          // 头部高度（约120px）+ WebView高度 + 内容区padding(32px)
+            // 头部高度（约120px）+ WebView高度 + 内容区padding(32px)
           const headerHeight = 120;
           const contentPadding = 32;
           totalHeight = headerHeight + webViewHeight + contentPadding;
-          
-          console.log('Export view size calculation:', { 
-            contentLength,
-            imageCount,
-            totalBlockElements,
-            webViewHeight,
-            headerHeight,
-            totalHeight
-          });
         }
           // 给WebView充足的时间来完全加载和渲染内容
-        console.log('Waiting for WebView to fully render content...');
         
         // 基于内容复杂度动态调整等待时间
         const hasImages = (note.content.match(/<img[^>]*>/gi) || []).length > 0;
         const isLongContent = note.content.length > 5000;
         const isVeryLongContent = note.content.length > 10000;
-        
-        let waitTime = 3000; // 基础等待时间3秒
+          let waitTime = 3000; // 基础等待时间3秒
         if (hasImages) waitTime += 2000; // 有图片额外加2秒
         if (isLongContent) waitTime += 2000; // 长内容额外加2秒
         if (isVeryLongContent) waitTime += 3000; // 超长内容额外加3秒
         
-        console.log(`Calculated wait time: ${waitTime}ms (hasImages: ${hasImages}, isLongContent: ${isLongContent}, isVeryLongContent: ${isVeryLongContent})`);
         await new Promise(resolve => setTimeout(resolve, waitTime));
       } catch (error) {
         console.error('设置视图样式时出错:', error);
-      }
-
-      // 使用更安全的截图配置
+      }      // 使用更安全的截图配置
       const fileName = `${note.title.replace(/[\\/:*?"<>|]/g, '_')}_${Date.now()}.png`;
       const fileUri = `${FileSystem.cacheDirectory}${fileName}`;
-      
-      console.log('Starting capture with optimized options...');
       
       // 使用高质量截图配置
       const base64Image = await captureRef(viewRef, {
@@ -481,9 +449,7 @@ export function useExport() {
           if (Platform.OS === 'android' && savedToGallery) {
             return { success: true, message: '图片已保存到相册并成功分享。' };
           }
-          return { success: true, message: '图片已成功分享。' };
-        } else {
-          console.log('分享功能不可用');
+          return { success: true, message: '图片已成功分享。' };        } else {
           if (Platform.OS === 'android' && savedToGallery) {
             return { success: true, message: '图片已保存到相册。分享功能当前不可用。' };
           } else if (Platform.OS === 'ios') {

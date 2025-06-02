@@ -19,19 +19,11 @@ export function useHistory<T>(initialValue: T) {
   
   // 判断是否可以撤销和重做
   const canUndo = currentIndex > 0;
-  const canRedo = currentIndex < history.length - 1;  // 设置新值并更新历史记录
-  const updateValue = useCallback((newValue: T) => {
+  const canRedo = currentIndex < history.length - 1;  // 设置新值并更新历史记录  const updateValue = useCallback((newValue: T) => {
     // 先检查值是否真的发生了变化
     if (newValue === value) {
       return; // 没有变化，直接返回
     }
-    
-    console.log('updateValue called with:', {
-      newValue: typeof newValue === 'string' ? newValue.substring(0, 50) + '...' : newValue,
-      currentValue: typeof value === 'string' ? value.substring(0, 50) + '...' : value,
-      currentIndex,
-      historyLength: history.length
-    });
     
     // 更新当前值
     setValue(newValue);
@@ -42,12 +34,9 @@ export function useHistory<T>(initialValue: T) {
       const historyToUpdate = prevState.currentIndex < prevState.history.length - 1 
         ? prevState.history.slice(0, prevState.currentIndex + 1)
         : prevState.history;
-      
-      // 添加新版本的内容到历史记录
+        // 添加新版本的内容到历史记录
       const newHistory = [...historyToUpdate, newValue];
       const newIndex = newHistory.length - 1;
-      
-      console.log('New history created:', newHistory.length, 'items, index:', newIndex);
       
       return {
         history: newHistory,
