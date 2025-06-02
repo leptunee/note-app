@@ -1,5 +1,5 @@
 import React, { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
-import { Modal, Text, StyleSheet, View, Animated, Easing, Dimensions } from 'react-native';
+import { Text, StyleSheet, View, Animated, Easing, Dimensions } from 'react-native';
 
 interface ToastProps {
   backgroundColor?: string;
@@ -16,7 +16,7 @@ const Toast = forwardRef<ToastRef, ToastProps>(
   ({ 
     backgroundColor = '#333', 
     textColor = '#fff', 
-    duration = 3000,
+    duration = 1500, // 缩短为 1.5 秒
     position = 'bottom'
   }, ref) => {
     const [visible, setVisible] = useState(false);
@@ -56,37 +56,32 @@ const Toast = forwardRef<ToastRef, ToastProps>(
       if (toastType === 'info') return backgroundColor; // Default or custom
       return backgroundColor;
     };
-    
-    const positionStyle = () => {
+      const positionStyle = () => {
       const { height } = Dimensions.get('window');
       if (position === 'top') return { top: 50 };
       if (position === 'bottom') return { bottom: 50 };
       if (position === 'center') return { top: height / 2 - 50 }; // Adjust 50 based on expected toast height
       return { bottom: 50 }; // Default
-    }
+    };
 
     if (!visible) {
       return null;
     }
 
     return (
-      <Modal
-        transparent={true}
-        visible={visible}
-        animationType="none" // Using Animated API for fade
-        onRequestClose={() => { /* Android back button, do nothing specific */ }}
+      <View 
+        style={[styles.container, positionStyle()]} 
+        pointerEvents="none" // 允许触摸事件穿透到下层组件
       >
-        <View style={[styles.container, positionStyle()]}>
-          <Animated.View
-            style={[
-              styles.toast,
-              { backgroundColor: getBackgroundColor(), opacity },
-            ]}
-          >
-            <Text style={[styles.message, { color: textColor }]}>{message}</Text>
-          </Animated.View>
-        </View>
-      </Modal>
+        <Animated.View
+          style={[
+            styles.toast,
+            { backgroundColor: getBackgroundColor(), opacity },
+          ]}
+        >
+          <Text style={[styles.message, { color: textColor }]}>{message}</Text>
+        </Animated.View>
+      </View>
     );
   }
 );
@@ -97,7 +92,9 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     alignItems: 'center',
-    zIndex: 9999, // Ensure toast is on top
+    zIndex: 99999, // 确保 toast 在最顶层
+    elevation: 99999, // Android 下的层级
+    pointerEvents: 'none', // 默认不拦截触摸事件
   },
   toast: {
     paddingHorizontal: 20,
@@ -109,6 +106,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 2,
     marginHorizontal: 20,
+    pointerEvents: 'none', // 不拦截触摸事件
   },
   message: {
     fontSize: 16,
