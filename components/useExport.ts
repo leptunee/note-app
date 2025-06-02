@@ -287,12 +287,27 @@ export function useExport() {
       if (!viewRef.current) {
         console.error('视图引用无效');
         return { success: false, message: '无法获取笔记视图以截图。' };
-      }
-
-      // 临时显示导出视图以进行截图
+      }      // 临时显示导出视图以进行截图
       let totalHeight = 800; // 默认高度
       try {
         if (viewRef.current) {
+          // 临时将视图移动到屏幕左上角进行截图，使用更小的偏移量避免显示
+          viewRef.current.setNativeProps({
+            style: {
+              position: 'absolute',
+              opacity: 1,
+              width: 375,
+              height: 'auto',
+              top: -50000, // 使用更大的负值确保完全在屏幕外
+              left: 0,
+              zIndex: 99999, // 使用很高的z-index确保在最顶层
+              backgroundColor: 'white',
+              margin: 0,
+              padding: 0,
+              borderRadius: 8,
+            }
+          });
+          
           // 使用改进的高度计算逻辑，与RichTextContent.tsx保持一致
           const contentLength = note.content ? note.content.replace(/<[^>]*>/g, '').length : 0;
           const imageCount = (note.content.match(/<img[^>]*>/gi) || []).length;
@@ -365,37 +380,19 @@ export function useExport() {
             headerHeight,
             totalHeight
           });
-
-          // 设置导出视图的样式
-          viewRef.current.setNativeProps({
-            style: {
-              position: 'absolute',
-              opacity: 1,
-              height: totalHeight,
-              width: 450,
-              left: 0,
-              top: 0,
-              backgroundColor: 'white',
-              borderRadius: 8,
-              padding: 0,
-              zIndex: 999,
-              overflow: 'visible',
-            }
-          });
         }
-        
-        // 给WebView充足的时间来完全加载和渲染内容
+          // 给WebView充足的时间来完全加载和渲染内容
         console.log('Waiting for WebView to fully render content...');
         
-        // 基于内容复杂度动态调整等待时间，增加更长的等待时间
+        // 基于内容复杂度动态调整等待时间
         const hasImages = (note.content.match(/<img[^>]*>/gi) || []).length > 0;
         const isLongContent = note.content.length > 5000;
         const isVeryLongContent = note.content.length > 10000;
         
-        let waitTime = 5000; // 增加基础等待时间到5秒
-        if (hasImages) waitTime += 3000; // 有图片额外加3秒
-        if (isLongContent) waitTime += 3000; // 长内容额外加3秒
-        if (isVeryLongContent) waitTime += 5000; // 超长内容额外加5秒
+        let waitTime = 3000; // 基础等待时间3秒
+        if (hasImages) waitTime += 2000; // 有图片额外加2秒
+        if (isLongContent) waitTime += 2000; // 长内容额外加2秒
+        if (isVeryLongContent) waitTime += 3000; // 超长内容额外加3秒
         
         console.log(`Calculated wait time: ${waitTime}ms (hasImages: ${hasImages}, isLongContent: ${isLongContent}, isVeryLongContent: ${isVeryLongContent})`);
         await new Promise(resolve => setTimeout(resolve, waitTime));
@@ -421,19 +418,21 @@ export function useExport() {
         fileUri,
         base64Image,
         { encoding: FileSystem.EncodingType.Base64 }
-      );
-
-      // 截图后恢复隐藏状态
+      );      // 截图后立即恢复隐藏状态
       try {
         if (viewRef.current) {
           viewRef.current.setNativeProps({
             style: {
               position: 'absolute',
               opacity: 0,
-              width: 1,
-              height: 1,
-              left: -9999,
-              zIndex: -1
+              width: 375,
+              height: 'auto',
+              top: -99999,
+              left: -99999,
+              zIndex: -999,
+              backgroundColor: 'white',
+              margin: 0,
+              padding: 0,
             }
           });
         }

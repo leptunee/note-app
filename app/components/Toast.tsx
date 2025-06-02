@@ -1,5 +1,5 @@
 import React, { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
-import { Text, StyleSheet, View, Animated, Easing, Dimensions } from 'react-native';
+import { Text, StyleSheet, View, Animated, Easing, Dimensions, ActivityIndicator } from 'react-native';
 
 interface ToastProps {
   backgroundColor?: string;
@@ -9,7 +9,8 @@ interface ToastProps {
 }
 
 export interface ToastRef {
-  show: (message: string, type?: 'success' | 'error' | 'info') => void;
+  show: (message: string, type?: 'success' | 'error' | 'info' | 'loading') => void;
+  hide: () => void; // 新增：手动隐藏Toast的方法
 }
 
 const Toast = forwardRef<ToastRef, ToastProps>(
@@ -18,14 +19,18 @@ const Toast = forwardRef<ToastRef, ToastProps>(
     textColor = '#fff', 
     duration = 1500, // 缩短为 1.5 秒
     position = 'bottom'
-  }, ref) => {
-    const [visible, setVisible] = useState(false);
+  }, ref) => {    const [visible, setVisible] = useState(false);
     const [message, setMessage] = useState('');
-    const [toastType, setToastType] = useState<'success' | 'error' | 'info'>('info');
+    const [toastType, setToastType] = useState<'success' | 'error' | 'info' | 'loading'>('info');
     const opacity = useState(new Animated.Value(0))[0];
-
-    useImperativeHandle(ref, () => ({
+    const [hideTimeout, setHideTimeout] = useState<ReturnType<typeof setTimeout> | null>(null);    useImperativeHandle(ref, () => ({
       show(msg, type = 'info') {
+        // 清除之前的隐藏定时器
+        if (hideTimeout) {
+          clearTimeout(hideTimeout);
+          setHideTimeout(null);
+        }
+        
         setMessage(msg);
         setToastType(type);
         setVisible(true);
@@ -35,24 +40,45 @@ const Toast = forwardRef<ToastRef, ToastProps>(
           easing: Easing.ease,
           useNativeDriver: true,
         }).start(() => {
-          setTimeout(() => {
-            Animated.timing(opacity, {
-              toValue: 0,
-              duration: 300,
-              easing: Easing.ease,
-              useNativeDriver: true,
-            }).start(() => {
-              setVisible(false);
-              setMessage('');
-            });
-          }, duration);
+          // loading类型的toast不会自动隐藏
+          if (type !== 'loading') {
+            const timeout = setTimeout(() => {
+              Animated.timing(opacity, {
+                toValue: 0,
+                duration: 300,
+                easing: Easing.ease,
+                useNativeDriver: true,
+              }).start(() => {
+                setVisible(false);
+                setMessage('');
+                setHideTimeout(null);
+              });
+            }, duration);
+            setHideTimeout(timeout);
+          }
         });
       },
-    }));
-
-    const getBackgroundColor = () => {
+      hide() {
+        // 清除隐藏定时器
+        if (hideTimeout) {
+          clearTimeout(hideTimeout);
+          setHideTimeout(null);
+        }
+        
+        Animated.timing(opacity, {
+          toValue: 0,
+          duration: 300,
+          easing: Easing.ease,
+          useNativeDriver: true,
+        }).start(() => {
+          setVisible(false);
+          setMessage('');
+        });
+      },
+    }));    const getBackgroundColor = () => {
       if (toastType === 'success') return '#4CAF50'; // Green
       if (toastType === 'error') return '#F44336';   // Red
+      if (toastType === 'loading') return '#2196F3';  // Blue
       if (toastType === 'info') return backgroundColor; // Default or custom
       return backgroundColor;
     };
@@ -72,14 +98,22 @@ const Toast = forwardRef<ToastRef, ToastProps>(
       <View 
         style={[styles.container, positionStyle()]} 
         pointerEvents="none" // 允许触摸事件穿透到下层组件
-      >
-        <Animated.View
+      >        <Animated.View
           style={[
             styles.toast,
             { backgroundColor: getBackgroundColor(), opacity },
           ]}
         >
-          <Text style={[styles.message, { color: textColor }]}>{message}</Text>
+          <View style={styles.toastContent}>
+            {toastType === 'loading' && (
+              <ActivityIndicator 
+                size="small" 
+                color={textColor} 
+                style={styles.loadingIndicator}
+              />
+            )}
+            <Text style={[styles.message, { color: textColor }]}>{message}</Text>
+          </View>
         </Animated.View>
       </View>
     );
@@ -107,6 +141,14 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
     marginHorizontal: 20,
     pointerEvents: 'none', // 不拦截触摸事件
+  },
+  toastContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  loadingIndicator: {
+    marginRight: 8,
   },
   message: {
     fontSize: 16,

@@ -1,7 +1,7 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { View, ImageBackground, Platform, Keyboard, KeyboardAvoidingView, Text } from 'react-native';
 import { useEditorBridge, TenTapStarterKit } from '@10play/tentap-editor';
-import { NoteHeader, RichTextContent, ExportModal, PageSettingsModal, CustomToolbar, styles, Toast, type ToastRef } from './components';
+import { NoteHeader, RichTextContent, ExportModal, PageSettingsModal, CustomToolbar, styles, Toast, ExportView, type ToastRef } from './components';
 import { useEditorContent } from './components/hooks/useEditorContent';
 import { useEditorDebug } from './components/hooks/useEditorDebug';
 import { useNoteEdit } from './useNoteEdit';
@@ -17,8 +17,7 @@ export default function NoteEditScreen() {
     canUndo,
     canRedo,
     setCanUndo,
-    setCanRedo,
-    titleError,
+    setCanRedo,    titleError,
     showExportModal,
     setShowExportModal,
     showOptionsMenu,
@@ -172,10 +171,16 @@ export default function NoteEditScreen() {
       keyboardDidShowListener?.remove();
       keyboardDidHideListener?.remove();
     };
-  }, []);
-
-  return (
+  }, []);  return (
     <View style={{ flex: 1 }}>
+      {/* 导出视图 - 独立渲染，不受任何容器约束 */}
+      <ExportView
+        ref={noteViewRef}
+        title={title}
+        content={content}
+        lastEditedAt={lastEditedTime}
+      />
+      
       <View style={[
         styles.container,
         { backgroundColor: getBackgroundColor(pageSettings, colorScheme) }
@@ -208,8 +213,7 @@ export default function NoteEditScreen() {
               showOptionsMenu={showOptionsMenu}
               toggleOptionsMenu={() => setShowOptionsMenu(!showOptionsMenu)}
               onPageSettings={handleOpenPageSettings}
-            />{editor && isEditorReady && (
-              <RichTextContent
+            />            {editor && isEditorReady && (              <RichTextContent
                 title={title}
                 content={content}
                 onChangeContent={handleContentChange}

@@ -13,15 +13,20 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
   const { exportAsTxt, exportAsMarkdown, exportAsImage, exportAsWord } = useExport();
   const { t } = useTranslation();
   const router = useRouter();
-  const [title, setTitle] = useState('');  const [content, setContent] = useState('');
+  const [title, setTitle] = useState('');
+  const [content, setContent] = useState('');
   
   // 编辑器的 undo/redo 状态将在 note-edit.tsx 中管理
   const [canUndo, setCanUndo] = useState(false);
   const [canRedo, setCanRedo] = useState(false);
+
   const [titleError, setTitleError] = useState('');
+
   const [showExportModal, setShowExportModal] = useState(false);
   const [showOptionsMenu, setShowOptionsMenu] = useState(false);
-  const [showPageSettings, setShowPageSettings] = useState(false);  const [lastEditedTime, setLastEditedTime] = useState<number | undefined>(undefined);
+  const [showPageSettings, setShowPageSettings] = useState(false);
+
+  const [lastEditedTime, setLastEditedTime] = useState<number | undefined>(undefined);
   const [pageSettings, setPageSettings] = useState<PageSettings>({
     themeId: 'default',
     marginValue: 20,
@@ -32,7 +37,9 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
   const colorScheme = useColorScheme() ?? 'light';
   const MAX_TITLE_LENGTH = 64;
   const isNewNote = !id;
-  const noteViewRef = useRef(null);  useEffect(() => {
+  const noteViewRef = useRef(null);
+
+  useEffect(() => {
     if (id) {
       const note = notes.find(n => n.id === id);
       if (note) {
@@ -64,7 +71,9 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
         // 移除了默认背景图片
       });
     }
-  }, [id, notes, t]);  // 纯保存功能，可选择是否显示 toast
+  }, [id, notes, t]);
+
+  // 纯保存功能，可选择是否显示 toast
   const handleSave = (currentContentOverride?: string, showToast: boolean = true) => {
     const contentToUse = typeof currentContentOverride === 'string' ? currentContentOverride : content;
     const finalTitle = title.trim() || String(t('untitledNote'));
@@ -103,8 +112,10 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
           ...noteData,
           createdAt: now,
           updatedAt: now,
-        };        addNote(newNote);
-      }      
+        };
+
+        addNote(newNote);
+      }
       
       if (showToast) {
         toastRef?.current?.show('保存成功', 'success');
@@ -117,6 +128,7 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
       return false;
     }
   };
+
   // 保存并返回功能 - 静默保存，不显示 toast
   const handleSaveAndBack = (currentContentOverride?: string) => {
     const saveSuccess = handleSave(currentContentOverride, false); // 静默保存
@@ -125,6 +137,7 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
       router.back();
     }
   };
+
   // 仅返回功能，不保存
   const handleBack = () => {
     router.back();
@@ -144,41 +157,87 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
 
   // Modify export functions to use toastRef and return ExportResult
   const handleExportAsTxt = async () => {
-    const now = Date.now();
-    const note = notes.find(n => n.id === id) || { id: 'temp', title, content, createdAt: now, updatedAt: now, pageSettings };
-    const result = await exportAsTxt(note);
-    toastRef?.current?.show(result.message, result.success ? 'success' : 'error');
-    return result;
-  };
-
-  const handleExportAsMarkdown = async () => {
-    const now = Date.now();
-    const note = notes.find(n => n.id === id) || { id: 'temp', title, content, createdAt: now, updatedAt: now, pageSettings };
-    const result = await exportAsMarkdown(note);
-    toastRef?.current?.show(result.message, result.success ? 'success' : 'error');
-    return result;
-  };
-
-  const handleExportAsImage = async () => {
-    if (!noteViewRef.current) {
-      const message = '无法获取笔记视图以截图。';
-      toastRef?.current?.show(message, 'error');
-      return { success: false, message };
+    toastRef?.current?.show('正在导出文本文件...', 'loading');
+    
+    try {
+      const now = Date.now();
+      const note = notes.find(n => n.id === id) || { id: 'temp', title, content, createdAt: now, updatedAt: now, pageSettings };
+      const result = await exportAsTxt(note);
+      
+      toastRef?.current?.hide();
+      toastRef?.current?.show(result.message, result.success ? 'success' : 'error');
+      return result;
+    } catch (error) {
+      toastRef?.current?.hide();
+      toastRef?.current?.show('导出文本文件时发生错误', 'error');
+      return { success: false, message: '导出文本文件时发生错误' };
     }
-    const now = Date.now();
-    const note = notes.find(n => n.id === id) || { id: 'temp', title, content, createdAt: now, updatedAt: now, pageSettings };
-    const result = await exportAsImage(noteViewRef, note);
-    toastRef?.current?.show(result.message, result.success ? 'success' : 'error');
-    return result;
+  };
+  const handleExportAsMarkdown = async () => {
+    toastRef?.current?.show('正在导出Markdown文件...', 'loading');
+    
+    try {
+      const now = Date.now();
+      const note = notes.find(n => n.id === id) || { id: 'temp', title, content, createdAt: now, updatedAt: now, pageSettings };
+      const result = await exportAsMarkdown(note);
+      
+      toastRef?.current?.hide();
+      toastRef?.current?.show(result.message, result.success ? 'success' : 'error');
+      return result;
+    } catch (error) {
+      toastRef?.current?.hide();
+      toastRef?.current?.show('导出Markdown文件时发生错误', 'error');
+      return { success: false, message: '导出Markdown文件时发生错误' };
+    }
+  };
+  const handleExportAsImage = async () => {
+    // 显示loading toast
+    toastRef?.current?.show('正在导出图片...', 'loading');
+    
+    try {
+      // 检查 ref 是否可用
+      if (!noteViewRef.current) {
+        const message = '无法获取笔记视图以截图。';
+        toastRef?.current?.hide();
+        toastRef?.current?.show(message, 'error');
+        return { success: false, message };
+      }
+      
+      const now = Date.now();
+      const note = notes.find(n => n.id === id) || { id: 'temp', title, content, createdAt: now, updatedAt: now, pageSettings };
+      
+      // 直接调用导出功能，不需要显式显示ExportView
+      const result = await exportAsImage(noteViewRef, note);
+      
+      // 隐藏loading toast并显示结果
+      toastRef?.current?.hide();
+      toastRef?.current?.show(result.message, result.success ? 'success' : 'error');
+      return result;
+    } catch (error) {
+      // 出现错误时隐藏loading toast并显示错误信息
+      toastRef?.current?.hide();
+      toastRef?.current?.show('导出图片时发生错误', 'error');
+      return { success: false, message: '导出图片时发生错误' };
+    }
+  };
+  const handleExportAsWord = async () => {
+    toastRef?.current?.show('正在导出Word文档...', 'loading');
+    
+    try {
+      const now = Date.now();
+      const note = notes.find(n => n.id === id) || { id: 'temp', title, content, createdAt: now, updatedAt: now, pageSettings };
+      const result = await exportAsWord(note);
+      
+      toastRef?.current?.hide();
+      toastRef?.current?.show(result.message, result.success ? 'success' : 'error');
+      return result;
+    } catch (error) {
+      toastRef?.current?.hide();
+      toastRef?.current?.show('导出Word文档时发生错误', 'error');
+      return { success: false, message: '导出Word文档时发生错误' };
+    }
   };
 
-  const handleExportAsWord = async () => {
-    const now = Date.now();
-    const note = notes.find(n => n.id === id) || { id: 'temp', title, content, createdAt: now, updatedAt: now, pageSettings };
-    const result = await exportAsWord(note);
-    toastRef?.current?.show(result.message, result.success ? 'success' : 'error');
-    return result;
-  };
   // 清理定时器
   useEffect(() => {
     return () => {
@@ -193,7 +252,9 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
       }, 4000);
       return () => clearTimeout(timer);
     }
-  }, [showOptionsMenu]);  const handleTitleChange = (text: string) => {
+  }, [showOptionsMenu]);
+
+  const handleTitleChange = (text: string) => {
     setTitle(text);
     // 更新最后编辑时间
     setLastEditedTime(Date.now());
@@ -212,10 +273,11 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
   const handleOpenPageSettings = () => {
     setShowPageSettings(true);
   };
-
   const handlePageSettingsChange = (settings: Partial<PageSettings>) => {
     setPageSettings(prev => ({ ...prev, ...settings }));
-  };  return {
+  };
+
+  return {
     title,
     setTitle,
     content,

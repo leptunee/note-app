@@ -21,32 +21,35 @@ export const ExportView = forwardRef<View, ExportViewProps>(({
   title,
   content,
   lastEditedAt
-}, ref) => {  const { t } = useTranslation();
-  const webViewHeight = calculateContentHeight(content);
-
-  return (
+}, ref) => {
+  const { t } = useTranslation();
+  const webViewHeight = calculateContentHeight(content);  return (
     <View 
       ref={ref} 
       collapsable={false} 
-      style={[
-        styles.printableContent, 
-        { 
-          position: 'absolute', 
-          opacity: 0, 
-          width: 1, 
-          height: 1,
-          left: -9999, 
-          zIndex: -1,
-          backgroundColor: 'white',
-          overflow: 'visible'
-        }
-      ]}
-    >
-      {/* 标题头部 */}
+      style={{
+        position: 'absolute',
+        opacity: 0,
+        width: 375,
+        height: 'auto',
+        top: -99999,
+        left: -99999,
+        zIndex: -999,
+        backgroundColor: 'white',
+        overflow: 'hidden',
+        pointerEvents: 'none',
+        elevation: 0,
+        shadowOpacity: 0,
+        borderRadius: 8,
+        // 确保不受父容器影响
+        margin: 0,
+        padding: 0,
+      }}
+    >{/* 标题头部 */}
       <View style={[styles.noteHeader, { 
         backgroundColor: '#f8f8f8', 
         padding: 16, 
-        width: 450,
+        width: 375, // 与容器宽度保持一致
         borderTopLeftRadius: 8,
         borderTopRightRadius: 8
       }]}>
@@ -62,24 +65,21 @@ export const ExportView = forwardRef<View, ExportViewProps>(({
         <Text style={[styles.noteDate, { color: '#666', fontSize: 12 }]}>
           {lastEditedAt ? `${t('lastEdited')}: ${formatDate(lastEditedAt)}` : formatDate()}
         </Text>
-      </View>
-
-      {/* 内容区域 */}
+      </View>      {/* 内容区域 */}
       <View style={{ 
         padding: 16, 
         backgroundColor: 'white', 
-        width: 450,
+        width: 375, // 与标题头部保持一致
         minHeight: webViewHeight + 32,
         flexShrink: 0,
         borderBottomLeftRadius: 8,
         borderBottomRightRadius: 8,
-        overflow: 'visible'
-      }}>
-        {content && content.trim() ? (
+        overflow: 'hidden'
+      }}>        {content && content.trim() ? (
           <WebView
             style={{ 
               height: webViewHeight,
-              width: 418, // 450 - 32 padding
+              width: 343, // 375 - 32 padding
               backgroundColor: 'white',
               flex: 0
             }}

@@ -17,8 +17,7 @@ interface RichTextContentProps {
   onChangeTitle: (text: string) => void;
   noteViewRef: React.RefObject<any>;
   textColor?: string;
-  editorBackgroundColor?: string;
-  editorBorderColor?: string;
+  editorBackgroundColor?: string;  editorBorderColor?: string;
   maxLength?: number;
   titleError?: string;
   lastEditedAt?: number;
@@ -46,18 +45,8 @@ export const RichTextContent: React.FC<RichTextContentProps> = ({
     initialContent: content,
     onContentChange: onChangeContent,
     debounceMs: 500
-  });
-  
-  return (
+  });    return (
     <View style={styles.contentContainer}>
-      {/* 导出视图 */}
-      <ExportView
-        ref={noteViewRef}
-        title={title}
-        content={content}
-        lastEditedAt={lastEditedAt}
-      />
-
       {/* 标题和元数据部分 */}
       <TitleSection
         title={title}
