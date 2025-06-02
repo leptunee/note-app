@@ -1,9 +1,8 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { Alert, useColorScheme } from 'react-native';
 import { useNotes, PageSettings } from '@/components/useNotes';
 import { useExport } from '@/components/useExport';
-import { useHistory } from '@/components/useHistory';
 import { useTranslation } from 'react-i18next';
 import { v4 as uuidv4 } from 'uuid';
 import { type ToastRef } from './components'; // Import ToastRef type from components
@@ -14,22 +13,15 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
   const { exportAsTxt, exportAsMarkdown, exportAsImage, exportAsWord } = useExport();
   const { t } = useTranslation();
   const router = useRouter();
-  const [title, setTitle] = useState('');
-  const {
-    value: content, // This is the reactive content state from useHistory
-    setValue: updateContent,
-    undo: handleUndo,
-    redo: handleRedo,
-    reset: resetContentHistory,
-    canUndo,
-    canRedo
-  } = useHistory<string>('');
+  const [title, setTitle] = useState('');  const [content, setContent] = useState('');
+  
+  // 编辑器的 undo/redo 状态将在 note-edit.tsx 中管理
+  const [canUndo, setCanUndo] = useState(false);
+  const [canRedo, setCanRedo] = useState(false);
   const [titleError, setTitleError] = useState('');
   const [showExportModal, setShowExportModal] = useState(false);
   const [showOptionsMenu, setShowOptionsMenu] = useState(false);
-  const [showPageSettings, setShowPageSettings] = useState(false);
-  const [lastEditedTime, setLastEditedTime] = useState<number | undefined>(undefined);
-  const [autoSaveTimer, setAutoSaveTimer] = useState<any>(null);
+  const [showPageSettings, setShowPageSettings] = useState(false);  const [lastEditedTime, setLastEditedTime] = useState<number | undefined>(undefined);
   const [pageSettings, setPageSettings] = useState<PageSettings>({
     themeId: 'default',
     marginValue: 20,
@@ -40,13 +32,12 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
   const colorScheme = useColorScheme() ?? 'light';
   const MAX_TITLE_LENGTH = 64;
   const isNewNote = !id;
-  const noteViewRef = useRef(null);
-  useEffect(() => {
+  const noteViewRef = useRef(null);  useEffect(() => {
     if (id) {
       const note = notes.find(n => n.id === id);
       if (note) {
         setTitle(note.title);
-        resetContentHistory(note.content);
+        setContent(note.content);
         setLastEditedTime(note.updatedAt);
         if (note.pageSettings) {
           setPageSettings(note.pageSettings);
@@ -64,7 +55,7 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
         }
       }
     } else {
-      resetContentHistory('');
+      setContent('');
       setPageSettings({
         themeId: 'default',
         marginValue: 20,
@@ -73,21 +64,22 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
         // 移除了默认背景图片
       });
     }
-  }, [id, notes, t, resetContentHistory]);
-  const handleSave = (currentContentOverride?: string) => {
+  }, [id, notes, t]);  // 纯保存功能，可选择是否显示 toast
+  const handleSave = (currentContentOverride?: string, showToast: boolean = true) => {
     const contentToUse = typeof currentContentOverride === 'string' ? currentContentOverride : content;
     const finalTitle = title.trim() || String(t('untitledNote'));
     
     if (finalTitle.length > MAX_TITLE_LENGTH) {
       setTitleError(String(t('titleTooLong', { max: MAX_TITLE_LENGTH })));
-      return;
+      return false;
     }
 
+    // 如果标题和内容都为空，不保存
     if (!finalTitle.trim() && !contentToUse.trim()) {
-      router.back();
-      return;
+      return false;
     }
-      const noteData = {
+      
+    const noteData = {
       title: finalTitle,
       content: contentToUse,
       pageSettings,
@@ -111,18 +103,31 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
           ...noteData,
           createdAt: now,
           updatedAt: now,
-        };
-        addNote(newNote);
+        };        addNote(newNote);
       }      
-      if (autoSaveTimer) {
-        clearTimeout(autoSaveTimer);
-        setAutoSaveTimer(null);
-      }
       
-      router.back();
+      if (showToast) {
+        toastRef?.current?.show('保存成功', 'success');
+      }
+      return true;
     } catch (error) {
-      toastRef?.current?.show('保存失败，请重试', 'error');
+      if (showToast) {
+        toastRef?.current?.show('保存失败，请重试', 'error');
+      }
+      return false;
     }
+  };
+  // 保存并返回功能 - 静默保存，不显示 toast
+  const handleSaveAndBack = (currentContentOverride?: string) => {
+    const saveSuccess = handleSave(currentContentOverride, false); // 静默保存
+    // 无论保存是否成功，都返回（对于空内容的情况）
+    if (saveSuccess !== false) {
+      router.back();
+    }
+  };
+  // 仅返回功能，不保存
+  const handleBack = () => {
+    router.back();
   };
 
   const handleDelete = () => {
@@ -174,33 +179,12 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
     toastRef?.current?.show(result.message, result.success ? 'success' : 'error');
     return result;
   };
-
-  // 自动保存功能 - 在内容变化后延迟保存
-  const triggerAutoSave = () => {
-    // 清除之前的定时器
-    if (autoSaveTimer) {
-      clearTimeout(autoSaveTimer);
-    }
-    
-    // 设置新的定时器，3秒后自动保存
-    const timer = setTimeout(() => {
-      if (title.trim() || content.trim()) {
-        console.log('Auto-saving note...');
-        handleSave();
-      }
-    }, 3000);
-    
-    setAutoSaveTimer(timer);
-  };
-
   // 清理定时器
   useEffect(() => {
     return () => {
-      if (autoSaveTimer) {
-        clearTimeout(autoSaveTimer);
-      }
+      // 清理函数，目前为空
     };
-  }, [autoSaveTimer]);
+  }, []);
 
   useEffect(() => {
     if (showOptionsMenu) {
@@ -218,13 +202,11 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
     } else {
       setTitleError('');
     }
-    // 触发自动保存
-    triggerAutoSave();
   };
+
   const handleContentChange = (text: string) => {
-    updateContent(text); // Updates the 'content' state from useHistory
+    setContent(text);
     setLastEditedTime(Date.now());
-    triggerAutoSave();
   };
 
   const handleOpenPageSettings = () => {
@@ -233,14 +215,10 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
 
   const handlePageSettingsChange = (settings: Partial<PageSettings>) => {
     setPageSettings(prev => ({ ...prev, ...settings }));
-  };
-  return {
+  };  return {
     title,
     setTitle,
     content,
-    updateContent,
-    handleUndo,
-    handleRedo,
     canUndo,
     canRedo,
     titleError,
@@ -255,8 +233,10 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
     setPageSettings,
     isNewNote,
     noteViewRef,
-    lastEditedTime,  // 添加最后编辑时间
+    lastEditedTime,
     handleSave,
+    handleSaveAndBack,
+    handleBack,
     handleDelete,
     handleExport,
     handleExportAsTxt,
@@ -269,5 +249,7 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
     handlePageSettingsChange,
     MAX_TITLE_LENGTH,
     colorScheme,
+    setCanUndo,
+    setCanRedo,
   };
 }

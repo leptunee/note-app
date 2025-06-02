@@ -60,9 +60,10 @@ export function useEditorContent({
     const timeoutId = setTimeout(initializeContent, 200);
     return () => clearTimeout(timeoutId);
   }, [editor, initialContent, hasBeenInitialized, isUpdating]);
-  // 监听编辑器内容变化，使用 TenTap 的订阅系统或轮询
+
+  // 监听编辑器内容变化，使用防抖
   useEffect(() => {
-    if (!editor || !hasBeenInitialized) return;
+    if (!editor?.on || !hasBeenInitialized) return;
     
     const handleContentUpdate = () => {
       // 清除之前的防抖定时器
@@ -89,45 +90,37 @@ export function useEditorContent({
       }, debounceMs);
     };
 
-    // 尝试使用 TenTap 的订阅系统
-    let unsubscribe: (() => void) | null = null;
-    let intervalId: ReturnType<typeof setInterval> | null = null;
-    
-    if (editor._subscribeToContentUpdate && typeof editor._subscribeToContentUpdate === 'function') {
-      try {
-        unsubscribe = editor._subscribeToContentUpdate(handleContentUpdate);
-      } catch (error) {
-        console.warn('Failed to subscribe to content updates:', error);
-      }
-    }
-    
-    // 如果订阅不可用，使用轮询作为后备
-    if (!unsubscribe) {
-      intervalId = setInterval(handleContentUpdate, debounceMs);
-    }
+    // 监听编辑器的更新事件
+    editor.on('update', handleContentUpdate);
     
     return () => {
-      if (unsubscribe) {
-        unsubscribe();
-      }
-      if (intervalId) {
-        clearInterval(intervalId);
-      }
+      editor.off?.('update', handleContentUpdate);
       if (debounceTimeoutRef.current) {
         clearTimeout(debounceTimeoutRef.current);
       }
     };
   }, [editor, onContentChange, isUpdating, debounceMs, hasBeenInitialized]);
-  // 添加编辑器失焦同步 - 注意：TenTap 编辑器不支持传统的 on/off 事件
+
+  // 添加编辑器失焦同步
   useEffect(() => {
-    if (!editor || !hasBeenInitialized) return;
+    if (!editor?.on || !hasBeenInitialized) return;
     
-    // TenTap 编辑器没有传统的事件系统，我们依赖轮询来检测内容变化
-    // 失焦事件将通过上面的订阅或轮询机制来处理
-    
-    return () => {
-      // 清理函数 - 不需要特殊处理，因为没有事件监听器
+    const handleBlur = async () => {
+      try {
+        if (isUpdating) return;
+        
+        const currentHTML = await editor.getHTML();
+        if (currentHTML !== lastContentRef.current) {
+          lastContentRef.current = currentHTML;
+          onContentChange(currentHTML);
+        }
+      } catch (error) {
+        // 静默处理错误
+      }
     };
+
+    editor.on('blur', handleBlur);
+    return () => editor.off?.('blur', handleBlur);
   }, [editor, onContentChange, isUpdating, hasBeenInitialized]);
 
   // 获取当前编辑器内容的方法
