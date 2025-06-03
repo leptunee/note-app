@@ -27,11 +27,12 @@ export default function NoteEditScreen() {
     pageSettings,
     isNewNote,
     noteViewRef,
-    lastEditedTime,
-    handleSave,
+    lastEditedTime,    handleSave,
     handleBack,
     handleDelete,
     handleExport,
+    handleTogglePin,
+    getCurrentNotePinStatus,
     handleExportAsTxt,
     handleExportAsMarkdown,
     handleExportAsImage,
@@ -226,13 +227,14 @@ export default function NoteEditScreen() {
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
         >
-          {/* Header 不受页边距影响 */}
-          <NoteHeader
+          {/* Header 不受页边距影响 */}          <NoteHeader
             isNewNote={isNewNote}
             onBack={handleBack}
             onSave={handleSaveWithSync}
             onExport={handleExport}
             onDelete={handleDelete}
+            onTogglePin={handleTogglePin}
+            isPinned={getCurrentNotePinStatus()}
             onUndo={handleUndo}
             onRedo={handleRedo}
             canUndo={canUndo}

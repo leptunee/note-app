@@ -8,6 +8,8 @@ interface Note {
   title: string;
   content: string;
   createdAt: number;
+  updatedAt: number;
+  pinned?: boolean;
 }
 
 interface NotesListProps {
@@ -36,10 +38,18 @@ export const NotesList: React.FC<NotesListProps> = ({
   onNoteLongPress,
   onToggleNoteSelection,
   truncateContent
-}) => {
+}) => {  // 对笔记进行排序：置顶的笔记在前，然后按最后编辑时间排序
+  const sortedNotes = notes.slice().sort((a, b) => {
+    // 首先按置顶状态排序
+    if (a.pinned && !b.pinned) return -1;
+    if (!a.pinned && b.pinned) return 1;
+    // 置顶状态相同时，按最后编辑时间排序（最近编辑的在前）
+    return b.updatedAt - a.updatedAt;
+  });
+
   return (
     <FlatList
-      data={notes}
+      data={sortedNotes}
       keyExtractor={item => item.id}
       renderItem={({ item }) => (
         <NoteItem

@@ -5,9 +5,11 @@ import { useFocusEffect } from 'expo-router';
 
 interface UseSelectionModeProps {
   deleteNote: (id: string) => Promise<void>;
+  togglePinNote: (id: string) => Promise<void>;
+  setPinNotes: (ids: string[], pinned: boolean) => Promise<void>;
 }
 
-export default function useSelectionMode({ deleteNote }: UseSelectionModeProps) {
+export default function useSelectionMode({ deleteNote, togglePinNote, setPinNotes }: UseSelectionModeProps) {
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [selectedNotes, setSelectedNotes] = useState<Set<string>>(new Set());
   const [toolbarAnimation] = useState(new Animated.Value(0));
@@ -74,12 +76,21 @@ export default function useSelectionMode({ deleteNote }: UseSelectionModeProps) 
         },
       ]
     );
-  }, [selectedNotes, deleteNote, exitSelectionMode]);
+  }, [selectedNotes, deleteNote, exitSelectionMode]);  // 置顶选中的笔记 - 使用批量操作避免卡顿
+  const pinSelectedNotes = useCallback(async () => {
+    const selectedArray = Array.from(selectedNotes);
+    // 统一设置所有选中的笔记为置顶状态
+    await setPinNotes(selectedArray, true);
+    exitSelectionMode();
+  }, [selectedNotes, setPinNotes, exitSelectionMode]);
 
-  // 置顶选中的笔记 (暂时占位，后续可实现)
-  const pinSelectedNotes = useCallback(() => {
-    Alert.alert('功能开发中', '置顶功能正在开发中');
-  }, []);
+  // 取消置顶选中的笔记
+  const unpinSelectedNotes = useCallback(async () => {
+    const selectedArray = Array.from(selectedNotes);
+    // 统一设置所有选中的笔记为非置顶状态
+    await setPinNotes(selectedArray, false);
+    exitSelectionMode();
+  }, [selectedNotes, setPinNotes, exitSelectionMode]);
 
   // 导出选中的笔记 (暂时占位，后续可实现)
   const exportSelectedNotes = useCallback(() => {
@@ -101,7 +112,6 @@ export default function useSelectionMode({ deleteNote }: UseSelectionModeProps) 
       return () => subscription.remove();
     }, [isSelectionMode, exitSelectionMode])
   );
-
   return {
     isSelectionMode,
     selectedNotes,
@@ -112,6 +122,7 @@ export default function useSelectionMode({ deleteNote }: UseSelectionModeProps) 
     toggleSelectAll,
     deleteSelectedNotes,
     pinSelectedNotes,
+    unpinSelectedNotes,
     exportSelectedNotes,
   };
 };

@@ -42,7 +42,10 @@ interface SelectionToolbarProps {
   onToggleSelectAll: () => void;
   onDeleteSelected: () => void;
   onPinSelected: () => void;
+  onUnpinSelected: () => void;
   onExportSelected: () => void;
+  selectedNotes: Set<string>;
+  notes: Array<{ id: string; pinned?: boolean }>;
 }
 
 export const SelectionToolbar: React.FC<SelectionToolbarProps> = ({
@@ -55,12 +58,25 @@ export const SelectionToolbar: React.FC<SelectionToolbarProps> = ({
   onToggleSelectAll,
   onDeleteSelected,
   onPinSelected,
-  onExportSelected
+  onUnpinSelected,
+  onExportSelected,
+  selectedNotes,
+  notes
 }) => {
   if (!isVisible) return null;
 
   const isAllSelected = selectedCount === totalCount;
-
+  
+  // 检查选中的笔记中有多少已经被置顶
+  const selectedNotesArray = Array.from(selectedNotes);
+  const selectedNotesData = notes.filter(note => selectedNotesArray.includes(note.id));
+  const pinnedSelectedCount = selectedNotesData.filter(note => note.pinned).length;
+  const unpinnedSelectedCount = selectedNotesData.length - pinnedSelectedCount;
+  // 决定显示置顶还是取消置顶按钮
+  // 只有当所有选中的笔记都已置顶时，才显示取消置顶按钮
+  // 否则显示置顶按钮
+  const allSelectedArePinned = unpinnedSelectedCount === 0 && pinnedSelectedCount > 0;
+  
   return (
     <Animated.View 
       style={[
@@ -73,7 +89,8 @@ export const SelectionToolbar: React.FC<SelectionToolbarProps> = ({
           backgroundColor: colors.toolbarBackground,
         }
       ]}
-    >      <ToolbarButton 
+    >
+      <ToolbarButton 
         onPress={onExitSelection}
         iconName="arrow-left"
         text="返回"
@@ -98,9 +115,9 @@ export const SelectionToolbar: React.FC<SelectionToolbarProps> = ({
       />
       
       <ToolbarButton 
-        onPress={onPinSelected}
-        iconName="thumb-tack"
-        text="置顶"
+        onPress={allSelectedArePinned ? onUnpinSelected : onPinSelected}
+        iconName={allSelectedArePinned ? "times" : "thumb-tack"}
+        text={allSelectedArePinned ? "取消" : "置顶"}
         iconColor={colors.tint}
         textColor={colors.toolbarText}
       />
@@ -116,8 +133,7 @@ export const SelectionToolbar: React.FC<SelectionToolbarProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
-  toolbar: {
+const styles = StyleSheet.create({  toolbar: {
     position: 'absolute',
     bottom: 0,
     left: 0,
@@ -138,8 +154,8 @@ const styles = StyleSheet.create({
   toolbarButton: {
     alignItems: 'center',
     justifyContent: 'center',
-    minWidth: 60,
-    paddingHorizontal: 10,
+    flex: 1,
+    paddingHorizontal: 4,
     paddingVertical: 6,
   },
   iconContainer: {

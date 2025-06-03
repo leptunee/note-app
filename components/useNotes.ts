@@ -7,6 +7,7 @@ export type Note = {
   content: string;
   createdAt: number;
   updatedAt: number; // 添加最后编辑时间
+  pinned?: boolean; // 添加置顶标记
   pageSettings?: PageSettings; // 新增页面设置字段
 };
 
@@ -69,11 +70,26 @@ export function useNotes() {
     const newNotes = notes.map(n => (n.id === note.id ? { ...n, ...note } : n));
     await saveNotes(newNotes);
   };
-
   const deleteNote = async (id: string) => {
     const newNotes = notes.filter(n => n.id !== id);
     await saveNotes(newNotes);
   };
+  const togglePinNote = async (id: string) => {
+    const newNotes = notes.map(n => 
+      n.id === id ? { ...n, pinned: !n.pinned } : n
+    );
+    await saveNotes(newNotes);
+  };
+
+  // 批量设置置顶状态，避免多次刷新
+  const setPinNotes = async (ids: string[], pinned: boolean) => {
+    const idSet = new Set(ids);
+    const newNotes = notes.map(n => 
+      idSet.has(n.id) ? { ...n, pinned } : n
+    );
+    await saveNotes(newNotes);
+  };
+
   // 移除清理所有数据的功能
-  return { notes, loading, addNote, updateNote, deleteNote, refreshNotes };
+  return { notes, loading, addNote, updateNote, deleteNote, togglePinNote, setPinNotes, refreshNotes };
 }

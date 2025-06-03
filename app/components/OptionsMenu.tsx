@@ -13,13 +13,17 @@ interface OptionsMenuProps {
   onHide: () => void;
   onExport: () => void;
   onDelete: () => void;
+  onTogglePin?: () => void;
+  isPinned?: boolean;
 }
 
 export const OptionsMenu: React.FC<OptionsMenuProps> = ({ 
   isVisible, 
   onHide,
   onExport, 
-  onDelete 
+  onDelete,
+  onTogglePin,
+  isPinned
 }) => {
   const { t } = useTranslation();
   const colorScheme = useColorScheme() ?? 'light';
@@ -39,8 +43,7 @@ export const OptionsMenu: React.FC<OptionsMenuProps> = ({
         <View style={[styles.optionsMenu, { 
           backgroundColor: colorScheme === 'dark' ? '#333' : '#fff',
           borderColor: colorScheme === 'dark' ? '#444' : '#eaeaea'
-        }]}>
-          <TouchableOpacity 
+        }]}>          <TouchableOpacity 
             style={styles.optionItem} 
             onPress={() => {
               onHide();
@@ -49,6 +52,22 @@ export const OptionsMenu: React.FC<OptionsMenuProps> = ({
           >
             <FontAwesome name="download" size={ICON_SIZE} color={colorScheme === 'dark' ? '#fff' : '#000'} style={styles.optionIcon} />
             <Text style={[styles.optionText, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>导出笔记</Text>
+          </TouchableOpacity>          <TouchableOpacity 
+            style={styles.optionItem} 
+            onPress={() => {
+              onHide();
+              onTogglePin?.();
+            }}
+          >
+            <FontAwesome 
+              name="thumb-tack" 
+              size={ICON_SIZE} 
+              color={colorScheme === 'dark' ? '#fff' : '#000'} 
+              style={styles.optionIcon} 
+            />
+            <Text style={[styles.optionText, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
+              {isPinned ? '取消置顶' : '置顶笔记'}
+            </Text>
           </TouchableOpacity>
           
           <TouchableOpacity 

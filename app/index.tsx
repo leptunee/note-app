@@ -8,12 +8,11 @@ import { NotesHeader, NotesList, SelectionToolbar } from './components';
 import useSelectionMode from './hooks/useSelectionMode';
 
 export default function NotesScreen() {
-  const { notes, refreshNotes, deleteNote } = useNotes();
+  const { notes, refreshNotes, deleteNote, togglePinNote, setPinNotes } = useNotes();
   const { t } = useTranslation();
   const router = useRouter();
   const colorScheme = useColorScheme() ?? 'light';
-  
-  // 使用选择模式Hook
+    // 使用选择模式Hook
   const {
     isSelectionMode,
     selectedNotes,
@@ -24,8 +23,9 @@ export default function NotesScreen() {
     toggleSelectAll,
     deleteSelectedNotes,
     pinSelectedNotes,
+    unpinSelectedNotes,
     exportSelectedNotes,
-  } = useSelectionMode({ deleteNote });
+  } = useSelectionMode({ deleteNote, togglePinNote, setPinNotes });
 
   // 仅在页面首次获得焦点或从编辑页面返回时刷新笔记列表
   useFocusEffect(
@@ -81,9 +81,7 @@ export default function NotesScreen() {
         onNoteLongPress={enterSelectionMode}
         onToggleNoteSelection={toggleNoteSelection}
         truncateContent={truncateContent}
-      />
-
-      <SelectionToolbar
+      />      <SelectionToolbar
         isVisible={isSelectionMode}
         toolbarAnimation={toolbarAnimation}
         selectedCount={selectedNotes.size}
@@ -93,7 +91,10 @@ export default function NotesScreen() {
         onToggleSelectAll={() => toggleSelectAll(notes)}
         onDeleteSelected={deleteSelectedNotes}
         onPinSelected={pinSelectedNotes}
+        onUnpinSelected={unpinSelectedNotes}
         onExportSelected={exportSelectedNotes}
+        selectedNotes={selectedNotes}
+        notes={notes}
       />
     </View>
   );

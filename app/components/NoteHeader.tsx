@@ -15,6 +15,8 @@ interface NoteHeaderProps {
   onSave: () => void;
   onExport: () => void;
   onDelete: () => void;
+  onTogglePin?: () => void;
+  isPinned?: boolean;
   onUndo?: () => void;
   onRedo?: () => void;
   canUndo: boolean;
@@ -30,6 +32,8 @@ export const NoteHeader: React.FC<NoteHeaderProps> = ({
   onSave,
   onExport,
   onDelete,
+  onTogglePin,
+  isPinned = false,
   onUndo,
   onRedo,
   canUndo,
@@ -88,16 +92,16 @@ export const NoteHeader: React.FC<NoteHeaderProps> = ({
             size={ICON_SIZE} 
             color={canRedo ? Colors[colorScheme].tint : '#888'} 
           />
-        </TouchableOpacity>
-
-        {!isNewNote && (
+        </TouchableOpacity>        {!isNewNote && (
           <OptionsMenu 
             isVisible={showOptionsMenu} 
             onHide={toggleOptionsMenu}
             onExport={onExport}
             onDelete={onDelete}
+            onTogglePin={onTogglePin}
+            isPinned={isPinned}
           />
-        )}          <TouchableOpacity onPress={onSave} style={styles.saveButton}>
+        )}<TouchableOpacity onPress={onSave} style={styles.saveButton}>
           <FontAwesome 
             name="check" 
             size={ICON_SIZE} 

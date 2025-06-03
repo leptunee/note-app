@@ -11,6 +11,8 @@ interface NoteItemProps {
     title: string;
     content: string;
     createdAt: number;
+    updatedAt: number;
+    pinned?: boolean;
   };
   isSelectionMode: boolean;
   isSelected: boolean;
@@ -37,7 +39,32 @@ export const NoteItem: React.FC<NoteItemProps> = ({
   onToggleSelection,
   truncateContent
 }) => {
-  const firstImageUri = extractFirstImageUri(note.content);  return (
+  const firstImageUri = extractFirstImageUri(note.content);
+
+  // 格式化日期显示
+  const formatDate = (timestamp: number) => {
+    const date = new Date(timestamp);
+    const today = new Date();
+    
+    // 检查是否为今天
+    const isToday = date.toDateString() === today.toDateString();
+    
+    if (isToday) {
+      // 今天显示时间 HH:MM
+      return date.toLocaleTimeString('zh-CN', { 
+        hour: '2-digit', 
+        minute: '2-digit',
+        hour12: false 
+      });
+    } else {
+      // 其他日期显示 YYYY/MM/DD
+      return date.toLocaleDateString('zh-CN', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      }).replace(/\//g, '/');
+    }
+  };return (
     <TouchableOpacity 
       style={[styles.noteItem, { 
         backgroundColor: colors.cardBackground,
@@ -59,9 +86,7 @@ export const NoteItem: React.FC<NoteItemProps> = ({
               )}
             </TouchableOpacity>
           </View>
-        )}
-        
-        <View style={[styles.noteTextContainer, isSelectionMode && styles.noteTextContainerWithCheckbox]}>
+        )}        <View style={[styles.noteTextContainer, isSelectionMode && styles.noteTextContainerWithCheckbox]}>
           <Text 
             style={[styles.noteTitle, { color: colors.text }]}
             numberOfLines={1}
@@ -75,9 +100,20 @@ export const NoteItem: React.FC<NoteItemProps> = ({
           >
             {truncateContent(note.content, firstImageUri ? 40 : 60)}
           </Text>
-          <Text style={[styles.noteDate, { color: colors.tertiaryText }]}>
-            {new Date(note.createdAt).toLocaleDateString()}
-          </Text>
+            {/* 底部日期和置顶图标行 */}
+          <View style={styles.bottomRow}>
+            <Text style={[styles.noteDate, { color: colors.tertiaryText }]}>
+              {formatDate(note.updatedAt || note.createdAt)}
+            </Text>
+            {note.pinned && (
+              <FontAwesome 
+                name="thumb-tack" 
+                size={12} 
+                color={colors.tint} 
+                style={styles.pinIconBottom}
+              />
+            )}
+          </View>
         </View>
         
         {firstImageUri && (
@@ -137,22 +173,38 @@ const styles = StyleSheet.create({
   checkboxSelected: {
     backgroundColor: Colors.light.tint,
     borderColor: Colors.light.tint,
-  },
-  noteTitle: {
+  },  noteTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 6,
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  pinIcon: {
+    marginLeft: 8,
+    opacity: 0.8,
   },
   noteContent: {
     fontSize: 14,
     lineHeight: 20,
     marginBottom: 8,
   },
+  bottomRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+  },
   noteDate: {
     fontSize: 12,
-    textAlign: 'right',
-    marginTop: 4,
-  },  imagePreviewContainer: {
+    color: '#666',
+  },
+  pinIconBottom: {
+    marginLeft: 6,
+    opacity: 0.8,
+  },imagePreviewContainer: {
     width: 60,
     height: 60,
     borderRadius: 8,

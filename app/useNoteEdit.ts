@@ -10,7 +10,7 @@ import { type ToastRef } from './components'; // Import ToastRef type from compo
 export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef | null>, titleInputRef?: React.RefObject<TextInput | null>) {
   const { id: routeId } = useLocalSearchParams<{ id: string }>();
   const [currentNoteId, setCurrentNoteId] = useState<string | undefined>(routeId);
-  const { notes, addNote, updateNote, deleteNote } = useNotes();
+  const { notes, addNote, updateNote, deleteNote, togglePinNote } = useNotes();
   const { exportAsTxt, exportAsMarkdown, exportAsImage, exportAsWord } = useExport();
   const { t } = useTranslation();
   const router = useRouter();
@@ -149,6 +149,24 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
   const handleExport = () => {
     setShowOptionsMenu(false);
     setShowExportModal(true);
+  };
+
+  // 处理置顶功能
+  const handleTogglePin = async () => {
+    if (currentNoteId) {
+      await togglePinNote(currentNoteId);
+      setShowOptionsMenu(false);
+      toastRef?.current?.show('已更新置顶状态', 'success');
+    }
+  };
+
+  // 获取当前笔记的置顶状态
+  const getCurrentNotePinStatus = () => {
+    if (currentNoteId) {
+      const note = notes.find(n => n.id === currentNoteId);
+      return note?.pinned || false;
+    }
+    return false;
   };
 
   // Modify export functions to use toastRef and return ExportResult
@@ -325,6 +343,7 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
     handleBack,
     handleDelete,
     handleExport,
+    handleTogglePin,
     handleExportAsTxt,
     handleExportAsMarkdown,
     handleExportAsImage,
@@ -337,5 +356,6 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
     colorScheme,
     setCanUndo,
     setCanRedo,
+    getCurrentNotePinStatus,
   };
 }
