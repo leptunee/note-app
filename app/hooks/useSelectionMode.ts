@@ -33,7 +33,6 @@ export default function useSelectionMode({ deleteNote }: UseSelectionModeProps) 
       useNativeDriver: true,
     }).start();
   }, [toolbarAnimation]);
-
   // 切换笔记选择状态
   const toggleNoteSelection = useCallback((noteId: string) => {
     const newSelectedNotes = new Set(selectedNotes);
@@ -43,22 +42,15 @@ export default function useSelectionMode({ deleteNote }: UseSelectionModeProps) 
       newSelectedNotes.add(noteId);
     }
     setSelectedNotes(newSelectedNotes);
-    
-    // 如果没有选中的笔记，退出选择模式
-    if (newSelectedNotes.size === 0) {
-      exitSelectionMode();
-    }
-  }, [selectedNotes, exitSelectionMode]);
-
+  }, [selectedNotes]);
   // 全选/取消全选
   const toggleSelectAll = useCallback((allNotes: any[]) => {
     if (selectedNotes.size === allNotes.length) {
       setSelectedNotes(new Set());
-      exitSelectionMode();
     } else {
       setSelectedNotes(new Set(allNotes.map(note => note.id)));
     }
-  }, [selectedNotes, exitSelectionMode]);
+  }, [selectedNotes]);
 
   // 删除选中的笔记
   const deleteSelectedNotes = useCallback(() => {

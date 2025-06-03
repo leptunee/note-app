@@ -18,10 +18,12 @@ const ToolbarButton: React.FC<ToolbarButtonProps> = ({
   text, 
   iconColor, 
   textColor, 
-  iconSize = 20 
+  iconSize = 24 
 }) => (
-  <TouchableOpacity style={styles.toolbarButton} onPress={onPress}>
-    <FontAwesome name={iconName as any} size={iconSize} color={iconColor} />
+  <TouchableOpacity style={styles.toolbarButton} onPress={onPress} activeOpacity={0.7}>
+    <View style={styles.iconContainer}>
+      <FontAwesome name={iconName as any} size={iconSize} color={iconColor} />
+    </View>
     <Text style={[styles.toolbarButtonText, { color: textColor }]}>{text}</Text>
   </TouchableOpacity>
 );
@@ -71,8 +73,7 @@ export const SelectionToolbar: React.FC<SelectionToolbarProps> = ({
           backgroundColor: colors.toolbarBackground,
         }
       ]}
-    >
-      <ToolbarButton 
+    >      <ToolbarButton 
         onPress={onExitSelection}
         iconName="arrow-left"
         text="返回"
@@ -90,7 +91,7 @@ export const SelectionToolbar: React.FC<SelectionToolbarProps> = ({
       
       <ToolbarButton 
         onPress={onDeleteSelected}
-        iconName="trash"
+        iconName="trash-o"
         text="删除"
         iconColor="#ff3b30"
         textColor="#ff3b30"
@@ -106,7 +107,7 @@ export const SelectionToolbar: React.FC<SelectionToolbarProps> = ({
       
       <ToolbarButton 
         onPress={onExportSelected}
-        iconName="share"
+        iconName="download"
         text="导出"
         iconColor={colors.tint}
         textColor={colors.toolbarText}
@@ -124,23 +125,29 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-    borderTopWidth: 1,
-    borderTopColor: '#e0e0e0',
-    elevation: 8,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderTopWidth: 0.5,
+    borderTopColor: 'rgba(0, 0, 0, 0.1)',
+    elevation: 12,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
   },
   toolbarButton: {
     alignItems: 'center',
     justifyContent: 'center',
     minWidth: 60,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  iconContainer: {
+    marginBottom: 4,
   },
   toolbarButtonText: {
     fontSize: 12,
-    marginTop: 4,
+    fontWeight: '500',
+    textAlign: 'center',
   },
 });
