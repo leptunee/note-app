@@ -8,5 +8,9 @@ export { CustomToolbar } from './CustomToolbar';
 export { ExportView } from './ExportView';
 export { TitleSection } from './TitleSection';
 export { EditorComponent } from './EditorComponent';
+export { NoteItem } from './NoteItem';
+export { NotesHeader } from './NotesHeader';
+export { SelectionToolbar } from './SelectionToolbar';
+export { NotesList } from './NotesList';
 export { styles } from './styles';
 export { default as Toast, type ToastRef } from './Toast'; // Export Toast and ToastRef
