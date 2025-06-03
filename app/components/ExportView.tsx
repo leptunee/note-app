@@ -52,10 +52,9 @@ export const ExportView = forwardRef<View, ExportViewProps>(({
         width: 375, // 与容器宽度保持一致
         borderTopLeftRadius: 8,
         borderTopRightRadius: 8
-      }]}>
-        <Text style={[styles.noteTitle, { 
+      }]}>        <Text style={[styles.noteTitle, { 
           color: '#000', 
-          fontSize: 24, 
+          fontSize: 20, // 与编辑界面保持一致
           fontWeight: 'bold' as const, 
           marginBottom: 4,
           flexWrap: 'wrap'

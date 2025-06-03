@@ -26,21 +26,21 @@ export const TitleSection = forwardRef<TextInput, TitleSectionProps>(({
 }, ref) => {
   const { t } = useTranslation();
   const colorScheme = useColorScheme() ?? 'light';
-
   return (
     <>
       {/* 标题输入区域 */}
       <TextInput
-        ref={ref}
-        style={[
+        ref={ref}        style={[
           {
             backgroundColor: 'transparent',
             color: textColor || (colorScheme === 'dark' ? '#fff' : '#000'),
             paddingHorizontal: 0,
             paddingVertical: 4,
-            fontSize: 24,
+            fontSize: 20, // 减小字体以确保64字符能在3行内显示
             fontWeight: 'bold',
             marginBottom: 2,
+            minHeight: 32, // 确保至少有一行的高度
+            textAlignVertical: 'top', // 文本从顶部开始对齐
           }
         ]}
         placeholder={String(t('title'))}
@@ -48,7 +48,9 @@ export const TitleSection = forwardRef<TextInput, TitleSectionProps>(({
         onChangeText={onChangeTitle}
         maxLength={maxLength}
         placeholderTextColor={colorScheme === 'dark' ? '#888' : '#888'}
+        multiline={true}
         scrollEnabled={false}
+        numberOfLines={3} // 最多显示3行，超过后可以滚动
       />
 
       {/* 日期和字数统计 */}

@@ -37,9 +37,7 @@ export const NoteItem: React.FC<NoteItemProps> = ({
   onToggleSelection,
   truncateContent
 }) => {
-  const firstImageUri = extractFirstImageUri(note.content);
-
-  return (
+  const firstImageUri = extractFirstImageUri(note.content);  return (
     <TouchableOpacity 
       style={[styles.noteItem, { 
         backgroundColor: colors.cardBackground,
@@ -47,6 +45,7 @@ export const NoteItem: React.FC<NoteItemProps> = ({
       }]} 
       onPress={onPress}
       onLongPress={onLongPress}
+      activeOpacity={0.8}
     >
       <View style={styles.noteContentContainer}>
         {isSelectionMode && (
@@ -153,15 +152,13 @@ const styles = StyleSheet.create({
     fontSize: 12,
     textAlign: 'right',
     marginTop: 4,
-  },
-  imagePreviewContainer: {
+  },  imagePreviewContainer: {
     width: 60,
     height: 60,
     borderRadius: 8,
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: '#ddd',
-    elevation: 1,
   },
   imagePreview: {
     width: '100%',
