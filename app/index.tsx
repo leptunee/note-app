@@ -12,7 +12,9 @@ export default function NotesScreen() {
   const { notes, refreshNotes, deleteNote, togglePinNote, setPinNotes } = useNotes();
   const { t } = useTranslation();
   const router = useRouter();
-  const colorScheme = useColorScheme() ?? 'light';  // 使用选择模式Hook
+  const colorScheme = useColorScheme() ?? 'light';
+
+  // 使用选择模式Hook
   const {
     isSelectionMode,
     selectedNotes,
@@ -27,9 +29,7 @@ export default function NotesScreen() {
     unpinSelectedNotes,
     exportSelectedNotes,
     closeExportDialog,
-  } = useSelectionMode({ deleteNote, togglePinNote, setPinNotes });
-
-  // 仅在页面首次获得焦点或从编辑页面返回时刷新笔记列表
+  } = useSelectionMode({ deleteNote, togglePinNote, setPinNotes });  // 仅在页面首次获得焦点或从编辑页面返回时刷新笔记列表
   useFocusEffect(
     useCallback(() => {
       refreshNotes();
@@ -54,13 +54,17 @@ export default function NotesScreen() {
     toolbarText: colorScheme === 'dark' ? '#fff' : '#333',
     secondaryText: colorScheme === 'dark' ? '#ccc' : '#666',
     tertiaryText: colorScheme === 'dark' ? '#888' : '#999',
-  }), [colorScheme]);
-  // 处理笔记点击
+  }), [colorScheme]);  // 处理笔记点击
   const handleNotePress = useCallback((noteId: string) => {
     if (isSelectionMode) {
       toggleNoteSelection(noteId);
     } else {
-      router.push({ pathname: '/note-edit', params: { id: noteId } });
+      router.push({ 
+        pathname: '/note-edit', 
+        params: { 
+          id: noteId
+        } 
+      });
     }
   }, [isSelectionMode, toggleNoteSelection, router]);
 

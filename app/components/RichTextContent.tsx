@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, TextInput, useColorScheme } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
@@ -42,15 +42,15 @@ export const RichTextContent: React.FC<RichTextContentProps> = ({
   const colorScheme = useColorScheme();
   // 创建内部引用，如果没有传入外部引用的话
   const internalTitleRef = useRef<TextInput | null>(null);
-  const finalTitleRef = titleInputRef || internalTitleRef;
-
-  // 使用自定义 Hook 管理编辑器内容
-  const { isUpdating, getCurrentContent } = useEditorContent({
+  const finalTitleRef = titleInputRef || internalTitleRef;  // 使用自定义 Hook 管理编辑器内容
+  const { isUpdating, getCurrentContent, forceReloadContent } = useEditorContent({
     editor,
     initialContent: content,
     onContentChange: onChangeContent,
     debounceMs: 500
-  });    return (
+  });
+
+  return (
     <View style={styles.contentContainer}>      {/* 标题和元数据部分 */}
       <TitleSection
         ref={finalTitleRef}
@@ -61,11 +61,10 @@ export const RichTextContent: React.FC<RichTextContentProps> = ({
         textColor={textColor}
         maxLength={maxLength}
         titleError={titleError}
-      />
-
-      {/* 富文本编辑器 */}
+      />      {/* 富文本编辑器 */}
       <EditorComponent
         editor={editor}
+        content={content}
       />
     </View>
   );

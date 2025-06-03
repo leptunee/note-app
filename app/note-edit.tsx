@@ -10,8 +10,7 @@ export default function NoteEditScreen() {
   const toastRef = useRef<ToastRef>(null);
   const titleInputRef = useRef<TextInput>(null);
   const [isKeyboardVisible, setKeyboardVisible] = useState(false);
-  const [keyboardHeight, setKeyboardHeight] = useState(0);
-  const [isEditorReady, setIsEditorReady] = useState(false);  const {
+  const [keyboardHeight, setKeyboardHeight] = useState(0);  const [isEditorReady, setIsEditorReady] = useState(false);const {
     title,
     content,
     canUndo,
@@ -43,12 +42,11 @@ export default function NoteEditScreen() {
     handlePageSettingsChange,
     MAX_TITLE_LENGTH,
     colorScheme,
-  } = useNoteEdit(themes, toastRef, titleInputRef);
-  // 创建编辑器实例 - 使用实际的 content 作为初始内容
+  } = useNoteEdit(themes, toastRef, titleInputRef);  // 创建编辑器实例 - 确保内容加载后再创建
   const editor = useEditorBridge({
     autofocus: false,
     avoidIosKeyboard: false,
-    initialContent: content || '', // 使用实际的 content 状态
+    initialContent: content || '',
     bridgeExtensions: TenTapStarterKit,
   });
   // 撤销/重做处理函数
@@ -108,21 +106,47 @@ export default function NoteEditScreen() {
     editor,
     initialContent: content,
     onContentChange: handleContentChange,
-    debounceMs: 500  });
-
-  // 检查编辑器是否准备就绪
+    debounceMs: 500  });  // 检查编辑器是否准备就绪 - 简化逻辑
   useEffect(() => {
+    if (!editor) return;
+    
+    let timeoutId: any;
+    let checkCount = 0;
+    const maxChecks = 30; // 增加检查次数，每次间隔100ms，总共3秒
+    
     const checkEditorReady = () => {
       if (editor && typeof editor.getHTML === 'function') {
-        setIsEditorReady(true);
+        try {
+          // 尝试调用 getHTML 方法，如果成功则说明编辑器已准备就绪
+          editor.getHTML();
+          setIsEditorReady(true);
+          return;
+        } catch (error) {
+          // 如果出错，继续重试
+        }
+      }
+      
+      checkCount++;
+      if (checkCount < maxChecks) {
+        timeoutId = setTimeout(checkEditorReady, 100);
       } else {
-        const timeoutId = setTimeout(checkEditorReady, 100);
-        return () => clearTimeout(timeoutId);
+        // 即使超时也设置为准备就绪，避免永久加载
+        console.warn('Editor ready check timeout, setting ready state anyway');
+        setIsEditorReady(true);
       }
     };
 
-    return checkEditorReady();
-  }, [editor]);  // 在保存前同步编辑器内容的函数
+    // 立即开始检查
+    checkEditorReady();
+    
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
+  }, [editor]);
+
+  // 在保存前同步编辑器内容的函数
   const handleSaveWithSync = async () => {
     // 先让编辑器失去焦点
     try {
@@ -249,9 +273,8 @@ export default function NoteEditScreen() {
             flex: 1, 
             paddingHorizontal: contentPadding,
             paddingTop: 0,
-            paddingBottom: 0
-          }}>
-            {editor && isEditorReady && (
+            paddingBottom: 0          }}>
+            {editor && isEditorReady ? (
               <RichTextContent
                 title={title}
                 content={content}
@@ -267,6 +290,21 @@ export default function NoteEditScreen() {
                 editor={editor}
                 titleInputRef={titleInputRef}
               />
+            ) : (
+              <View style={{
+                flex: 1,
+                justifyContent: 'center',
+                alignItems: 'center',
+                minHeight: 200
+              }}>
+                <Text style={{ 
+                  color: textColor, 
+                  fontSize: 16,
+                  opacity: 0.6 
+                }}>
+                  正在加载编辑器...
+                </Text>
+              </View>
             )}
           </View>
         </KeyboardAvoidingView>{/* 工具栏 - 只在键盘弹起时显示，并固定在键盘上方 */}

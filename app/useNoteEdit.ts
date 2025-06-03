@@ -1,11 +1,11 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useRef, useState, useCallback } from 'react';
-import { Alert, useColorScheme, Keyboard, TextInput } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { useColorScheme, Keyboard, TextInput } from 'react-native';
 import { useNotes, PageSettings } from '@/components/useNotes';
 import { useExport } from '@/components/useExport';
 import { useTranslation } from 'react-i18next';
 import { v4 as uuidv4 } from 'uuid';
-import { type ToastRef } from './components'; // Import ToastRef type from components
+import { type ToastRef } from './components';
 
 export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef | null>, titleInputRef?: React.RefObject<TextInput | null>) {
   const { id: routeId } = useLocalSearchParams<{ id: string }>();
@@ -27,13 +27,16 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
   const [showOptionsMenu, setShowOptionsMenu] = useState(false);
   const [showPageSettings, setShowPageSettings] = useState(false);
 
-  const [lastEditedTime, setLastEditedTime] = useState<number | undefined>(undefined);  const [pageSettings, setPageSettings] = useState<PageSettings>({
+  const [lastEditedTime, setLastEditedTime] = useState<number | undefined>(undefined);
+  
+  const [pageSettings, setPageSettings] = useState<PageSettings>({
     themeId: 'default',
     marginValue: 22,
-    backgroundImageOpacity: 0.5, // 默认透明度设为50%
-    backgroundImageBlur: 0, // 默认无模糊
-    // 移除了默认背景图片
-  });  const colorScheme = useColorScheme() ?? 'light';
+    backgroundImageOpacity: 0.5,
+    backgroundImageBlur: 0,
+  });
+
+  const colorScheme = useColorScheme() ?? 'light';
   const MAX_TITLE_LENGTH = 64;
   const isNewNote = !currentNoteId;
   const noteViewRef = useRef(null);
@@ -42,31 +45,39 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
     if (currentNoteId) {
       const note = notes.find(n => n.id === currentNoteId);
       if (note) {
+        // 直接设置内容，移除复杂的 setTimeout 逻辑
         setTitle(note.title);
         setContent(note.content);
         setLastEditedTime(note.updatedAt);
+        
         if (note.pageSettings) {
-          setPageSettings(note.pageSettings);        } else {
+          setPageSettings(note.pageSettings);        
+        } else {
           setPageSettings({
             themeId: 'default',
             marginValue: 22,
-            backgroundImageOpacity: 0.5, // 默认透明度设为50%
-            backgroundImageBlur: 0, // 默认无模糊
-            // 移除了默认背景图片
+            backgroundImageOpacity: 0.5,
+            backgroundImageBlur: 0,
           });
         }
+        
         if (note.title.length > MAX_TITLE_LENGTH) {
           setTitleError(String(t('titleTooLong', { max: MAX_TITLE_LENGTH })));
+        } else {
+          setTitleError('');
         }
       }
-    } else {      setContent('');
+    } else {      
+      // 新笔记的处理
+      setTitle('');
+      setContent('');
       setPageSettings({
         themeId: 'default',
         marginValue: 22,
-        backgroundImageOpacity: 0.5, // 默认透明度设为50%
-        backgroundImageBlur: 0, // 默认无模糊
-        // 移除了默认背景图片
-      });    }
+        backgroundImageOpacity: 0.5,
+        backgroundImageBlur: 0,
+      });
+    }
   }, [currentNoteId, notes, t]);
 
   // 纯保存功能，可选择是否显示 toast
@@ -89,7 +100,8 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
       content: contentToUse,
       pageSettings,
     };
-      try {
+    
+    try {
       if (currentNoteId) {
         const note = notes.find(n => n.id === currentNoteId);
         if (note) {
@@ -110,7 +122,6 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
         };
 
         addNote(newNote);
-        // 重要：设置当前笔记ID，避免重复创建
         setCurrentNoteId(newNoteId);
       }
       
@@ -128,8 +139,7 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
 
   // 保存并返回功能 - 静默保存，不显示 toast
   const handleSaveAndBack = (currentContentOverride?: string) => {
-    const saveSuccess = handleSave(currentContentOverride, false); // 静默保存
-    // 无论保存是否成功，都返回（对于空内容的情况）
+    const saveSuccess = handleSave(currentContentOverride, false);
     if (saveSuccess !== false) {
       router.back();
     }
@@ -139,6 +149,7 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
   const handleBack = () => {
     router.back();
   };
+  
   const handleDelete = () => {
     if (currentNoteId) {
       deleteNote(currentNoteId);
@@ -169,20 +180,24 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
     return false;
   };
 
-  // Modify export functions to use toastRef and return ExportResult
   const handleExportAsTxt = async () => {
-    // 首先让标题输入框失焦
     if (titleInputRef?.current) {
       titleInputRef.current.blur();
     }
     
-    // 如果键盘弹起，自动让键盘下落
     Keyboard.dismiss();
-    
     toastRef?.current?.show('正在导出文本文件...', 'loading');
-      try {
+    
+    try {
       const now = Date.now();
-      const note = notes.find(n => n.id === currentNoteId) || { id: 'temp', title, content, createdAt: now, updatedAt: now, pageSettings };
+      const note = notes.find(n => n.id === currentNoteId) || { 
+        id: 'temp', 
+        title, 
+        content, 
+        createdAt: now, 
+        updatedAt: now, 
+        pageSettings 
+      };
       const result = await exportAsTxt(note);
       
       toastRef?.current?.hide();
@@ -194,19 +209,25 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
       return { success: false, message: '导出文本文件时发生错误' };
     }
   };
+
   const handleExportAsMarkdown = async () => {
-    // 首先让标题输入框失焦
     if (titleInputRef?.current) {
       titleInputRef.current.blur();
     }
     
-    // 如果键盘弹起，自动让键盘下落
     Keyboard.dismiss();
-    
     toastRef?.current?.show('正在导出Markdown文件...', 'loading');
-      try {
+    
+    try {
       const now = Date.now();
-      const note = notes.find(n => n.id === currentNoteId) || { id: 'temp', title, content, createdAt: now, updatedAt: now, pageSettings };
+      const note = notes.find(n => n.id === currentNoteId) || { 
+        id: 'temp', 
+        title, 
+        content, 
+        createdAt: now, 
+        updatedAt: now, 
+        pageSettings 
+      };
       const result = await exportAsMarkdown(note);
       
       toastRef?.current?.hide();
@@ -218,56 +239,63 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
       return { success: false, message: '导出Markdown文件时发生错误' };
     }
   };
+
   const handleExportAsImage = async () => {
-    // 首先让标题输入框失焦
     if (titleInputRef?.current) {
       titleInputRef.current.blur();
     }
     
-    // 如果键盘弹起，自动让键盘下落
     Keyboard.dismiss();
-    
-    // 显示loading toast
     toastRef?.current?.show('正在导出图片...', 'loading');
     
     try {
-      // 检查 ref 是否可用
       if (!noteViewRef.current) {
         const message = '无法获取笔记视图以截图。';
         toastRef?.current?.hide();
         toastRef?.current?.show(message, 'error');
         return { success: false, message };
       }
-        const now = Date.now();
-      const note = notes.find(n => n.id === currentNoteId) || { id: 'temp', title, content, createdAt: now, updatedAt: now, pageSettings };
       
-      // 直接调用导出功能，不需要显式显示ExportView
+      const now = Date.now();
+      const note = notes.find(n => n.id === currentNoteId) || { 
+        id: 'temp', 
+        title, 
+        content, 
+        createdAt: now, 
+        updatedAt: now, 
+        pageSettings 
+      };
+      
       const result = await exportAsImage(noteViewRef, note);
       
-      // 隐藏loading toast并显示结果
       toastRef?.current?.hide();
       toastRef?.current?.show(result.message, result.success ? 'success' : 'error');
       return result;
     } catch (error) {
-      // 出现错误时隐藏loading toast并显示错误信息
       toastRef?.current?.hide();
       toastRef?.current?.show('导出图片时发生错误', 'error');
       return { success: false, message: '导出图片时发生错误' };
     }
   };
+
   const handleExportAsWord = async () => {
-    // 首先让标题输入框失焦
     if (titleInputRef?.current) {
       titleInputRef.current.blur();
     }
     
-    // 如果键盘弹起，自动让键盘下落
     Keyboard.dismiss();
-    
     toastRef?.current?.show('正在导出Word文档...', 'loading');
-      try {
+    
+    try {
       const now = Date.now();
-      const note = notes.find(n => n.id === currentNoteId) || { id: 'temp', title, content, createdAt: now, updatedAt: now, pageSettings };
+      const note = notes.find(n => n.id === currentNoteId) || { 
+        id: 'temp', 
+        title, 
+        content, 
+        createdAt: now, 
+        updatedAt: now, 
+        pageSettings 
+      };
       const result = await exportAsWord(note);
       
       toastRef?.current?.hide();
@@ -280,13 +308,6 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
     }
   };
 
-  // 清理定时器
-  useEffect(() => {
-    return () => {
-      // 清理函数，目前为空
-    };
-  }, []);
-
   useEffect(() => {
     if (showOptionsMenu) {
       const timer = setTimeout(() => {
@@ -298,7 +319,6 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
 
   const handleTitleChange = (text: string) => {
     setTitle(text);
-    // 更新最后编辑时间
     setLastEditedTime(Date.now());
     if (text.length > MAX_TITLE_LENGTH) {
       setTitleError(String(t('titleTooLong', { max: MAX_TITLE_LENGTH })));
@@ -315,9 +335,11 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
   const handleOpenPageSettings = () => {
     setShowPageSettings(true);
   };
+  
   const handlePageSettingsChange = (settings: Partial<PageSettings>) => {
     setPageSettings(prev => ({ ...prev, ...settings }));
   };
+
   return {
     title,
     setTitle,

@@ -1,4 +1,4 @@
-// 编辑器内容管理的自定义 Hook - 修复版本
+// 编辑器内容管理的自定义 Hook - 简化版本
 import { useState, useEffect, useCallback, useRef } from 'react';
 
 interface UseEditorContentProps {
@@ -15,53 +15,59 @@ export function useEditorContent({
   debounceMs = 500
 }: UseEditorContentProps) {
   const [isUpdating, setIsUpdating] = useState(false);
-  const [hasBeenInitialized, setHasBeenInitialized] = useState(false);
   const lastContentRef = useRef<string>('');
   const debounceTimeoutRef = useRef<number | null>(null);
+  const isInitializedRef = useRef(false);
 
-  // 初始化编辑器内容管理，避免干扰撤销历史
+  // 强制重新加载内容的方法
+  const forceReloadContent = useCallback(async () => {
+    if (!editor || !initialContent) return;
+    
+    try {
+      await editor.setContent(initialContent);
+      lastContentRef.current = initialContent;
+    } catch (error) {
+      console.warn('Failed to force reload content:', error);
+    }
+  }, [editor, initialContent]);
+
+  // 简化的初始化逻辑 - 直接设置内容，不等待
   useEffect(() => {
-    if (!editor) return;
+    if (!editor || isInitializedRef.current) return;
     
     const initializeContent = async () => {
       try {
-        // 如果还没有初始化，标记为已初始化但不设置内容
-        // 让编辑器使用 initialContent 配置自行初始化
-        if (!hasBeenInitialized) {
-          // 等待编辑器准备好
-          if (editor.getHTML) {
-            const currentContent = (await editor.getHTML()) || '';
-            lastContentRef.current = currentContent;
-            setHasBeenInitialized(true);
-
-          }
-          return;
-        }
-        
-        // 如果已经初始化，只有在外部内容显著不同且编辑器未聚焦时才更新
-        const currentHTML = (await editor.getHTML?.()) || '';
-        
-        // 只在内容完全不同且编辑器未聚焦时才更新（支持撤销/重做）
-        const shouldUpdate = currentHTML !== initialContent && 
-                           !editor.isFocused?.() && 
-                           !isUpdating;
-          if (shouldUpdate) {
-          editor.setContent(initialContent);
+        // 如果有初始内容，立即设置，不做任何检查
+        if (initialContent && initialContent.trim() !== '') {
+          await editor.setContent(initialContent);
           lastContentRef.current = initialContent;
         }
+        
+        isInitializedRef.current = true;
       } catch (error) {
-        // 静默处理错误
+        // 如果设置失败，等待一下再试一次
+        setTimeout(async () => {
+          try {
+            if (initialContent && initialContent.trim() !== '') {
+              await editor.setContent(initialContent);
+              lastContentRef.current = initialContent;
+            }
+            isInitializedRef.current = true;
+          } catch (retryError) {
+            console.warn('Editor initialization failed after retry:', retryError);
+            isInitializedRef.current = true;
+          }
+        }, 100);
       }
     };
-
-    // 延迟初始化，确保编辑器完全准备好
-    const timeoutId = setTimeout(initializeContent, 200);
-    return () => clearTimeout(timeoutId);
-  }, [editor, initialContent, hasBeenInitialized, isUpdating]);
+    
+    // 立即初始化，不延迟
+    initializeContent();
+  }, [editor, initialContent]);
 
   // 监听编辑器内容变化，使用防抖
   useEffect(() => {
-    if (!editor?.on || !hasBeenInitialized) return;
+    if (!editor?.on) return;
     
     const handleContentUpdate = () => {
       // 清除之前的防抖定时器
@@ -81,8 +87,9 @@ export function useEditorContent({
             onContentChange(currentHTML);
             // 使用 Promise 来延迟设置状态
             Promise.resolve().then(() => setIsUpdating(false));
-          }        } catch (error) {
-          // 静默处理错误
+          }
+        } catch (error) {
+          console.warn('Error handling content update:', error);
         }
       }, debounceMs);
     };
@@ -96,11 +103,11 @@ export function useEditorContent({
         clearTimeout(debounceTimeoutRef.current);
       }
     };
-  }, [editor, onContentChange, isUpdating, debounceMs, hasBeenInitialized]);
+  }, [editor, onContentChange, isUpdating, debounceMs]);
 
   // 添加编辑器失焦同步
   useEffect(() => {
-    if (!editor?.on || !hasBeenInitialized) return;
+    if (!editor?.on) return;
     
     const handleBlur = async () => {
       try {
@@ -112,25 +119,27 @@ export function useEditorContent({
           onContentChange(currentHTML);
         }
       } catch (error) {
-        // 静默处理错误
+        console.warn('Error handling blur:', error);
       }
     };
 
     editor.on('blur', handleBlur);
     return () => editor.off?.('blur', handleBlur);
-  }, [editor, onContentChange, isUpdating, hasBeenInitialized]);
+  }, [editor, onContentChange, isUpdating]);
 
   // 获取当前编辑器内容的方法
   const getCurrentContent = useCallback(async () => {
     if (!editor?.getHTML) return initialContent;
     try {
-      return await editor.getHTML();    } catch (error) {
+      return await editor.getHTML();
+    } catch (error) {
       return initialContent;
     }
   }, [editor, initialContent]);
 
   return {
     isUpdating,
-    getCurrentContent
+    getCurrentContent,
+    forceReloadContent
   };
 }

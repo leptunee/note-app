@@ -38,16 +38,34 @@ export function useNotes() {
     setLastRefreshTime(now);
     setRefreshTrigger(prev => prev + 1);
   };  useEffect(() => {
-    AsyncStorage.getItem(NOTES_KEY).then(data => {
-      if (data) {
-        setNotes(JSON.parse(data));
+    const loadNotes = async () => {
+      try {
+        const data = await AsyncStorage.getItem(NOTES_KEY);
+        if (data) {
+          const parsedNotes = JSON.parse(data);
+          setNotes(parsedNotes);
+        }
+      } catch (error) {
+        console.error('❌ Error loading notes:', error);
+        // 如果加载失败，尝试重新加载一次
+        setTimeout(async () => {
+          try {
+            const data = await AsyncStorage.getItem(NOTES_KEY);
+            if (data) {
+              const parsedNotes = JSON.parse(data);
+              setNotes(parsedNotes);
+            }
+          } catch (retryError) {
+            console.error('❌ Retry loading notes failed:', retryError);
+          }
+        }, 1000);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
-    }).catch(error => {
-      console.error('❌ Error loading notes:', error);
-      setLoading(false);
-    });
-  }, [refreshTrigger]);  const saveNotes = async (newNotes: Note[]) => {
+    };
+
+    loadNotes();
+  }, [refreshTrigger]);const saveNotes = async (newNotes: Note[]) => {
     setNotes(newNotes);
     await AsyncStorage.setItem(NOTES_KEY, JSON.stringify(newNotes));
   };  const addNote = async (note: Note) => {

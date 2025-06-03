@@ -1,14 +1,24 @@
 // 编辑器组件 - 富文本编辑器封装
 import React from 'react';
-import { View } from 'react-native';
+import { View, useColorScheme } from 'react-native';
 import { RichText } from '@10play/tentap-editor';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 
 interface EditorComponentProps {
   editor: any;
+  content?: string;
 }
 
-export const EditorComponent: React.FC<EditorComponentProps> = ({ editor }) => {
+export const EditorComponent: React.FC<EditorComponentProps> = ({ 
+  editor, 
+  content = '' 
+}) => {
+  const colorScheme = useColorScheme() ?? 'light';
+
+  if (!editor) {
+    return <View style={{ flex: 1, minHeight: 200 }} />;
+  }
+  
   return (
     <KeyboardAwareScrollView 
       enableOnAndroid={true}
