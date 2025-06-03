@@ -29,7 +29,10 @@ export default function NotesScreen() {
     unpinSelectedNotes,
     exportSelectedNotes,
     closeExportDialog,
-  } = useSelectionMode({ deleteNote, togglePinNote, setPinNotes });  // 仅在页面首次获得焦点或从编辑页面返回时刷新笔记列表
+  } = useSelectionMode({ deleteNote, togglePinNote, setPinNotes });  // 搜索按钮处理 - 导航到搜索页面
+  const handleSearchPress = useCallback(() => {
+    router.push('/search');
+  }, [router]);// 仅在页面首次获得焦点或从编辑页面返回时刷新笔记列表
   useFocusEffect(
     useCallback(() => {
       refreshNotes();
@@ -67,23 +70,20 @@ export default function NotesScreen() {
       });
     }
   }, [isSelectionMode, toggleNoteSelection, router]);
-
-  // 获取选中的笔记数据
+  // 获取选中的笔记数据 - 总是从原始notes中获取
   const selectedNotesData = useMemo(() => {
     const selectedIds = Array.from(selectedNotes);
     return notes.filter(note => selectedIds.includes(note.id));
   }, [notes, selectedNotes]);
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <NotesHeader
+    <View style={[styles.container, { backgroundColor: colors.background }]}>      <NotesHeader
         title={String(t('notes'))}
         colors={colors}
         onAboutPress={() => router.push('/about')}
         onAddPress={() => router.push('/note-edit')}
-      />
-
-      <NotesList
+        onSearchPress={handleSearchPress}
+      />      <NotesList
         notes={notes}
         isSelectionMode={isSelectionMode}
         selectedNotes={selectedNotes}
@@ -106,7 +106,7 @@ export default function NotesScreen() {
         onExportSelected={exportSelectedNotes}
         selectedNotes={selectedNotes}
         notes={notes}
-      />      <BatchExportDialog
+      /><BatchExportDialog
         visible={showExportDialog}
         onClose={closeExportDialog}
         notes={selectedNotesData}

@@ -12,35 +12,49 @@ interface NotesHeaderProps {
   };
   onAboutPress: () => void;
   onAddPress: () => void;
+  onSearchPress: () => void;
 }
 
 export const NotesHeader: React.FC<NotesHeaderProps> = ({
   title,
   colors,
   onAboutPress,
-  onAddPress
-}) => {
-  return (
+  onAddPress,
+  onSearchPress
+}) => {  return (
     <View style={styles.headerContainer}>
-      <TouchableOpacity
-        style={styles.aboutButton}
-        onPress={onAboutPress}
-      >
-        <FontAwesome 
-          name="info-circle" 
-          size={24} 
-          color={colors.text} 
-        />
-      </TouchableOpacity>
-      
       <Text style={[styles.header, { color: colors.text }]}>{title}</Text>
       
-      <TouchableOpacity
-        style={[styles.addIconButton, { backgroundColor: colors.tint }]}
-        onPress={onAddPress}
-      >
-        <FontAwesome name="plus" size={20} color="#fff" />
-      </TouchableOpacity>
+      <View style={styles.rightButtons}>
+        <TouchableOpacity
+          style={styles.actionButton}
+          onPress={onAboutPress}
+        >
+          <FontAwesome 
+            name="info-circle" 
+            size={20} 
+            color={colors.text} 
+          />
+        </TouchableOpacity>
+        
+        <TouchableOpacity
+          style={styles.actionButton}
+          onPress={onSearchPress}
+        >
+          <FontAwesome 
+            name="search" 
+            size={20} 
+            color={colors.text} 
+          />
+        </TouchableOpacity>
+        
+        <TouchableOpacity
+          style={styles.actionButton}
+          onPress={onAddPress}
+        >
+          <FontAwesome name="plus" size={20} color={colors.text} />
+        </TouchableOpacity>
+      </View>
     </View>
   );
 };
@@ -56,19 +70,16 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: 'bold',
   },
-  aboutButton: {
-    padding: 8,
-  },
-  addIconButton: {
+  actionButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
+    backgroundColor: 'transparent',
+  },  rightButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
 });

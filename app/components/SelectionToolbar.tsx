@@ -89,10 +89,9 @@ export const SelectionToolbar: React.FC<SelectionToolbarProps> = ({
           backgroundColor: colors.toolbarBackground,
         }
       ]}
-    >
-      <ToolbarButton 
+    >      <ToolbarButton 
         onPress={onExitSelection}
-        iconName="arrow-left"
+        iconName="chevron-left"
         text="返回"
         iconColor={colors.tint}
         textColor={colors.toolbarText}
