@@ -13,6 +13,7 @@ export default function useSelectionMode({ deleteNote, togglePinNote, setPinNote
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [selectedNotes, setSelectedNotes] = useState<Set<string>>(new Set());
   const [toolbarAnimation] = useState(new Animated.Value(0));
+  const [showExportDialog, setShowExportDialog] = useState(false);
 
   // 进入选择模式
   const enterSelectionMode = useCallback((noteId: string) => {
@@ -53,12 +54,14 @@ export default function useSelectionMode({ deleteNote, togglePinNote, setPinNote
       setSelectedNotes(new Set(allNotes.map(note => note.id)));
     }
   }, [selectedNotes]);
-
   // 删除选中的笔记
   const deleteSelectedNotes = useCallback(() => {
+    const selectedCount = selectedNotes.size;
+    const noteText = selectedCount === 1 ? '笔记' : '篇笔记';
+    
     Alert.alert(
       '确认删除',
-      `确定要删除选中的 ${selectedNotes.size} 条笔记吗？`,
+      `确定要删除所选的 ${selectedCount} ${noteText}吗？`,
       [
         {
           text: '取消',
@@ -76,7 +79,7 @@ export default function useSelectionMode({ deleteNote, togglePinNote, setPinNote
         },
       ]
     );
-  }, [selectedNotes, deleteNote, exitSelectionMode]);  // 置顶选中的笔记 - 使用批量操作避免卡顿
+  }, [selectedNotes, deleteNote, exitSelectionMode]);// 置顶选中的笔记 - 使用批量操作避免卡顿
   const pinSelectedNotes = useCallback(async () => {
     const selectedArray = Array.from(selectedNotes);
     // 统一设置所有选中的笔记为置顶状态
@@ -91,10 +94,18 @@ export default function useSelectionMode({ deleteNote, togglePinNote, setPinNote
     await setPinNotes(selectedArray, false);
     exitSelectionMode();
   }, [selectedNotes, setPinNotes, exitSelectionMode]);
-
-  // 导出选中的笔记 (暂时占位，后续可实现)
+  // 导出选中的笔记
   const exportSelectedNotes = useCallback(() => {
-    Alert.alert('功能开发中', '批量导出功能正在开发中');
+    if (selectedNotes.size === 0) {
+      Alert.alert('提示', '请先选择要导出的笔记');
+      return;
+    }
+    setShowExportDialog(true);
+  }, [selectedNotes]);
+
+  // 关闭导出对话框
+  const closeExportDialog = useCallback(() => {
+    setShowExportDialog(false);
   }, []);
 
   // 硬件返回键处理
@@ -111,11 +122,11 @@ export default function useSelectionMode({ deleteNote, togglePinNote, setPinNote
       const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
       return () => subscription.remove();
     }, [isSelectionMode, exitSelectionMode])
-  );
-  return {
+  );  return {
     isSelectionMode,
     selectedNotes,
     toolbarAnimation,
+    showExportDialog,
     enterSelectionMode,
     exitSelectionMode,
     toggleNoteSelection,
@@ -124,5 +135,6 @@ export default function useSelectionMode({ deleteNote, togglePinNote, setPinNote
     pinSelectedNotes,
     unpinSelectedNotes,
     exportSelectedNotes,
+    closeExportDialog,
   };
 };

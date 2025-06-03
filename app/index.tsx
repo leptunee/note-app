@@ -5,18 +5,19 @@ import { useTranslation } from 'react-i18next';
 import { useRouter, useFocusEffect } from 'expo-router';
 import Colors from '@/constants/Colors';
 import { NotesHeader, NotesList, SelectionToolbar } from './components';
+import { BatchExportDialog } from './components/BatchExportDialog';
 import useSelectionMode from './hooks/useSelectionMode';
 
 export default function NotesScreen() {
   const { notes, refreshNotes, deleteNote, togglePinNote, setPinNotes } = useNotes();
   const { t } = useTranslation();
   const router = useRouter();
-  const colorScheme = useColorScheme() ?? 'light';
-    // 使用选择模式Hook
+  const colorScheme = useColorScheme() ?? 'light';  // 使用选择模式Hook
   const {
     isSelectionMode,
     selectedNotes,
     toolbarAnimation,
+    showExportDialog,
     enterSelectionMode,
     exitSelectionMode,
     toggleNoteSelection,
@@ -25,6 +26,7 @@ export default function NotesScreen() {
     pinSelectedNotes,
     unpinSelectedNotes,
     exportSelectedNotes,
+    closeExportDialog,
   } = useSelectionMode({ deleteNote, togglePinNote, setPinNotes });
 
   // 仅在页面首次获得焦点或从编辑页面返回时刷新笔记列表
@@ -53,7 +55,6 @@ export default function NotesScreen() {
     secondaryText: colorScheme === 'dark' ? '#ccc' : '#666',
     tertiaryText: colorScheme === 'dark' ? '#888' : '#999',
   }), [colorScheme]);
-
   // 处理笔记点击
   const handleNotePress = useCallback((noteId: string) => {
     if (isSelectionMode) {
@@ -62,6 +63,12 @@ export default function NotesScreen() {
       router.push({ pathname: '/note-edit', params: { id: noteId } });
     }
   }, [isSelectionMode, toggleNoteSelection, router]);
+
+  // 获取选中的笔记数据
+  const selectedNotesData = useMemo(() => {
+    const selectedIds = Array.from(selectedNotes);
+    return notes.filter(note => selectedIds.includes(note.id));
+  }, [notes, selectedNotes]);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -95,6 +102,11 @@ export default function NotesScreen() {
         onExportSelected={exportSelectedNotes}
         selectedNotes={selectedNotes}
         notes={notes}
+      />      <BatchExportDialog
+        visible={showExportDialog}
+        onClose={closeExportDialog}
+        notes={selectedNotesData}
+        selectedCount={selectedNotes.size}
       />
     </View>
   );

@@ -469,11 +469,263 @@ export function useExport() {
       return { success: false, message: '导出图片失败，请重试。' };
     }
   };
+  /**
+   * 批量导出多个笔记为纯文本文件(.txt)
+   * @param notes 要导出的笔记数组
+   * @returns 对象包含导出是否成功和消息
+   */
+  const exportMultipleAsTxt = async (notes: Note[]): Promise<ExportResult> => {
+    try {
+      if (notes.length === 0) {
+        return { success: false, message: '没有选择任何笔记。' };
+      }
+
+      // 构建合并的文件内容
+      let combinedContent = '';
+      
+      notes.forEach((note, index) => {
+        const plainTextContent = extractPlainTextFromHTML(note.content);
+        const dateStr = new Date(note.createdAt).toLocaleString();
+        
+        // 添加分隔符（除了第一个笔记）
+        if (index > 0) {
+          combinedContent += '\n\n' + '='.repeat(50) + '\n\n';
+        }
+        
+        combinedContent += `标题: ${note.title}\n创建时间: ${dateStr}\n\n${plainTextContent}`;
+      });
+      
+      // 添加页脚
+      combinedContent += `\n\n- 来自笔记应用 (共导出 ${notes.length} 篇笔记)`;
+
+      // 创建文件名
+      const fileName = notes.length === 1 
+        ? `${notes[0].title.replace(/[\\/:*?"<>|]/g, '_')}_${Date.now()}.txt`
+        : `批量导出_${notes.length}篇笔记_${Date.now()}.txt`;
+
+      // 确定文件路径
+      const filePath = `${FileSystem.cacheDirectory}${fileName}`;
+
+      // 写入文件
+      await FileSystem.writeAsStringAsync(filePath, combinedContent, {
+        encoding: FileSystem.EncodingType.UTF8
+      });
+
+      // 检查分享功能是否可用
+      const isAvailable = await Sharing.isAvailableAsync();
+
+      if (isAvailable) {
+        // 分享文件
+        await Sharing.shareAsync(filePath, {
+          mimeType: 'text/plain',
+          dialogTitle: `分享 ${notes.length} 篇笔记`,
+          UTI: 'public.plain-text'
+        });
+        return { success: true, message: `已成功导出 ${notes.length} 篇笔记为文本文件。` };
+      } else {
+        return { success: false, message: '分享功能不可用，无法导出文本文件。' };
+      }
+    } catch (error) {
+      console.error('批量导出笔记时出错:', error);
+      return { success: false, message: '批量导出文本文件失败，请重试。' };
+    }
+  };
+
+  /**
+   * 批量导出多个笔记为Word文档（HTML格式）
+   * @param notes 要导出的笔记数组
+   * @returns 对象包含导出是否成功和消息
+   */
+  const exportMultipleAsWord = async (notes: Note[]): Promise<ExportResult> => {
+    try {
+      if (notes.length === 0) {
+        return { success: false, message: '没有选择任何笔记。' };
+      }
+
+      // 构建HTML内容
+      let notesHtml = '';
+      
+      notes.forEach((note, index) => {
+        const dateStr = new Date(note.createdAt).toLocaleDateString();
+        const timeStr = new Date(note.createdAt).toLocaleTimeString();
+        const formattedContent = note.content || '<p>无内容</p>';
+        
+        // 添加分页符（除了第一个笔记）
+        if (index > 0) {
+          notesHtml += '<div style="page-break-before: always;"></div>';
+        }
+        
+        notesHtml += `
+          <div class="note-section">
+            <div class="note-header">
+              <h1>${note.title}</h1>
+              <div class="date">创建于 ${dateStr} ${timeStr}</div>
+            </div>
+            <div class="content">
+              ${formattedContent}
+            </div>
+          </div>
+        `;
+      });
+
+      const htmlContent = `
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>批量导出笔记 - ${notes.length}篇</title>
+  <style>
+    body {
+      font-family: 'Microsoft YaHei', 'PingFang SC', 'Helvetica Neue', Arial, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 40px;
+      background-color: #ffffff;
+      color: #2c3e50;
+      line-height: 1.6;
+    }
+    .note-section {
+      margin-bottom: 60px;
+    }
+    .note-header h1 {
+      font-size: 24pt;
+      color: #2c3e50;
+      margin: 0 0 10px 0;
+      border-bottom: 2px solid #3498db;
+      padding-bottom: 10px;
+    }
+    .date {
+      color: #7f8c8d;
+      font-size: 12pt;
+      margin-bottom: 2em;
+    }
+    .content {
+      font-size: 12pt;
+      text-align: justify;
+    }
+    .footer {
+      margin-top: 3em;
+      padding-top: 1em;
+      border-top: 1px solid #ecf0f1;
+      color: #95a5a6;
+      font-size: 9pt;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="document">
+    ${notesHtml}
+    
+    <div class="footer">
+      此文档由笔记应用导出 - ${new Date().toLocaleDateString()} (共 ${notes.length} 篇笔记)
+    </div>
+  </div>
+</body>
+</html>
+      `;
+
+      // 创建临时HTML文件
+      const fileName = `批量导出_${notes.length}篇笔记_${Date.now()}.html`;
+      const filePath = `${FileSystem.cacheDirectory}${fileName}`;
+
+      // 写入文件
+      await FileSystem.writeAsStringAsync(filePath, htmlContent, {
+        encoding: FileSystem.EncodingType.UTF8
+      });
+
+      // 检查分享功能是否可用
+      const isAvailable = await Sharing.isAvailableAsync();
+
+      if (isAvailable) {
+        // 分享文件
+        await Sharing.shareAsync(filePath, {
+          mimeType: 'text/html',
+          dialogTitle: `分享 ${notes.length} 篇笔记`,
+          UTI: 'public.html'
+        });
+        return { success: true, message: `已成功导出 ${notes.length} 篇笔记为Word文档。` };
+      } else {
+        return { success: false, message: '分享功能不可用，无法导出Word文档。' };
+      }
+    } catch (error) {
+      console.error('批量导出Word文档时出错:', error);
+      return { success: false, message: '批量导出Word文档失败，请重试。' };
+    }
+  };
+
+  /**
+   * 批量导出多个笔记为Markdown文件(.md)
+   * @param notes 要导出的笔记数组
+   * @returns 对象包含导出是否成功和消息
+   */
+  const exportMultipleAsMarkdown = async (notes: Note[]): Promise<ExportResult> => {
+    try {
+      if (notes.length === 0) {
+        return { success: false, message: '没有选择任何笔记。' };
+      }
+
+      // 构建合并的Markdown内容
+      let combinedContent = '';
+      
+      notes.forEach((note, index) => {
+        const plainTextContent = extractPlainTextFromHTML(note.content);
+        const dateStr = new Date(note.createdAt).toLocaleString();
+        
+        // 添加分隔符（除了第一个笔记）
+        if (index > 0) {
+          combinedContent += '\n\n---\n\n';
+        }
+        
+        combinedContent += `# ${note.title}\n\n`;
+        combinedContent += `**创建时间:** ${dateStr}\n\n`;
+        combinedContent += `${plainTextContent}\n`;
+      });
+      
+      // 添加页脚
+      combinedContent += `\n\n---\n\n*来自笔记应用 (共导出 ${notes.length} 篇笔记)*`;
+
+      // 创建文件名
+      const fileName = notes.length === 1 
+        ? `${notes[0].title.replace(/[\\/:*?"<>|]/g, '_')}_${Date.now()}.md`
+        : `批量导出_${notes.length}篇笔记_${Date.now()}.md`;
+
+      // 确定文件路径
+      const filePath = `${FileSystem.cacheDirectory}${fileName}`;
+
+      // 写入文件
+      await FileSystem.writeAsStringAsync(filePath, combinedContent, {
+        encoding: FileSystem.EncodingType.UTF8
+      });
+
+      // 检查分享功能是否可用
+      const isAvailable = await Sharing.isAvailableAsync();
+
+      if (isAvailable) {
+        // 分享文件
+        await Sharing.shareAsync(filePath, {
+          mimeType: 'text/markdown',
+          dialogTitle: `分享 ${notes.length} 篇笔记`,
+          UTI: 'net.daringfireball.markdown'
+        });
+        return { success: true, message: `已成功导出 ${notes.length} 篇笔记为Markdown文件。` };
+      } else {
+        return { success: false, message: '分享功能不可用，无法导出Markdown文件。' };
+      }
+    } catch (error) {
+      console.error('批量导出Markdown时出错:', error);
+      return { success: false, message: '批量导出Markdown失败，请重试。' };
+    }
+  };
 
   return {
     exportAsTxt,
     exportAsWord,
     exportAsMarkdown,
-    exportAsImage
+    exportAsImage,
+    exportMultipleAsTxt,
+    exportMultipleAsWord,
+    exportMultipleAsMarkdown
   };
 }
