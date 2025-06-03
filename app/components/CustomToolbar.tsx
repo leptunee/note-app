@@ -90,15 +90,13 @@ export const CustomToolbar: React.FC<CustomToolbarProps> = ({
           // 如果转换失败，使用原始 URI
         }// 尝试多种插入方法
         let insertSuccess = false;
-        
-        // 方法1: 使用正确的 setImage API (根据文档，setImage 只接受 string 参数)
+          // 方法1: 使用正确的 setImage API (根据文档，setImage 只接受 string 参数)
         if (!insertSuccess && typeof editor.setImage === 'function') {
           try {
             editor.setImage(imageUri);
             insertSuccess = true;
-            console.log('Image inserted successfully using setImage API');
           } catch (e) {
-            console.log('setImage failed, trying next method:', e);
+            // 尝试下一种方法
           }
         }
         
@@ -107,9 +105,8 @@ export const CustomToolbar: React.FC<CustomToolbarProps> = ({
           try {
             editor.chain().focus().setImage({ src: imageUri }).run();
             insertSuccess = true;
-            console.log('Image inserted successfully using chain API');
           } catch (e) {
-            console.log('Chain API failed, trying next method:', e);
+            // 尝试下一种方法
           }
         }
         
@@ -118,12 +115,10 @@ export const CustomToolbar: React.FC<CustomToolbarProps> = ({
           try {
             editor.commands.setImage({ src: imageUri });
             insertSuccess = true;
-            console.log('Image inserted successfully using commands.setImage');
           } catch (e) {
-            console.log('commands.setImage failed, trying next method:', e);
+            // 尝试下一种方法
           }
-        }
-          // 方法4: 使用 HTML 插入
+        }          // 方法4: 使用 HTML 插入
         if (!insertSuccess) {
           try {
             const imageHtml = `<img src="${imageUri}" style="max-width: 100%; height: auto; display: block; margin: 10px 0; border-radius: 4px;" alt="插入的图片" title="插入的图片" />`;
@@ -131,42 +126,26 @@ export const CustomToolbar: React.FC<CustomToolbarProps> = ({
             if (typeof editor.insertContent === 'function') {
               await editor.insertContent(imageHtml);
               insertSuccess = true;
-              console.log('Image inserted successfully using insertContent');
             } else if (typeof editor.commands?.insertContent === 'function') {
               await editor.commands.insertContent(imageHtml);
               insertSuccess = true;
-              console.log('Image inserted successfully using commands.insertContent');
             }
           } catch (e) {
-            console.log('HTML insertion failed:', e);
+            // HTML插入失败
           }
-        }
-          if (!insertSuccess) {
+        }        if (!insertSuccess) {
           console.warn('All image insertion methods failed');
           Alert.alert('插入失败', '当前编辑器版本不支持图片插入功能');
           return;
-        }        // 检查编辑器内容以验证图片是否插入成功
+        }
+
+        // 图片插入成功后的简单验证
         try {
-          console.log('Editor object keys:', Object.keys(editor));
-          console.log('Editor available methods:', Object.getOwnPropertyNames(editor).filter(prop => typeof editor[prop] === 'function'));
-          
-          // 尝试不同的内容获取方法 (这些都是异步方法)
           if (typeof editor.getHTML === 'function') {
-            const htmlContent = await editor.getHTML();
-            console.log('getHTML result:', htmlContent);
-          }
-          
-          if (typeof editor.getJSON === 'function') {
-            const jsonContent = await editor.getJSON();
-            console.log('getJSON result:', jsonContent);
-          }
-          
-          if (typeof editor.getText === 'function') {
-            const textContent = await editor.getText();
-            console.log('getText result:', textContent);
+            await editor.getHTML();
           }
         } catch (e) {
-          console.log('Failed to get editor content:', e);
+          // 静默处理验证错误
         }
       }
     } catch (error) {

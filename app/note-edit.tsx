@@ -123,20 +123,16 @@ export default function NoteEditScreen() {
     return checkEditorReady();
   }, [editor]);  // 在保存前同步编辑器内容的函数
   const handleSaveWithSync = async () => {
-    console.log('🚀 handleSaveWithSync called - 开始保存操作');
-    
     // 先让编辑器失去焦点
     try {
       if (editor && typeof editor.blur === 'function') {
-        console.log('📝 Calling editor.blur() - 编辑器失焦');
         editor.blur();
       }
     } catch (error) {
-      console.log('⚠️ Editor blur failed:', error);
+      // 静默处理错误
     }
     
     // 立即调用键盘下落
-    console.log('📱 Calling Keyboard.dismiss() immediately - 立即键盘下落');
     Keyboard.dismiss();
     
     // 获取编辑器内容并保存
@@ -144,29 +140,23 @@ export default function NoteEditScreen() {
     if (editor && typeof editor.getHTML === 'function') {
       try {
         latestContent = await editor.getHTML();
-        console.log('✅ Editor content retrieved');
       } catch (error) {
-        console.log('⚠️ Failed to get editor content:', error);
+        // 静默处理错误
       }
-    } else {
-      console.log('⚠️ Editor not available');
     }
       // 延迟执行保存，确保键盘已经下落
     setTimeout(() => {
-      console.log('💾 Executing delayed save operation');
       handleSave(latestContent, true); // 显示toast，用户点击保存按钮应该有反馈
       
       // 保存后再次确保编辑器失焦和键盘下落
       setTimeout(() => {
         try {
           if (editor && typeof editor.blur === 'function') {
-            console.log('📝 Post-save editor.blur() - 保存后编辑器失焦');
             editor.blur();
           }
         } catch (error) {
-          console.log('⚠️ Post-save editor blur failed:', error);
+          // 静默处理错误
         }
-        console.log('📱 Post-save Keyboard.dismiss() - 保存后键盘下落');
         Keyboard.dismiss();
       }, 100);
     }, 200);

@@ -36,16 +36,17 @@ export function useNotes() {
     
     setLastRefreshTime(now);
     setRefreshTrigger(prev => prev + 1);
-  };
-
-  useEffect(() => {
+  };  useEffect(() => {
     AsyncStorage.getItem(NOTES_KEY).then(data => {
-      if (data) setNotes(JSON.parse(data));
+      if (data) {
+        setNotes(JSON.parse(data));
+      }
+      setLoading(false);
+    }).catch(error => {
+      console.error('❌ Error loading notes:', error);
       setLoading(false);
     });
-  }, [refreshTrigger]);
-
-  const saveNotes = async (newNotes: Note[]) => {
+  }, [refreshTrigger]);  const saveNotes = async (newNotes: Note[]) => {
     setNotes(newNotes);
     await AsyncStorage.setItem(NOTES_KEY, JSON.stringify(newNotes));
   };  const addNote = async (note: Note) => {
@@ -73,5 +74,6 @@ export function useNotes() {
     const newNotes = notes.filter(n => n.id !== id);
     await saveNotes(newNotes);
   };
+  // 移除清理所有数据的功能
   return { notes, loading, addNote, updateNote, deleteNote, refreshNotes };
 }

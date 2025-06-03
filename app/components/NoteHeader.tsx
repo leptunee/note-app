@@ -97,11 +97,7 @@ export const NoteHeader: React.FC<NoteHeaderProps> = ({
             onExport={onExport}
             onDelete={onDelete}
           />
-        )}
-          <TouchableOpacity onPress={() => {
-          console.log('💾 Save button pressed - 保存按钮被点击');
-          onSave();
-        }} style={styles.saveButton}>
+        )}          <TouchableOpacity onPress={onSave} style={styles.saveButton}>
           <FontAwesome 
             name="check" 
             size={ICON_SIZE} 

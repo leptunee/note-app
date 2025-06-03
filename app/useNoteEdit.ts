@@ -8,7 +8,8 @@ import { v4 as uuidv4 } from 'uuid';
 import { type ToastRef } from './components'; // Import ToastRef type from components
 
 export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef | null>, titleInputRef?: React.RefObject<TextInput | null>) {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id: routeId } = useLocalSearchParams<{ id: string }>();
+  const [currentNoteId, setCurrentNoteId] = useState<string | undefined>(routeId);
   const { notes, addNote, updateNote, deleteNote } = useNotes();
   const { exportAsTxt, exportAsMarkdown, exportAsImage, exportAsWord } = useExport();
   const { t } = useTranslation();
@@ -32,15 +33,14 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
     backgroundImageOpacity: 0.5, // 默认透明度设为50%
     backgroundImageBlur: 0, // 默认无模糊
     // 移除了默认背景图片
-  });
-  const colorScheme = useColorScheme() ?? 'light';
+  });  const colorScheme = useColorScheme() ?? 'light';
   const MAX_TITLE_LENGTH = 64;
-  const isNewNote = !id;
+  const isNewNote = !currentNoteId;
   const noteViewRef = useRef(null);
 
   useEffect(() => {
-    if (id) {
-      const note = notes.find(n => n.id === id);
+    if (currentNoteId) {
+      const note = notes.find(n => n.id === currentNoteId);
       if (note) {
         setTitle(note.title);
         setContent(note.content);
@@ -66,9 +66,8 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
         backgroundImageOpacity: 0.5, // 默认透明度设为50%
         backgroundImageBlur: 0, // 默认无模糊
         // 移除了默认背景图片
-      });
-    }
-  }, [id, notes, t]);
+      });    }
+  }, [currentNoteId, notes, t]);
 
   // 纯保存功能，可选择是否显示 toast
   const handleSave = (currentContentOverride?: string, showToast: boolean = true) => {
@@ -90,10 +89,9 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
       content: contentToUse,
       pageSettings,
     };
-    
-    try {
-      if (id) {
-        const note = notes.find(n => n.id === id);
+      try {
+      if (currentNoteId) {
+        const note = notes.find(n => n.id === currentNoteId);
         if (note) {
           updateNote({
             ...note,
@@ -112,6 +110,8 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
         };
 
         addNote(newNote);
+        // 重要：设置当前笔记ID，避免重复创建
+        setCurrentNoteId(newNoteId);
       }
       
       if (showToast) {
@@ -139,10 +139,9 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
   const handleBack = () => {
     router.back();
   };
-
   const handleDelete = () => {
-    if (id) {
-      deleteNote(id);
+    if (currentNoteId) {
+      deleteNote(currentNoteId);
     }
     router.back();
   };
@@ -163,10 +162,9 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
     Keyboard.dismiss();
     
     toastRef?.current?.show('正在导出文本文件...', 'loading');
-    
-    try {
+      try {
       const now = Date.now();
-      const note = notes.find(n => n.id === id) || { id: 'temp', title, content, createdAt: now, updatedAt: now, pageSettings };
+      const note = notes.find(n => n.id === currentNoteId) || { id: 'temp', title, content, createdAt: now, updatedAt: now, pageSettings };
       const result = await exportAsTxt(note);
       
       toastRef?.current?.hide();
@@ -188,10 +186,9 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
     Keyboard.dismiss();
     
     toastRef?.current?.show('正在导出Markdown文件...', 'loading');
-    
-    try {
+      try {
       const now = Date.now();
-      const note = notes.find(n => n.id === id) || { id: 'temp', title, content, createdAt: now, updatedAt: now, pageSettings };
+      const note = notes.find(n => n.id === currentNoteId) || { id: 'temp', title, content, createdAt: now, updatedAt: now, pageSettings };
       const result = await exportAsMarkdown(note);
       
       toastRef?.current?.hide();
@@ -223,9 +220,8 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
         toastRef?.current?.show(message, 'error');
         return { success: false, message };
       }
-      
-      const now = Date.now();
-      const note = notes.find(n => n.id === id) || { id: 'temp', title, content, createdAt: now, updatedAt: now, pageSettings };
+        const now = Date.now();
+      const note = notes.find(n => n.id === currentNoteId) || { id: 'temp', title, content, createdAt: now, updatedAt: now, pageSettings };
       
       // 直接调用导出功能，不需要显式显示ExportView
       const result = await exportAsImage(noteViewRef, note);
@@ -251,10 +247,9 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
     Keyboard.dismiss();
     
     toastRef?.current?.show('正在导出Word文档...', 'loading');
-    
-    try {
+      try {
       const now = Date.now();
-      const note = notes.find(n => n.id === id) || { id: 'temp', title, content, createdAt: now, updatedAt: now, pageSettings };
+      const note = notes.find(n => n.id === currentNoteId) || { id: 'temp', title, content, createdAt: now, updatedAt: now, pageSettings };
       const result = await exportAsWord(note);
       
       toastRef?.current?.hide();
@@ -305,7 +300,6 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
   const handlePageSettingsChange = (settings: Partial<PageSettings>) => {
     setPageSettings(prev => ({ ...prev, ...settings }));
   };
-
   return {
     title,
     setTitle,
@@ -325,6 +319,7 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
     isNewNote,
     noteViewRef,
     lastEditedTime,
+    currentNoteId,
     handleSave,
     handleSaveAndBack,
     handleBack,
