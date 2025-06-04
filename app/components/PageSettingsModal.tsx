@@ -112,11 +112,11 @@ export const PageSettingsModal: React.FC<PageSettingsModalProps> = ({
     onClose();
   };
 
-  return (
-    <Modal
+  return (    <Modal
       visible={isVisible}
       transparent
       animationType="fade"
+      statusBarTranslucent={true}
       onRequestClose={onClose}
     >
       {/* 背景遮罩，点击可关闭模态框 */}

@@ -41,11 +41,11 @@ export const BatchExportDialog: React.FC<BatchExportDialogProps> = ({
   };
 
   return (
-    <>
-      <Modal
+    <>      <Modal
         animationType="fade"
         transparent={true}
         visible={visible}
+        statusBarTranslucent={true}
         onRequestClose={onClose}
       >
         <TouchableWithoutFeedback onPress={onClose}>

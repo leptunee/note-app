@@ -43,11 +43,11 @@ export const ExportModal: React.FC<ExportModalProps> = ({
   };
 
   return (
-    <>
-      <Modal
+    <>      <Modal
         animationType="fade" // Changed from "slide" to "fade"
         transparent={true}
         visible={isVisible}
+        statusBarTranslucent={true}
         onRequestClose={onClose}
       >
         <TouchableWithoutFeedback onPress={onClose}>

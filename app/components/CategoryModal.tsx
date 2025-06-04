@@ -10,11 +10,13 @@ import {
   useColorScheme,
   ScrollView,
   Alert,
+  TouchableWithoutFeedback,
 } from 'react-native';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { Category } from '@/components/useNotes';
 import Colors from '@/constants/Colors';
 import { useTranslation } from 'react-i18next';
+import { styles } from './styles';
 
 interface CategoryModalProps {
   isVisible: boolean;
@@ -26,22 +28,12 @@ interface CategoryModalProps {
 
 // 预定义的图标选项
 const CATEGORY_ICONS = [
-  'file-text',
-  'briefcase',
-  'user',
-  'graduation-cap',
-  'heart',
-  'star',
-  'bookmark',
-  'tag',
-  'folder',
-  'home',
-  'car',
-  'plane',
-  'camera',
-  'music',
-  'gamepad',
-  'shopping-cart',
+  'folder',      // 文件夹 - 最常用，排第一
+  'briefcase',   // 工作/商务
+  'user',        // 个人 - 替换原来的 file-text
+  'graduation-cap', // 学习 - 替换原来的 tag
+  'star',        // 收藏/重要
+  'bookmark',    // 书签/标记
 ];
 
 // 预定义的颜色选项
@@ -52,12 +44,6 @@ const CATEGORY_COLORS = [
   '#9C27B0', // 紫色
   '#F44336', // 红色
   '#607D8B', // 蓝灰色
-  '#795548', // 棕色
-  '#FF5722', // 深橙色
-  '#3F51B5', // 靛蓝色
-  '#009688', // 青色
-  '#CDDC39', // 柠檬绿
-  '#E91E63', // 粉红色
 ];
 
 export const CategoryModal: React.FC<CategoryModalProps> = ({
@@ -143,195 +129,143 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
       ]
     );
   };
-
   return (
     <Modal
       visible={isVisible}
-      animationType="slide"
+      animationType="fade"
       transparent={true}
+      statusBarTranslucent={true}
       onRequestClose={onClose}
     >
-      <View style={styles.overlay}>
-        <View style={[styles.modal, { backgroundColor: colors.background }]}>
-          {/* 头部 */}
-          <View style={[styles.header, { borderBottomColor: colors.border }]}>
-            <Text style={[styles.headerTitle, { color: colors.text }]}>
-              {category ? t('editCategory', '编辑分类') : t('addCategory', '新建分类')}
-            </Text>
-            <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-              <FontAwesome name="times" size={20} color={colors.secondaryText} />
-            </TouchableOpacity>
-          </View>
+      <TouchableWithoutFeedback onPress={onClose}>
+        <View style={styles.modalOverlay}>
+          <TouchableWithoutFeedback onPress={() => {}}>
+            <View style={[styles.modalContainer, { backgroundColor: colors.background }]}>
+              {/* 头部 */}
+              <View style={[localStyles.header, { borderBottomColor: colors.border }]}>
+                <Text style={[localStyles.headerTitle, { color: colors.text }]}>
+                  {category ? t('editCategory', '编辑分类') : t('addCategory', '新建分类')}
+                </Text>
+                <TouchableOpacity style={localStyles.closeButton} onPress={onClose}>
+                  <FontAwesome name="times" size={20} color={colors.secondaryText} />
+                </TouchableOpacity>
+              </View>
 
-          <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-            {/* 分类名称 */}
-            <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                {t('categoryName', '分类名称')}
-              </Text>
-              <TextInput
-                style={[
-                  styles.nameInput,
-                  {
-                    backgroundColor: colors.inputBackground,
-                    borderColor: nameError ? '#F44336' : colors.inputBorder,
-                    color: colors.text,
-                  },
-                ]}
-                value={name}
-                onChangeText={(text) => {
-                  setName(text);
-                  setNameError('');
-                }}
-                placeholder={t('enterCategoryName', '请输入分类名称')}
-                placeholderTextColor={colors.secondaryText}
-                maxLength={20}
-              />
-              {nameError ? (
-                <Text style={styles.errorText}>{nameError}</Text>
-              ) : null}
-            </View>
-
-            {/* 图标选择 */}
-            <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                {t('categoryIcon', '分类图标')}
-              </Text>
-              <View style={styles.iconGrid}>
-                {CATEGORY_ICONS.map((icon) => (
-                  <TouchableOpacity
-                    key={icon}
+              <ScrollView style={localStyles.content} showsVerticalScrollIndicator={false}>
+                {/* 分类名称 */}
+                <View style={localStyles.section}>
+                  <Text style={[localStyles.sectionTitle, { color: colors.text }]}>
+                    {t('categoryName', '分类名称')}
+                  </Text>
+                  <TextInput
                     style={[
-                      styles.iconOption,
+                      localStyles.nameInput,
                       {
-                        backgroundColor:
-                          selectedIcon === icon ? selectedColor : colors.surface,
-                        borderColor: selectedIcon === icon ? selectedColor : colors.border,
+                        backgroundColor: colors.inputBackground,
+                        borderColor: nameError ? '#F44336' : colors.inputBorder,
+                        color: colors.text,
                       },
                     ]}
-                    onPress={() => setSelectedIcon(icon)}
-                  >
-                    <FontAwesome
-                      name={icon as any}
-                      size={20}
-                      color={selectedIcon === icon ? '#ffffff' : colors.secondaryText}
-                    />
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
-
-            {/* 颜色选择 */}
-            <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                {t('categoryColor', '分类颜色')}
-              </Text>
-              <View style={styles.colorGrid}>
-                {CATEGORY_COLORS.map((color) => (
-                  <TouchableOpacity
-                    key={color}
-                    style={[
-                      styles.colorOption,
-                      {
-                        backgroundColor: color,
-                        borderColor: selectedColor === color ? colors.text : 'transparent',
-                      },
-                    ]}
-                    onPress={() => setSelectedColor(color)}
-                  >
-                    {selectedColor === color && (
-                      <FontAwesome name="check" size={16} color="#ffffff" />
-                    )}
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
-
-            {/* 预览 */}
-            <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                {t('preview', '预览')}
-              </Text>
-              <View style={[styles.preview, { backgroundColor: colors.surface }]}>
-                <View
-                  style={[
-                    styles.previewIcon,
-                    { backgroundColor: selectedColor },
-                  ]}
-                >
-                  <FontAwesome
-                    name={selectedIcon as any}
-                    size={16}
-                    color="#ffffff"
+                    value={name}
+                    onChangeText={(text) => {
+                      setName(text);
+                      setNameError('');
+                    }}
+                    placeholder={t('enterCategoryName', '请输入分类名称')}
+                    placeholderTextColor={colors.secondaryText}
+                    maxLength={20}
                   />
+                  {nameError ? (
+                    <Text style={localStyles.errorText}>{nameError}</Text>
+                  ) : null}
                 </View>
-                <Text style={[styles.previewName, { color: colors.text }]}>
-                  {name || t('categoryName', '分类名称')}
-                </Text>
+
+                {/* 图标选择 */}
+                <View style={localStyles.section}>
+                  <Text style={[localStyles.sectionTitle, { color: colors.text }]}>
+                    {t('categoryIcon', '分类图标')}
+                  </Text>
+                  <View style={localStyles.iconGrid}>
+                    {CATEGORY_ICONS.map((icon) => (
+                      <TouchableOpacity
+                        key={icon}                        style={[
+                          localStyles.iconOption,
+                          {
+                            backgroundColor:
+                              selectedIcon === icon ? selectedColor : colors.surface,
+                          },
+                        ]}
+                        onPress={() => setSelectedIcon(icon)}
+                      >                        <FontAwesome
+                          name={icon as any}
+                          size={16}
+                          color={selectedIcon === icon ? '#ffffff' : colors.secondaryText}
+                        />
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>                {/* 颜色选择 */}
+                <View style={localStyles.section}>
+                  <Text style={[localStyles.sectionTitle, { color: colors.text }]}>
+                    {t('categoryColor', '分类颜色')}
+                  </Text>
+                  <View style={localStyles.colorGrid}>
+                    {CATEGORY_COLORS.map((color) => (
+                      <TouchableOpacity
+                        key={color}
+                        style={[
+                          localStyles.colorOption,
+                          {
+                            backgroundColor: color,
+                            borderColor: selectedColor === color ? colors.text : 'transparent',
+                          },
+                        ]}
+                        onPress={() => setSelectedColor(color)}
+                      >                        {selectedColor === color && (
+                          <FontAwesome name="check" size={14} color="#ffffff" />
+                        )}
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+              </ScrollView>              {/* 底部按钮 */}
+              <View style={[localStyles.footer, { borderTopColor: colors.border }]}>
+                <View style={localStyles.leftButtonContainer}>
+                  {category && category.id !== 'all' && category.id !== 'uncategorized' && onDelete && (
+                    <TouchableOpacity
+                      style={[localStyles.deleteButton, localStyles.footerButton]}
+                      onPress={handleDelete}
+                    >
+                      <FontAwesome name="trash" size={16} color="#F44336" />
+                      <Text style={localStyles.deleteButtonText}>
+                        {t('delete', '删除')}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+                
+                <TouchableOpacity
+                  style={[
+                    localStyles.saveButton,
+                    localStyles.footerButton,
+                    { backgroundColor: Colors[colorScheme].tint },
+                  ]}
+                  onPress={handleSave}
+                >
+                  <Text style={localStyles.saveButtonText}>
+                    {t('save', '保存')}
+                  </Text>
+                </TouchableOpacity>
               </View>
             </View>
-          </ScrollView>          {/* 底部按钮 */}
-          <View style={[styles.footer, { borderTopColor: colors.border }]}>
-            {category && category.id !== 'all' && category.id !== 'uncategorized' && onDelete && (
-              <TouchableOpacity
-                style={[styles.deleteButton, styles.footerButton]}
-                onPress={handleDelete}
-              >
-                <FontAwesome name="trash" size={16} color="#F44336" />
-                <Text style={styles.deleteButtonText}>
-                  {t('delete', '删除')}
-                </Text>
-              </TouchableOpacity>
-            )}
-            
-            <View style={styles.footerRightButtons}>
-              <TouchableOpacity
-                style={[styles.cancelButton, styles.footerButton]}
-                onPress={onClose}
-              >
-                <Text style={[styles.cancelButtonText, { color: colors.secondaryText }]}>
-                  {t('cancel', '取消')}
-                </Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity
-                style={[
-                  styles.saveButton,
-                  styles.footerButton,
-                  { backgroundColor: Colors[colorScheme].tint },
-                ]}
-                onPress={handleSave}
-              >
-                <Text style={styles.saveButtonText}>
-                  {t('save', '保存')}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
+          </TouchableWithoutFeedback>
         </View>
-      </View>
+      </TouchableWithoutFeedback>
     </Modal>
   );
 };
 
-const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modal: {
-    width: '90%',
-    maxWidth: 400,
-    maxHeight: '80%',
-    borderRadius: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 10,
-    elevation: 20,
-  },
+const localStyles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -346,18 +280,19 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     padding: 8,
-  },
-  content: {
+  },  content: {
+    flexGrow: 1,
     paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingVertical: 12,
+    maxHeight: 280,
   },
   section: {
-    marginBottom: 24,
+    marginBottom: 16,
   },
   sectionTitle: {
     fontSize: 16,
     fontWeight: '600',
-    marginBottom: 12,
+    marginBottom: 6,
   },
   nameInput: {
     borderWidth: 1,
@@ -370,29 +305,25 @@ const styles = StyleSheet.create({
     color: '#F44336',
     fontSize: 14,
     marginTop: 4,
-  },
-  iconGrid: {
+  },  iconGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 12,
-  },
-  iconOption: {
-    width: 48,
-    height: 48,
+    gap: 8,
+  },  iconOption: {
+    width: 32,
+    height: 32,
     borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 2,
   },
   colorGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 12,
-  },
-  colorOption: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    gap: 8,
+  },  colorOption: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 3,
@@ -414,14 +345,16 @@ const styles = StyleSheet.create({
   previewName: {
     fontSize: 16,
     fontWeight: '500',
-  },
-  footer: {
+  },  footer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 16,
     borderTopWidth: 1,
+  },
+  leftButtonContainer: {
+    flex: 1,
   },
   footerButton: {
     paddingHorizontal: 16,
@@ -430,10 +363,6 @@ const styles = StyleSheet.create({
     minWidth: 60,
     alignItems: 'center',
   },
-  footerRightButtons: {
-    flexDirection: 'row',
-    gap: 12,
-  },
   deleteButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -441,13 +370,6 @@ const styles = StyleSheet.create({
   },
   deleteButtonText: {
     color: '#F44336',
-    fontSize: 16,
-    fontWeight: '500',
-  },
-  cancelButton: {
-    backgroundColor: 'transparent',
-  },
-  cancelButtonText: {
     fontSize: 16,
     fontWeight: '500',
   },

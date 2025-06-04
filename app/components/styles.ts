@@ -176,10 +176,12 @@ export const styles = StyleSheet.create({  // 容器相关样式
     alignItems: 'center',
     backgroundColor: 'rgba(0,0,0,0.5)',
     padding: 20,
+    paddingTop: 0, // 确保覆盖状态栏
   },
   modalContainer: {
     width: '100%',
     maxWidth: 400,
+    maxHeight: '70%',
     borderRadius: 16,
     padding: 24,
     elevation: 5,
