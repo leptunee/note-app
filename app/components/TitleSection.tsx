@@ -2,8 +2,10 @@
 import React, { forwardRef } from 'react';
 import { View, Text, TextInput, useColorScheme } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { formatDate, getPlainTextLength } from './utils/contentUtils';
+import { getPlainTextLength } from './utils/contentUtils';
 import { styles } from './styles';
+import { CategoryDisplay } from './CategoryDisplay';
+import { Category } from '@/components/useNotes';
 
 interface TitleSectionProps {
   title: string;
@@ -12,7 +14,8 @@ interface TitleSectionProps {
   textColor?: string;
   maxLength?: number;
   titleError?: string;
-  lastEditedAt?: number;
+  selectedCategory?: Category;
+  onCategoryPress?: () => void;
 }
 
 export const TitleSection = forwardRef<TextInput, TitleSectionProps>(({
@@ -22,7 +25,8 @@ export const TitleSection = forwardRef<TextInput, TitleSectionProps>(({
   textColor,
   maxLength,
   titleError,
-  lastEditedAt
+  selectedCategory,
+  onCategoryPress
 }, ref) => {
   const { t } = useTranslation();
   const colorScheme = useColorScheme() ?? 'light';
@@ -53,16 +57,26 @@ export const TitleSection = forwardRef<TextInput, TitleSectionProps>(({
         numberOfLines={3} // 最多显示3行，超过后可以滚动
       />
 
-      {/* 日期和字数统计 */}
+      {/* 分类显示和字数统计 */}
       <View style={{ 
         flexDirection: 'row', 
         justifyContent: 'space-between', 
+        alignItems: 'center',
         paddingHorizontal: 0, 
         marginBottom: 2
       }}>
-        <Text style={{ color: colorScheme === 'dark' ? '#999' : '#888', fontSize: 12 }}>
-          {lastEditedAt ? `${t('lastEdited')}: ${formatDate(lastEditedAt)}` : formatDate()}
-        </Text>
+        {/* 分类显示 - 左侧 */}
+        {selectedCategory && onCategoryPress ? (
+          <CategoryDisplay
+            category={selectedCategory}
+            onPress={onCategoryPress}
+            textColor={colorScheme === 'dark' ? '#999' : '#888'}
+          />
+        ) : (
+          <View /> // 占位元素，保持布局
+        )}
+        
+        {/* 字数统计 - 右侧 */}
         <Text style={{ color: colorScheme === 'dark' ? '#999' : '#888', fontSize: 12 }}>
           {getPlainTextLength(content)} {getPlainTextLength(content) > 0 ? String(t('characters')) : String(t('character'))}
         </Text>

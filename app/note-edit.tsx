@@ -269,22 +269,12 @@ export default function NoteEditScreen() {
             showOptionsMenu={showOptionsMenu}
             toggleOptionsMenu={() => setShowOptionsMenu(!showOptionsMenu)}
             onPageSettings={handleOpenPageSettings}
-          />
-            {/* 内容区域受页边距影响 */}
+          />          {/* 内容区域受页边距影响 */}
           <View style={{ 
             flex: 1, 
             paddingHorizontal: contentPadding,
             paddingTop: 0,
             paddingBottom: 0          }}>
-            
-            {/* 分类选择器 */}
-            {categories && categories.length > 1 && (
-              <CategorySelector
-                categories={categories}
-                selectedCategoryId={selectedCategoryId}
-                onCategoryChange={handleCategoryChange}
-              />
-            )}
             
             {editor && isEditorReady ? (
               <RichTextContent
@@ -298,9 +288,11 @@ export default function NoteEditScreen() {
                 editorBorderColor={editorBorderColor}
                 maxLength={MAX_TITLE_LENGTH}
                 titleError={titleError}
-                lastEditedAt={lastEditedTime}
                 editor={editor}
                 titleInputRef={titleInputRef}
+                categories={categories}
+                selectedCategoryId={selectedCategoryId}
+                onCategoryChange={handleCategoryChange}
               />
             ) : (
               <View style={{

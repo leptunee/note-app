@@ -101,7 +101,24 @@ export function useNotes() {
         const notesData = await AsyncStorage.getItem(NOTES_KEY);
         if (notesData) {
           const parsedNotes = JSON.parse(notesData);
-          setNotes(parsedNotes);
+          
+          // 迁移所有笔记到"未分类"分类
+          const migratedNotes = parsedNotes.map((note: Note) => ({
+            ...note,
+            categoryId: note.categoryId && note.categoryId !== 'all' ? note.categoryId : 'uncategorized'
+          }));
+          
+          // 如果有笔记被迁移，保存更新后的数据
+          const hasChanges = migratedNotes.some((note: Note, index: number) => 
+            note.categoryId !== parsedNotes[index].categoryId
+          );
+          
+          if (hasChanges) {
+            await AsyncStorage.setItem(NOTES_KEY, JSON.stringify(migratedNotes));
+            console.log('✅ Notes migrated to uncategorized category');
+          }
+          
+          setNotes(migratedNotes);
         }        // 加载分类
         const categoriesData = await AsyncStorage.getItem(CATEGORIES_KEY);
         if (categoriesData) {

@@ -7,8 +7,10 @@ import { styles } from './styles';
 import { ExportView } from './ExportView';
 import { TitleSection } from './TitleSection';
 import { EditorComponent } from './EditorComponent';
+import { CategorySelectorModal } from './CategorySelectorModal';
 import { useEditorContent } from './hooks/useEditorContent';
 import { formatDate as getFormattedDate, getPlainTextLength, calculateContentHeight } from './utils/contentUtils';
+import { Category } from '@/components/useNotes';
 
 interface RichTextContentProps {
   title: string;
@@ -20,9 +22,13 @@ interface RichTextContentProps {
   editorBackgroundColor?: string;  editorBorderColor?: string;
   maxLength?: number;
   titleError?: string;
-  lastEditedAt?: number;
   editor: any;
   titleInputRef?: React.RefObject<TextInput | null>;
+  // 分类相关props
+  categories: Category[];
+  selectedCategoryId: string;
+  onCategoryChange: (categoryId: string) => void;
+  onAddCategory?: () => void;
 }
 
 export const RichTextContent: React.FC<RichTextContentProps> = ({
@@ -34,12 +40,16 @@ export const RichTextContent: React.FC<RichTextContentProps> = ({
   textColor,
   maxLength,
   titleError,
-  lastEditedAt,
   editor,
   titleInputRef,
+  categories,
+  selectedCategoryId,
+  onCategoryChange,
+  onAddCategory,
 }) => {
   const { t } = useTranslation();
-  const colorScheme = useColorScheme();
+  const colorScheme = useColorScheme();  const [showCategorySelector, setShowCategorySelector] = useState(false);
+  
   // 创建内部引用，如果没有传入外部引用的话
   const internalTitleRef = useRef<TextInput | null>(null);
   const finalTitleRef = titleInputRef || internalTitleRef;  // 使用自定义 Hook 管理编辑器内容
@@ -50,21 +60,43 @@ export const RichTextContent: React.FC<RichTextContentProps> = ({
     debounceMs: 500
   });
 
+  // 获取当前选中的分类
+  const selectedCategory = categories.find(cat => cat.id === selectedCategoryId) || 
+    { id: 'uncategorized', name: '未分类', icon: 'folder', color: '#999999', createdAt: 0, updatedAt: 0 };
+
+  const handleCategoryPress = () => {
+    setShowCategorySelector(true);
+  };
+
+  const handleCategorySelect = (categoryId: string) => {
+    onCategoryChange(categoryId);
+    setShowCategorySelector(false);
+  };
+
   return (
     <View style={styles.contentContainer}>      {/* 标题和元数据部分 */}
       <TitleSection
         ref={finalTitleRef}
         title={title}
         onChangeTitle={onChangeTitle}
-        lastEditedAt={lastEditedAt}
         content={content}
         textColor={textColor}
         maxLength={maxLength}
         titleError={titleError}
+        selectedCategory={selectedCategory}
+        onCategoryPress={handleCategoryPress}
       />      {/* 富文本编辑器 */}
       <EditorComponent
         editor={editor}
         content={content}
+      />      {/* 分类选择器模态框 - 只在需要时显示 */}
+      <CategorySelectorModal
+        visible={showCategorySelector}
+        categories={categories}
+        selectedCategoryId={selectedCategoryId}
+        onCategoryChange={handleCategorySelect}
+        onClose={() => setShowCategorySelector(false)}
+        onAddCategory={onAddCategory}
       />
     </View>
   );

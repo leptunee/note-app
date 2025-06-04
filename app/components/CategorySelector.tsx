@@ -1,11 +1,13 @@
 // 分类选择组件
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
   StyleSheet,
   useColorScheme,
+  Modal,
+  ScrollView,
 } from 'react-native';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { Category } from '@/components/useNotes';
@@ -16,17 +18,21 @@ interface CategorySelectorProps {
   categories: Category[];
   selectedCategoryId: string;
   onCategoryChange: (categoryId: string) => void;
+  onAddCategory?: () => void; // 新增：添加分类回调
+  showAddButton?: boolean; // 新增：是否显示添加按钮
 }
 
 export const CategorySelector: React.FC<CategorySelectorProps> = ({
   categories,
   selectedCategoryId,
   onCategoryChange,
+  onAddCategory,
+  showAddButton = true,
 }) => {
   const { t } = useTranslation();
   const colorScheme = useColorScheme() ?? 'light';
   const isDark = colorScheme === 'dark';
-
+  const [showDropdown, setShowDropdown] = useState(false);
   const colors = {
     background: isDark ? '#2a2a2a' : '#f8f9fa',
     text: isDark ? '#ffffff' : '#000000',
@@ -34,88 +40,148 @@ export const CategorySelector: React.FC<CategorySelectorProps> = ({
     border: isDark ? '#404040' : '#e0e0e0',
     activeBackground: isDark ? '#333333' : '#e3f2fd',
     activeText: Colors[colorScheme].tint,
+    dropdownBackground: isDark ? '#1a1a1a' : '#ffffff',
   };
 
-  const selectedCategory = categories.find(cat => cat.id === selectedCategoryId) || categories[0];
+  // 过滤掉"全部笔记"分类，只显示可选择的分类
+  const selectableCategories = categories.filter(cat => cat.id !== 'all');
+  const selectedCategory = selectableCategories.find(cat => cat.id === selectedCategoryId) || selectableCategories[0];
+
+  const handleCategorySelect = (categoryId: string) => {
+    onCategoryChange(categoryId);
+    setShowDropdown(false);
+  };
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <Text style={[styles.label, { color: colors.text }]}>
+      <Text style={[styles.label, { color: colors.text }]}
+      >
         {t('category', '分类')}
       </Text>
       
-      <View style={[styles.selectorContainer, { borderColor: colors.border }]}>
-        <View style={styles.selectedCategory}>
-          <View
-            style={[
-              styles.categoryIcon,
-              { backgroundColor: selectedCategory.color },
-            ]}
-          >
-            <FontAwesome
-              name={selectedCategory.icon as any}
-              size={14}
-              color="#ffffff"
-            />
+      <View style={styles.selectorRow}>
+        {/* 主要分类选择器 */}
+        <TouchableOpacity
+          style={[
+            styles.selectorButton,
+            { 
+              backgroundColor: colors.dropdownBackground,
+              borderColor: colors.border,
+              flex: 1,
+            }
+          ]}
+          onPress={() => setShowDropdown(true)}
+        >
+          <View style={styles.selectedCategory}>
+            <View
+              style={[
+                styles.categoryIcon,
+                { backgroundColor: selectedCategory.color },
+              ]}
+            >
+              <FontAwesome
+                name={selectedCategory.icon as any}
+                size={14}
+                color="#ffffff"
+              />
+            </View>
+            <Text style={[styles.categoryName, { color: colors.text }]}>
+              {selectedCategory.name}
+            </Text>
           </View>
-          <Text style={[styles.categoryName, { color: colors.text }]}>
-            {selectedCategory.name}
-          </Text>
-        </View>
+          <FontAwesome 
+            name="chevron-down" 
+            size={14} 
+            color={colors.secondaryText} 
+          />
+        </TouchableOpacity>
 
-        <View style={styles.categoryOptions}>
-          {categories.map((category) => {
-            const isSelected = category.id === selectedCategoryId;
-            
-            return (
-              <TouchableOpacity
-                key={category.id}
-                style={[
-                  styles.categoryOption,
-                  {
-                    backgroundColor: isSelected ? colors.activeBackground : 'transparent',
-                  },
-                ]}
-                onPress={() => onCategoryChange(category.id)}
-              >
-                <View
-                  style={[
-                    styles.optionIcon,
-                    {
-                      backgroundColor: isSelected ? category.color : colors.background,
-                      borderColor: category.color,
-                      borderWidth: isSelected ? 0 : 1,
-                    },
-                  ]}
-                >
-                  <FontAwesome
-                    name={category.icon as any}
-                    size={12}
-                    color={isSelected ? '#ffffff' : category.color}
-                  />
-                </View>
-                <Text
-                  style={[
-                    styles.optionName,
-                    {
-                      color: isSelected ? colors.activeText : colors.text,
-                      fontWeight: isSelected ? '600' : '400',
-                    },
-                  ]}
-                >
-                  {category.name}
-                </Text>
-                {isSelected && (
-                  <FontAwesome
-                    name="check"
-                    size={12}
-                    color={colors.activeText}
-                  />
-                )}
-              </TouchableOpacity>
-            );
-          })}        </View>
+        {/* 添加分类按钮 */}
+        {showAddButton && onAddCategory && (
+          <TouchableOpacity
+            style={[
+              styles.addButton,
+              { 
+                backgroundColor: Colors[colorScheme].tint,
+                marginLeft: 8,
+              }
+            ]}
+            onPress={onAddCategory}
+          >
+            <FontAwesome name="plus" size={14} color="#ffffff" />
+          </TouchableOpacity>
+        )}
       </View>
+
+      {/* 下拉选择模态框 */}
+      <Modal
+        visible={showDropdown}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowDropdown(false)}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setShowDropdown(false)}
+        >
+          <View style={[styles.dropdown, { backgroundColor: colors.dropdownBackground }]}
+          >            <ScrollView style={styles.dropdownScroll} showsVerticalScrollIndicator={false}>
+              {selectableCategories.map((category) => {
+                const isSelected = category.id === selectedCategoryId;
+                
+                return (
+                  <TouchableOpacity
+                    key={category.id}
+                    style={[
+                      styles.categoryOption,
+                      {
+                        backgroundColor: isSelected ? colors.activeBackground : 'transparent',
+                      },
+                    ]}
+                    onPress={() => handleCategorySelect(category.id)}
+                  >
+                    <View
+                      style={[
+                        styles.optionIcon,
+                        {
+                          backgroundColor: isSelected ? category.color : colors.background,
+                          borderColor: category.color,
+                          borderWidth: isSelected ? 0 : 1,
+                        },
+                      ]}
+                    >
+                      <FontAwesome
+                        name={category.icon as any}
+                        size={12}
+                        color={isSelected ? '#ffffff' : category.color}
+                      />
+                    </View>
+                    <Text
+                      style={[
+                        styles.optionName,
+                        {
+                          color: isSelected ? colors.activeText : colors.text,
+                          fontWeight: isSelected ? '600' : '400',
+                        },
+                      ]}
+                    >
+                      {category.name}
+                    </Text>
+                    {isSelected && (
+                      <FontAwesome
+                        name="check"
+                        size={12}
+                        color={colors.activeText}
+                      />
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </View>
   );
 };
@@ -131,16 +197,23 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginBottom: 8,
   },
-  selectorContainer: {
+  selectorRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  selectorButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     borderWidth: 1,
     borderRadius: 6,
-    overflow: 'hidden',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
   },
   selectedCategory: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    flex: 1,
   },
   categoryIcon: {
     width: 24,
@@ -154,17 +227,37 @@ const styles = StyleSheet.create({
     fontSize: 16,
     flex: 1,
   },
-  categoryOptions: {
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(0,0,0,0.1)',
+  addButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 6,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  dropdown: {
+    width: '80%',
+    maxHeight: '60%',
+    borderRadius: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  dropdownScroll: {
+    paddingVertical: 8,
   },
   categoryOption: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0,0,0,0.05)',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
   },
   optionIcon: {
     width: 20,
@@ -172,7 +265,7 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 8,
+    marginRight: 12,
   },
   optionName: {
     fontSize: 14,

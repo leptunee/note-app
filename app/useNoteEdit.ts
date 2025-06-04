@@ -67,11 +67,10 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
         } else {
           setTitleError('');
         }
-      }
-    } else {        // 新笔记的处理
+      }    } else {        // 新笔记的处理
       setTitle('');
       setContent('');
-      setSelectedCategoryId('all');
+      setSelectedCategoryId('uncategorized');
       setPageSettings({
         themeId: 'default',
         marginValue: 22,
@@ -94,11 +93,10 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
     // 如果标题和内容都为空，不保存
     if (!finalTitle.trim() && !contentToUse.trim()) {
       return false;
-    }
-        const noteData = {
+    }        const noteData = {
       title: finalTitle,
       content: contentToUse,
-      categoryId: selectedCategoryId === 'all' ? undefined : selectedCategoryId,
+      categoryId: selectedCategoryId === 'all' ? 'uncategorized' : selectedCategoryId,
       pageSettings,
     };
     
