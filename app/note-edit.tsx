@@ -1,7 +1,7 @@
 import React, { useRef, useState, useEffect, useCallback, useMemo } from 'react';
 import { View, ImageBackground, Platform, Keyboard, KeyboardAvoidingView, Text, TextInput } from 'react-native';
 import { useEditorBridge, TenTapStarterKit } from '@10play/tentap-editor';
-import { NoteHeader, RichTextContent, ExportModal, PageSettingsModal, CustomToolbar, styles, Toast, ExportView, type ToastRef } from './components';
+import { NoteHeader, RichTextContent, ExportModal, PageSettingsModal, CustomToolbar, styles, Toast, ExportView, CategorySelector, type ToastRef } from './components';
 import { useEditorContent } from './components/hooks/useEditorContent';
 import { useNoteEdit } from './useNoteEdit';
 import { themes, getBackgroundColor, getTextColor, getEditorBackgroundColor, getEditorBorderColor, getContentPadding } from './noteEditUtils';
@@ -24,6 +24,8 @@ export default function NoteEditScreen() {
     showPageSettings,
     setShowPageSettings,
     pageSettings,
+    selectedCategoryId,
+    categories,
     isNewNote,
     noteViewRef,
     lastEditedTime,    handleSave,
@@ -40,9 +42,10 @@ export default function NoteEditScreen() {
     handleContentChange,
     handleOpenPageSettings,
     handlePageSettingsChange,
+    handleCategoryChange,
     MAX_TITLE_LENGTH,
     colorScheme,
-  } = useNoteEdit(themes, toastRef, titleInputRef);  // 创建编辑器实例 - 确保内容加载后再创建
+  } = useNoteEdit(themes, toastRef, titleInputRef);// 创建编辑器实例 - 确保内容加载后再创建
   const editor = useEditorBridge({
     autofocus: false,
     avoidIosKeyboard: false,
@@ -267,13 +270,22 @@ export default function NoteEditScreen() {
             toggleOptionsMenu={() => setShowOptionsMenu(!showOptionsMenu)}
             onPageSettings={handleOpenPageSettings}
           />
-          
-          {/* 内容区域受页边距影响 */}
+            {/* 内容区域受页边距影响 */}
           <View style={{ 
             flex: 1, 
             paddingHorizontal: contentPadding,
             paddingTop: 0,
             paddingBottom: 0          }}>
+            
+            {/* 分类选择器 */}
+            {categories && categories.length > 1 && (
+              <CategorySelector
+                categories={categories}
+                selectedCategoryId={selectedCategoryId}
+                onCategoryChange={handleCategoryChange}
+              />
+            )}
+            
             {editor && isEditorReady ? (
               <RichTextContent
                 title={title}

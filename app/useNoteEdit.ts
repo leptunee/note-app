@@ -10,12 +10,13 @@ import { type ToastRef } from './components';
 export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef | null>, titleInputRef?: React.RefObject<TextInput | null>) {
   const { id: routeId } = useLocalSearchParams<{ id: string }>();
   const [currentNoteId, setCurrentNoteId] = useState<string | undefined>(routeId);
-  const { notes, addNote, updateNote, deleteNote, togglePinNote } = useNotes();
+  const { notes, categories, addNote, updateNote, deleteNote, togglePinNote, updateNoteCategory } = useNotes();
   const { exportAsTxt, exportAsMarkdown, exportAsImage, exportAsWord } = useExport();
   const { t } = useTranslation();
   const router = useRouter();
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
+  const [selectedCategoryId, setSelectedCategoryId] = useState('all');
   
   // 编辑器的 undo/redo 状态将在 note-edit.tsx 中管理
   const [canUndo, setCanUndo] = useState(false);
@@ -44,10 +45,10 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
   useEffect(() => {
     if (currentNoteId) {
       const note = notes.find(n => n.id === currentNoteId);
-      if (note) {
-        // 直接设置内容，移除复杂的 setTimeout 逻辑
+      if (note) {        // 直接设置内容，移除复杂的 setTimeout 逻辑
         setTitle(note.title);
         setContent(note.content);
+        setSelectedCategoryId(note.categoryId || 'all');
         setLastEditedTime(note.updatedAt);
         
         if (note.pageSettings) {
@@ -67,10 +68,10 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
           setTitleError('');
         }
       }
-    } else {      
-      // 新笔记的处理
+    } else {        // 新笔记的处理
       setTitle('');
       setContent('');
+      setSelectedCategoryId('all');
       setPageSettings({
         themeId: 'default',
         marginValue: 22,
@@ -94,10 +95,10 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
     if (!finalTitle.trim() && !contentToUse.trim()) {
       return false;
     }
-      
-    const noteData = {
+        const noteData = {
       title: finalTitle,
       content: contentToUse,
+      categoryId: selectedCategoryId === 'all' ? undefined : selectedCategoryId,
       pageSettings,
     };
     
@@ -335,11 +336,14 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
   const handleOpenPageSettings = () => {
     setShowPageSettings(true);
   };
-  
-  const handlePageSettingsChange = (settings: Partial<PageSettings>) => {
+    const handlePageSettingsChange = (settings: Partial<PageSettings>) => {
     setPageSettings(prev => ({ ...prev, ...settings }));
   };
 
+  // 处理分类选择
+  const handleCategoryChange = (categoryId: string) => {
+    setSelectedCategoryId(categoryId);
+  };
   return {
     title,
     setTitle,
@@ -356,6 +360,8 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
     setShowPageSettings,
     pageSettings,
     setPageSettings,
+    selectedCategoryId,
+    categories,
     isNewNote,
     noteViewRef,
     lastEditedTime,
@@ -374,6 +380,7 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
     handleContentChange,
     handleOpenPageSettings,
     handlePageSettingsChange,
+    handleCategoryChange,
     MAX_TITLE_LENGTH,
     colorScheme,
     setCanUndo,

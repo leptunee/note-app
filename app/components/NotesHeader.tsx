@@ -13,6 +13,7 @@ interface NotesHeaderProps {
   onAboutPress: () => void;
   onAddPress: () => void;
   onSearchPress: () => void;
+  onSidebarPress: () => void;
 }
 
 export const NotesHeader: React.FC<NotesHeaderProps> = ({
@@ -20,10 +21,23 @@ export const NotesHeader: React.FC<NotesHeaderProps> = ({
   colors,
   onAboutPress,
   onAddPress,
-  onSearchPress
+  onSearchPress,
+  onSidebarPress
 }) => {  return (
     <View style={styles.headerContainer}>
-      <Text style={[styles.header, { color: colors.text }]}>{title}</Text>
+      <View style={styles.leftSection}>
+        <TouchableOpacity
+          style={styles.actionButton}
+          onPress={onSidebarPress}
+        >
+          <FontAwesome 
+            name="bars" 
+            size={20} 
+            color={colors.text} 
+          />
+        </TouchableOpacity>
+        <Text style={[styles.header, { color: colors.text }]}>{title}</Text>
+      </View>
       
       <View style={styles.rightButtons}>
         <TouchableOpacity
@@ -66,9 +80,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 20,
   },
+  leftSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
   header: {
     fontSize: 28,
     fontWeight: 'bold',
+    marginLeft: 12,
   },
   actionButton: {
     width: 40,
