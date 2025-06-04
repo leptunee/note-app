@@ -1,5 +1,5 @@
 // 分类目录侧边栏组件
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,8 @@ import {
   ScrollView,
   useColorScheme,
   Dimensions,
+  BackHandler,
+  PanResponder,
 } from 'react-native';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { Category } from '@/components/useNotes';
@@ -44,7 +46,6 @@ export const CategorySidebar: React.FC<CategorySidebarProps> = ({
   const { t } = useTranslation();
   const colorScheme = useColorScheme() ?? 'light';
   const isDark = colorScheme === 'dark';
-
   const colors = {
     background: isDark ? '#1a1a1a' : '#ffffff',
     surface: isDark ? '#2a2a2a' : '#f8f9fa',
@@ -52,7 +53,77 @@ export const CategorySidebar: React.FC<CategorySidebarProps> = ({
     secondaryText: isDark ? '#cccccc' : '#666666',
     border: isDark ? '#404040' : '#e0e0e0',
     activeBackground: isDark ? '#333333' : '#e3f2fd',
-    activeText: Colors[colorScheme].tint,  };
+    activeText: Colors[colorScheme].tint,
+  };
+  // 处理硬件返回键
+  useEffect(() => {
+    const backAction = () => {
+      if (isVisible) {
+        onClose();
+        return true; // 阻止默认行为
+      }
+      return false; // 允许默认行为
+    };
+
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
+
+    return () => backHandler.remove();
+  }, [isVisible, onClose]);  // 处理滑动手势
+  const panResponder = PanResponder.create({
+    onMoveShouldSetPanResponder: (evt, gestureState) => {
+      // 只有当水平滑动距离大于垂直滑动距离时才响应
+      return Math.abs(gestureState.dx) > Math.abs(gestureState.dy) && Math.abs(gestureState.dx) > 10;
+    },
+    onPanResponderGrant: () => {
+      // 停止任何正在进行的动画
+      slideAnimation.stopAnimation();
+    },
+    onPanResponderMove: (evt, gestureState) => {
+      // 只允许向左滑动（dx < 0）
+      if (gestureState.dx < 0) {
+        const progress = Math.abs(gestureState.dx) / SIDEBAR_WIDTH;
+        const clampedProgress = Math.min(progress, 1);
+        // 直接设置动画值，跟随手势移动
+        slideAnimation.setValue(1 - clampedProgress);
+      }
+    },    onPanResponderRelease: (evt, gestureState) => {
+      // 调整关闭阈值到30%，并保留速度检测
+      const dragDistance = Math.abs(gestureState.dx);
+      const dragVelocity = Math.abs(gestureState.vx);      const shouldClose = 
+        (dragDistance > SIDEBAR_WIDTH * 0.3 && gestureState.dx < 0) || // 距离阈值：30%
+        (dragVelocity > 0.3 && gestureState.dx < 0); // 降低速度阈值到0.3，更容易触发
+      
+      if (shouldClose) {
+        // 优化动画速度：稍微增加动画时长
+        const currentProgress = 1 - (dragDistance / SIDEBAR_WIDTH);
+        const remainingDistance = currentProgress;
+        
+        // 调整动画时长：最短30ms，最长120ms
+        const baseSpeed = dragVelocity > 1 ? 30 : 40; // 高速滑动时稍快
+        const animationDuration = Math.max(baseSpeed, Math.min(120, remainingDistance * 200));
+        
+        // 开始关闭动画
+        Animated.timing(slideAnimation, {
+          toValue: 0,
+          duration: animationDuration,
+          useNativeDriver: false,
+        }).start();
+        
+        // 更快的回调延迟
+        setTimeout(() => {
+          onClose();
+        }, Math.min(50, animationDuration * 0.6));
+      } else {
+        // 回弹到打开状态，使用更快的弹簧动画
+        Animated.spring(slideAnimation, {
+          toValue: 1,
+          tension: 120, // 增加张力，更快回弹
+          friction: 7,  // 减少阻尼，更快到位
+          useNativeDriver: false,
+        }).start();
+      }
+    },
+  });
   if (!isVisible) return null;
 
   return (
@@ -63,9 +134,9 @@ export const CategorySidebar: React.FC<CategorySidebarProps> = ({
         activeOpacity={1}
         onPress={onClose}
       />
-      
-      {/* 侧边栏内容 */}
+        {/* 侧边栏内容 */}
       <Animated.View
+        {...panResponder.panHandlers}
         style={[
           styles.sidebar,
           {

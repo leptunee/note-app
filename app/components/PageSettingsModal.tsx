@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   View, 
   Text, 
@@ -65,8 +65,7 @@ export const PageSettingsModal: React.FC<PageSettingsModalProps> = ({
     { id: '4:3', name: '4:3 (经典)', value: [4, 3] },
     { id: '16:9', name: '16:9 (宽屏)', value: [16, 9] },
     { id: '3:4', name: '3:4 (竖屏)', value: [3, 4] },
-    { id: '9:16', name: '9:16 (全屏)', value: [9, 16] },
-  ];
+    { id: '9:16', name: '9:16 (全屏)', value: [9, 16] },  ];
   
   // 增加当前选择的裁切比例状态
   const [selectedAspectRatio, setSelectedAspectRatio] = useState<string>('4:3');

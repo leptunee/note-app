@@ -20,8 +20,7 @@ export const BatchExportDialog: React.FC<BatchExportDialogProps> = ({
   onClose,
   notes,
   selectedCount
-}) => {
-  const colorScheme = useColorScheme() ?? 'light';
+}) => {  const colorScheme = useColorScheme() ?? 'light';
   const toastRef = useRef<ToastRef>(null);
   const { exportMultipleAsTxt, exportMultipleAsWord, exportMultipleAsMarkdown } = useExport();
 

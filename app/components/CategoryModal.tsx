@@ -70,9 +70,7 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
     border: isDark ? '#404040' : '#e0e0e0',
     inputBackground: isDark ? '#333333' : '#ffffff',
     inputBorder: isDark ? '#555555' : '#dddddd',
-  };
-
-  // 初始化表单数据
+  };  // 初始化表单数据
   useEffect(() => {
     if (category) {
       setName(category.name);

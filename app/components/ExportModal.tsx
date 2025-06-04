@@ -23,8 +23,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
   onExportAsWord,
   onExportAsMarkdown,
   onExportAsImage
-}) => {
-  const colorScheme = useColorScheme() ?? 'light';
+}) => {  const colorScheme = useColorScheme() ?? 'light';
   const toastRef = useRef<ToastRef>(null); // Added toastRef
 
   // Updated handleExport to be async and use the result from exportFn to show toast
