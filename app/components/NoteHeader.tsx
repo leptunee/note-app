@@ -68,9 +68,7 @@ export const NoteHeader = memo<NoteHeaderProps>(({
 
   const handleToggleOptionsMenu = useCallback(() => {
     toggleOptionsMenu();
-  }, [toggleOptionsMenu]);
-
-  // 缓存样式计算
+  }, [toggleOptionsMenu]);  // 缓存样式计算
   const backButtonTextStyle = useMemo(() => [
     styles.actionText, 
     { color: Colors[colorScheme].tint, marginLeft: 5 }
@@ -91,9 +89,7 @@ export const NoteHeader = memo<NoteHeaderProps>(({
     [canRedo, colorScheme]
   );
 
-  return (
-    <View style={styles.header}>
-      <TouchableOpacity onPress={handleBack} style={styles.headerButton}>
+  return (    <View style={styles.header}>      <TouchableOpacity onPress={handleBack} style={styles.headerButton}>
         <FontAwesome 
           name="chevron-left" 
           size={ICON_SIZE} 
@@ -151,9 +147,7 @@ export const NoteHeader = memo<NoteHeaderProps>(({
             onTogglePin={onTogglePin}
             isPinned={isPinned}
           />
-        )}
-
-        <TouchableOpacity onPress={handleSave} style={styles.saveButton}>
+        )}        <TouchableOpacity onPress={handleSave} style={styles.saveButton}>
           <FontAwesome 
             name="check" 
             size={ICON_SIZE} 

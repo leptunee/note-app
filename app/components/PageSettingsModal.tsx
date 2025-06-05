@@ -42,7 +42,7 @@ interface AspectRatioOption {
 
 const themes: PageTheme[] = [
   { id: 'default', name: '默认', backgroundColor: '#ffffff', textColor: '#000000', editorBackgroundColor: '#f5f5f5', editorBorderColor: '#ddd' },
-  { id: 'dark', name: '暗黑', backgroundColor: '#121212', textColor: '#ffffff', editorBackgroundColor: '#2c2c2c', editorBorderColor: '#404040' },
+  { id: 'dark', name: '淡绿', backgroundColor: '#e8f5e9', textColor: '#1b5e20', editorBackgroundColor: '#c8e6c9', editorBorderColor: '#81c784' },
   { id: 'sepia', name: '护眼', backgroundColor: '#f8f1e3', textColor: '#5b4636', editorBackgroundColor: '#f0e8da', editorBorderColor: '#d8c8b6' },
   { id: 'blue', name: '蓝色', backgroundColor: '#edf6ff', textColor: '#333333', editorBackgroundColor: '#e0f0ff', editorBorderColor: '#c0d8f0' },
 ];
@@ -52,10 +52,10 @@ export const PageSettingsModal: React.FC<PageSettingsModalProps> = memo(({
   onClose,
   currentSettings,
   onSettingsChange
-}) => {
-  const { t } = useTranslation();
+}) => {  const { t } = useTranslation();
   const colorScheme = useColorScheme() ?? 'light';
-  const isDark = useMemo(() => colorScheme === 'dark', [colorScheme]);
+  // 始终使用亮色主题样式，不受系统暗黑模式影响
+  const isDark = useMemo(() => false, []);
   const screenHeight = useMemo(() => Dimensions.get('window').height, []);
   
   // 定义裁切比例选项

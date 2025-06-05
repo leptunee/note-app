@@ -1,5 +1,5 @@
 import React, { memo, useCallback, useMemo } from 'react';
-import { TouchableOpacity, View, Text, Alert, useColorScheme } from 'react-native';
+import { TouchableOpacity, View, Text, Alert, useColorScheme, Dimensions } from 'react-native';
 import { styles } from './styles';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import Colors from '@/constants/Colors';
@@ -49,70 +49,96 @@ export const OptionsMenu = memo<OptionsMenuProps>(({
         { text: String(t('delete')), onPress: onDelete, style: 'destructive' }
       ]
     );
-  }, [onHide, onDelete, t]);
-
-  // 缓存样式计算
+  }, [onHide, onDelete, t]);  // 缓存样式计算
   const menuStyle = useMemo(() => [
     styles.optionsMenu, 
     { 
       backgroundColor: colorScheme === 'dark' ? '#333' : '#fff',
-      borderColor: colorScheme === 'dark' ? '#444' : '#eaeaea'
+      borderWidth: 0, // 完全移除边框
     }
   ], [colorScheme]);
 
+  const optionItemStyle = useMemo(() => [
+    styles.optionItem,
+    {
+      borderBottomWidth: 0, // 移除底部边框
+    }
+  ], []);
+
   const textColor = useMemo(() => ({ 
     color: colorScheme === 'dark' ? '#fff' : '#000' 
-  }), [colorScheme]);
-
-  const iconColor = useMemo(() => 
-    colorScheme === 'dark' ? '#fff' : '#000', 
+  }), [colorScheme]);  const iconColor = useMemo(() => 
+    Colors[colorScheme].tint, 
     [colorScheme]
   );
 
-  return (
-    <View style={styles.optionsMenuContainer}>
-      {/* 按钮总是显示，不受isVisible状态影响 */}
-      <TouchableOpacity 
-        style={styles.headerIconButton} 
-        onPress={onHide}
-      >
-        <FontAwesome name="ellipsis-v" size={ICON_SIZE} color={Colors[colorScheme].tint} />
-      </TouchableOpacity>
+  // 获取屏幕尺寸用于backdrop
+  const screenDimensions = useMemo(() => Dimensions.get('window'), []);
+  
+  // 创建自定义backdrop样式
+  const backdropStyle = useMemo(() => ({
+    position: 'absolute' as const,
+    top: -screenDimensions.height,
+    left: -screenDimensions.width, 
+    width: screenDimensions.width * 3,
+    height: screenDimensions.height * 3,
+    backgroundColor: 'transparent',
+    zIndex: 998,
+  }), [screenDimensions]);return (
+    <>
+      <View style={styles.optionsMenuContainer}>
+        {/* 按钮总是显示，不受isVisible状态影响 */}
+        <TouchableOpacity 
+          style={styles.headerIconButton} 
+          onPress={onHide}
+        >
+          <FontAwesome name="ellipsis-v" size={ICON_SIZE} color={Colors[colorScheme].tint} />
+        </TouchableOpacity>
+        
         {/* 下拉菜单根据isVisible状态显示或隐藏 */}
-      {isVisible && (
-        <View style={menuStyle}>
-          <TouchableOpacity 
-            style={styles.optionItem} 
-            onPress={handleExportPress}
-          >
-            <FontAwesome name="download" size={ICON_SIZE} color={iconColor} style={styles.optionIcon} />
-            <Text style={[styles.optionText, textColor]}>导出笔记</Text>
-          </TouchableOpacity>
+        {isVisible && (
+          <View style={menuStyle}>
+            <TouchableOpacity 
+              style={optionItemStyle} 
+              onPress={handleExportPress}
+            >
+              <FontAwesome name="download" size={ICON_SIZE} color={iconColor} style={styles.optionIcon} />
+              <Text style={[styles.optionText, textColor]}>导出笔记</Text>
+            </TouchableOpacity>
 
-          <TouchableOpacity 
-            style={styles.optionItem} 
-            onPress={handleTogglePinPress}
-          >
-            <FontAwesome 
-              name="thumb-tack" 
-              size={ICON_SIZE} 
-              color={iconColor} 
-              style={styles.optionIcon} 
-            />
-            <Text style={[styles.optionText, textColor]}>
-              {isPinned ? '取消置顶' : '置顶笔记'}
-            </Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity 
-            style={styles.optionItem} 
-            onPress={handleDeletePress}
-          >
-            <FontAwesome name="trash-o" size={ICON_SIZE} color="#ff3b30" style={styles.optionIcon} />
-            <Text style={[styles.optionText, { color: '#ff3b30' }]}>删除笔记</Text>
-          </TouchableOpacity>
-        </View>
+            <TouchableOpacity 
+              style={optionItemStyle} 
+              onPress={handleTogglePinPress}
+            >
+              <FontAwesome 
+                name="thumb-tack" 
+                size={ICON_SIZE} 
+                color={iconColor} 
+                style={styles.optionIcon} 
+              />
+              <Text style={[styles.optionText, textColor]}>
+                {isPinned ? '取消置顶' : '置顶笔记'}
+              </Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={optionItemStyle} 
+              onPress={handleDeletePress}
+            >
+              <FontAwesome name="trash-o" size={ICON_SIZE} color="#ff3b30" style={styles.optionIcon} />
+              <Text style={[styles.optionText, { color: '#ff3b30' }]}>删除笔记</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+      </View>
+        {/* 背景遮罩，点击可关闭菜单 - 放在外层以覆盖整个屏幕 */}
+      {isVisible && (
+        <TouchableOpacity 
+          style={backdropStyle} 
+          activeOpacity={1}
+          onPress={onHide}
+        />
       )}
-    </View>
+    </>
   );
 });

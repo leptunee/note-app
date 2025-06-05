@@ -322,8 +322,7 @@ export const styles = StyleSheet.create({  // 容器相关样式
     fontSize: 16,
     fontWeight: '500',
   },
-  
-  // 新增背景图片样式
+    // 新增背景图片样式
   backgroundImage: {
     position: 'absolute',
     top: 0,
@@ -331,5 +330,14 @@ export const styles = StyleSheet.create({  // 容器相关样式
     bottom: 0,
     right: 0,
     zIndex: -1, // 确保在内容之下
+  },  // OptionsMenu 背景遮罩样式
+  backdrop: {
+    position: 'absolute',
+    top: -1000, // 向上扩展覆盖范围
+    left: -1000, // 向左扩展覆盖范围
+    right: -1000, // 向右扩展覆盖范围
+    bottom: -1000, // 向下扩展覆盖范围
+    backgroundColor: 'transparent',
+    zIndex: 998, // 确保在菜单下方但在其他内容上方
   },
 });

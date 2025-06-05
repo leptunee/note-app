@@ -283,14 +283,6 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
     }
   }, [titleInputRef, toastRef, exportAsWord, currentOrTempNote]);
 
-  useEffect(() => {
-    if (showOptionsMenu) {
-      const timer = setTimeout(() => {
-        setShowOptionsMenu(false);
-      }, 4000);
-      return () => clearTimeout(timer);
-    }
-  }, [showOptionsMenu]);
   const handleTitleChange = useCallback((text: string) => {
     setTitle(text);
     setLastEditedTime(Date.now());
