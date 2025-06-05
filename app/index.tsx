@@ -4,7 +4,7 @@ import { useNotes, Category } from '@/components/useNotes';
 import { useTranslation } from 'react-i18next';
 import { useRouter, useFocusEffect } from 'expo-router';
 import Colors from '@/constants/Colors';
-import { NotesHeader, NotesList, SelectionToolbar, CategorySidebar, CategoryModal } from './components';
+import { NotesHeader, NotesList, SelectionToolbar, CategorySidebar, CategoryModal, CategorySelectorModal } from './components';
 import { BatchExportDialog } from './components/BatchExportDialog';
 import useSelectionMode from './hooks/useSelectionMode';
 import { v4 as uuidv4 } from 'uuid';
@@ -33,12 +33,12 @@ export default function NotesScreen() {  const {
       refreshNotes();
     }, [refreshNotes])
   );
-
   // 分类相关状态
   const [selectedCategoryId, setSelectedCategoryId] = useState('all');
   const [sidebarVisible, setSidebarVisible] = useState(false);
   const [categoryModalVisible, setCategoryModalVisible] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [moveSelectorVisible, setMoveSelectorVisible] = useState(false);
   
   // 侧边栏动画
   const sidebarAnimation = useRef(new Animated.Value(0)).current;
@@ -118,13 +118,31 @@ export default function NotesScreen() {  const {
       await addCategory(newCategory);
     }
   };
-
   // 删除分类
   const handleDeleteCategory = async (categoryId: string) => {
     await deleteCategory(categoryId);
     if (selectedCategoryId === categoryId) {
       setSelectedCategoryId('all');
     }
+  };
+
+  // 打开移动选择器
+  const handleMoveSelected = () => {
+    setMoveSelectorVisible(true);
+  };
+
+  // 移动选择的笔记到指定分类
+  const handleMoveNotesToCategory = async (categoryId: string) => {
+    const selectedNotesArray = Array.from(selectedNotes);
+    
+    // 批量更新笔记分类
+    for (const noteId of selectedNotesArray) {
+      await updateNoteCategory(noteId, categoryId);
+    }
+    
+    // 关闭移动选择器并退出选择模式
+    setMoveSelectorVisible(false);
+    exitSelectionMode();
   };
 
   // 计算每个分类的笔记数量
@@ -134,11 +152,19 @@ export default function NotesScreen() {  const {
       counts[category.id] = getNotesByCategory(category.id).length;
     });
     return counts;  }, [categories, notes, getNotesByCategory]);
-
   // 根据选中的分类筛选笔记
   const filteredNotes = useMemo(() => {
     return getNotesByCategory(selectedCategoryId);
   }, [notes, selectedCategoryId, getNotesByCategory]);
+
+  // 获取当前选中的分类信息
+  const selectedCategory = useMemo(() => {
+    if (selectedCategoryId === 'all') {
+      return { name: t('allNotes', '全部笔记'), icon: 'folder', color: '#2196F3' };
+    }
+    return categories.find(cat => cat.id === selectedCategoryId) || 
+      { name: t('uncategorized', '未分类'), icon: 'folder', color: '#999999' };
+  }, [selectedCategoryId, categories, t]);
 
   // 截断长内容，只显示前若干个字符
   const truncateContent = useCallback((text: string, maxLength: number = 80) => {
@@ -181,9 +207,10 @@ export default function NotesScreen() {  const {
     const selectedIds = Array.from(selectedNotes);
     return notes.filter(note => selectedIds.includes(note.id));
   }, [notes, selectedNotes]);  return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>      
-      <NotesHeader
-        title={String(t('notes'))}
+    <View style={[styles.container, { backgroundColor: colors.background }]}>        <NotesHeader
+        title={selectedCategory.name}
+        categoryIcon={selectedCategory.icon}
+        categoryColor={selectedCategory.color}
         colors={colors}
         onAboutPress={() => router.push('/about')}
         onAddPress={() => router.push('/note-edit')}
@@ -201,8 +228,7 @@ export default function NotesScreen() {  const {
         onToggleNoteSelection={toggleNoteSelection}
         truncateContent={truncateContent}
       />
-      
-      <SelectionToolbar
+        <SelectionToolbar
         isVisible={isSelectionMode}
         toolbarAnimation={toolbarAnimation}
         selectedCount={selectedNotes.size}
@@ -214,6 +240,7 @@ export default function NotesScreen() {  const {
         onPinSelected={pinSelectedNotes}
         onUnpinSelected={unpinSelectedNotes}
         onExportSelected={exportSelectedNotes}
+        onMoveSelected={handleMoveSelected}
         selectedNotes={selectedNotes}
         notes={notes}
       />
@@ -243,6 +270,15 @@ export default function NotesScreen() {  const {
         onClose={() => setCategoryModalVisible(false)}
         onSave={handleSaveCategory}
         onDelete={handleDeleteCategory}
+      />      {/* 移动笔记的分类选择器 */}
+      <CategorySelectorModal
+        visible={moveSelectorVisible}
+        categories={categories}
+        selectedCategoryId="all"
+        onCategoryChange={handleMoveNotesToCategory}
+        onClose={() => setMoveSelectorVisible(false)}
+        onAddCategory={handleAddCategory}
+        onEditCategory={handleEditCategory}
       />
     </View>
   );

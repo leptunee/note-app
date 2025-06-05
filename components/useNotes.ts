@@ -112,10 +112,8 @@ export function useNotes() {
           const hasChanges = migratedNotes.some((note: Note, index: number) => 
             note.categoryId !== parsedNotes[index].categoryId
           );
-          
-          if (hasChanges) {
+            if (hasChanges) {
             await AsyncStorage.setItem(NOTES_KEY, JSON.stringify(migratedNotes));
-            console.log('✅ Notes migrated to uncategorized category');
           }
           
           setNotes(migratedNotes);
@@ -124,18 +122,13 @@ export function useNotes() {
         if (categoriesData) {
           const parsedCategories = JSON.parse(categoriesData);
           // 确保默认分类始终存在，并合并用户自定义分类
-          const defaultCategoryIds = DEFAULT_CATEGORIES.map(cat => cat.id);
-          const customCategories = parsedCategories.filter((cat: Category) => !defaultCategoryIds.includes(cat.id));
+          const defaultCategoryIds = DEFAULT_CATEGORIES.map(cat => cat.id);          const customCategories = parsedCategories.filter((cat: Category) => !defaultCategoryIds.includes(cat.id));
           const mergedCategories = [...DEFAULT_CATEGORIES, ...customCategories];
           setCategories(mergedCategories);
-          console.log('✅ Categories loaded and merged:', mergedCategories);
-        } else {
-          // 如果没有保存的分类，设置并保存默认分类
+        } else {          // 如果没有保存的分类，设置并保存默认分类
           setCategories(DEFAULT_CATEGORIES);
           await AsyncStorage.setItem(CATEGORIES_KEY, JSON.stringify(DEFAULT_CATEGORIES));
-          console.log('✅ Default categories set:', DEFAULT_CATEGORIES);
-        }} catch (error) {
-        console.error('❌ Error loading data:', error);
+        }      } catch (error) {
         // 如果加载失败，尝试重新加载一次
         setTimeout(async () => {
           try {
@@ -154,9 +147,8 @@ export function useNotes() {
             } else {
               setCategories(DEFAULT_CATEGORIES);
               await AsyncStorage.setItem(CATEGORIES_KEY, JSON.stringify(DEFAULT_CATEGORIES));
-            }
-          } catch (retryError) {
-            console.error('❌ Retry loading data failed:', retryError);
+            }          } catch (retryError) {
+            // Retry loading data failed
           }
         }, 1000);
       } finally {

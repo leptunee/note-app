@@ -5,6 +5,8 @@ import FontAwesome from '@expo/vector-icons/FontAwesome';
 
 interface NotesHeaderProps {
   title: string;
+  categoryIcon?: string;
+  categoryColor?: string;
   colors: {
     background: string;
     text: string;
@@ -18,15 +20,16 @@ interface NotesHeaderProps {
 
 export const NotesHeader: React.FC<NotesHeaderProps> = ({
   title,
+  categoryIcon,
+  categoryColor,
   colors,
   onAboutPress,
   onAddPress,
   onSearchPress,
   onSidebarPress
-}) => {  return (
+}) => {return (
     <View style={styles.headerContainer}>
-      <View style={styles.leftSection}>
-        <TouchableOpacity
+      <View style={styles.leftSection}>        <TouchableOpacity
           style={styles.actionButton}
           onPress={onSidebarPress}
         >
@@ -36,7 +39,30 @@ export const NotesHeader: React.FC<NotesHeaderProps> = ({
             color={colors.text} 
           />
         </TouchableOpacity>
-        <Text style={[styles.header, { color: colors.text }]}>{title}</Text>
+        
+        <View style={styles.titleSection}>
+          {categoryIcon && (
+            <View
+              style={[
+                styles.categoryIconContainer,
+                { backgroundColor: categoryColor || colors.tint }
+              ]}
+            >
+              <FontAwesome 
+                name={categoryIcon as any} 
+                size={16} 
+                color="#ffffff" 
+              />
+            </View>
+          )}
+          <Text 
+            style={[styles.header, { color: colors.text }]}
+            numberOfLines={1}
+            ellipsizeMode="tail"
+          >
+            {title}
+          </Text>
+        </View>
       </View>
       
       <View style={styles.rightButtons}>
@@ -84,11 +110,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
-  },
-  header: {
-    fontSize: 28,
+  },  header: {
+    fontSize: 24,
     fontWeight: 'bold',
-    marginLeft: 12,
+    flex: 1,
+    minWidth: 0, // 允许文本收缩以显示省略号
   },
   actionButton: {
     width: 40,
@@ -101,5 +127,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+  },  titleSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    marginLeft: 12,
+    minWidth: 0, // 允许文本收缩
+  },
+  categoryIconContainer: {
+    width: 24,
+    height: 24,
+    borderRadius: 6,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 8,
   },
 });

@@ -42,8 +42,8 @@ interface SelectionToolbarProps {
   onToggleSelectAll: () => void;
   onDeleteSelected: () => void;
   onPinSelected: () => void;
-  onUnpinSelected: () => void;
-  onExportSelected: () => void;
+  onUnpinSelected: () => void;  onExportSelected: () => void;
+  onMoveSelected: () => void;
   selectedNotes: Set<string>;
   notes: Array<{ id: string; pinned?: boolean }>;
 }
@@ -57,9 +57,9 @@ export const SelectionToolbar: React.FC<SelectionToolbarProps> = ({
   onExitSelection,
   onToggleSelectAll,
   onDeleteSelected,
-  onPinSelected,
-  onUnpinSelected,
+  onPinSelected,  onUnpinSelected,
   onExportSelected,
+  onMoveSelected,
   selectedNotes,
   notes
 }) => {
@@ -112,11 +112,18 @@ export const SelectionToolbar: React.FC<SelectionToolbarProps> = ({
         iconColor="#ff3b30"
         textColor="#ff3b30"
       />
-      
-      <ToolbarButton 
+        <ToolbarButton 
         onPress={allSelectedArePinned ? onUnpinSelected : onPinSelected}
         iconName={allSelectedArePinned ? "times" : "thumb-tack"}
         text={allSelectedArePinned ? "取消" : "置顶"}
+        iconColor={colors.tint}
+        textColor={colors.toolbarText}
+      />
+      
+      <ToolbarButton 
+        onPress={onMoveSelected}
+        iconName="folder-o"
+        text="移动"
         iconColor={colors.tint}
         textColor={colors.toolbarText}
       />
