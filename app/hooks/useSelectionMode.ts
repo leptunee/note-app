@@ -5,11 +5,12 @@ import { useFocusEffect } from 'expo-router';
 
 interface UseSelectionModeProps {
   deleteNote: (id: string) => Promise<void>;
+  deleteNotes: (ids: string[]) => Promise<void>;
   togglePinNote: (id: string) => Promise<void>;
   setPinNotes: (ids: string[], pinned: boolean) => Promise<void>;
 }
 
-export default function useSelectionMode({ deleteNote, togglePinNote, setPinNotes }: UseSelectionModeProps) {
+export default function useSelectionMode({ deleteNote, deleteNotes, togglePinNote, setPinNotes }: UseSelectionModeProps) {
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [selectedNotes, setSelectedNotes] = useState<Set<string>>(new Set());
   const [toolbarAnimation] = useState(new Animated.Value(0));
@@ -66,20 +67,18 @@ export default function useSelectionMode({ deleteNote, togglePinNote, setPinNote
         {
           text: '取消',
           style: 'cancel',
-        },
-        {
+        },        {
           text: '删除',
           style: 'destructive',
           onPress: async () => {
-            for (const noteId of selectedNotes) {
-              await deleteNote(noteId);
-            }
+            const selectedArray = Array.from(selectedNotes);
+            await deleteNotes(selectedArray);
             exitSelectionMode();
           },
         },
       ]
     );
-  }, [selectedNotes, deleteNote, exitSelectionMode]);// 置顶选中的笔记 - 使用批量操作避免卡顿
+  }, [selectedNotes, deleteNotes, exitSelectionMode]);// 置顶选中的笔记 - 使用批量操作避免卡顿
   const pinSelectedNotes = useCallback(async () => {
     const selectedArray = Array.from(selectedNotes);
     // 统一设置所有选中的笔记为置顶状态

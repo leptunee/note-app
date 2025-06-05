@@ -189,9 +189,15 @@ export function useNotes() {
   const updateNote = async (note: Note) => {
     const newNotes = notes.map(n => (n.id === note.id ? { ...n, ...note } : n));
     await saveNotes(newNotes);
-  };
-  const deleteNote = async (id: string) => {
+  };  const deleteNote = async (id: string) => {
     const newNotes = notes.filter(n => n.id !== id);
+    await saveNotes(newNotes);
+  };
+
+  // 批量删除笔记
+  const deleteNotes = async (ids: string[]) => {
+    const idSet = new Set(ids);
+    const newNotes = notes.filter(n => !idSet.has(n.id));
     await saveNotes(newNotes);
   };
   const togglePinNote = async (id: string) => {
@@ -257,7 +263,6 @@ export function useNotes() {
     }
     return notes.filter(note => note.categoryId === categoryId);
   };
-
   // 移除清理所有数据的功能
   return { 
     notes, 
@@ -266,6 +271,7 @@ export function useNotes() {
     addNote, 
     updateNote, 
     deleteNote, 
+    deleteNotes, 
     togglePinNote, 
     setPinNotes, 
     refreshNotes,

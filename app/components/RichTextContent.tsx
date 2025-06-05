@@ -29,6 +29,7 @@ interface RichTextContentProps {
   selectedCategoryId: string;
   onCategoryChange: (categoryId: string) => void;
   onAddCategory?: () => void;
+  onEditCategory?: (category: Category) => void;
 }
 
 export const RichTextContent: React.FC<RichTextContentProps> = ({
@@ -46,6 +47,7 @@ export const RichTextContent: React.FC<RichTextContentProps> = ({
   selectedCategoryId,
   onCategoryChange,
   onAddCategory,
+  onEditCategory,
 }) => {
   const { t } = useTranslation();
   const colorScheme = useColorScheme();  const [showCategorySelector, setShowCategorySelector] = useState(false);
@@ -97,6 +99,7 @@ export const RichTextContent: React.FC<RichTextContentProps> = ({
         onCategoryChange={handleCategorySelect}
         onClose={() => setShowCategorySelector(false)}
         onAddCategory={onAddCategory}
+        onEditCategory={onEditCategory}
       />
     </View>
   );

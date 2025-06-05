@@ -9,12 +9,12 @@ import { BatchExportDialog } from './components/BatchExportDialog';
 import useSelectionMode from './hooks/useSelectionMode';
 import { v4 as uuidv4 } from 'uuid';
 
-export default function NotesScreen() {
-  const { 
+export default function NotesScreen() {  const { 
     notes, 
     categories, 
     refreshNotes, 
     deleteNote, 
+    deleteNotes,
     togglePinNote, 
     setPinNotes,
     addCategory,
@@ -27,6 +27,13 @@ export default function NotesScreen() {
   const router = useRouter();
   const colorScheme = useColorScheme() ?? 'light';
 
+  // 页面聚焦时刷新笔记数据
+  useFocusEffect(
+    useCallback(() => {
+      refreshNotes();
+    }, [refreshNotes])
+  );
+
   // 分类相关状态
   const [selectedCategoryId, setSelectedCategoryId] = useState('all');
   const [sidebarVisible, setSidebarVisible] = useState(false);
@@ -35,7 +42,6 @@ export default function NotesScreen() {
   
   // 侧边栏动画
   const sidebarAnimation = useRef(new Animated.Value(0)).current;
-
   // 使用选择模式Hook
   const {
     isSelectionMode,
@@ -51,7 +57,7 @@ export default function NotesScreen() {
     unpinSelectedNotes,
     exportSelectedNotes,
     closeExportDialog,
-  } = useSelectionMode({ deleteNote, togglePinNote, setPinNotes });
+  } = useSelectionMode({ deleteNote, deleteNotes, togglePinNote, setPinNotes });
 
   // 侧边栏控制函数
   const openSidebar = () => {

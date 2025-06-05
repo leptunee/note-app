@@ -1,7 +1,7 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { useColorScheme, Keyboard, TextInput } from 'react-native';
-import { useNotes, PageSettings } from '@/components/useNotes';
+import { useNotes, PageSettings, Category } from '@/components/useNotes';
 import { useExport } from '@/components/useExport';
 import { useTranslation } from 'react-i18next';
 import { v4 as uuidv4 } from 'uuid';
@@ -10,7 +10,7 @@ import { type ToastRef } from './components';
 export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef | null>, titleInputRef?: React.RefObject<TextInput | null>) {
   const { id: routeId } = useLocalSearchParams<{ id: string }>();
   const [currentNoteId, setCurrentNoteId] = useState<string | undefined>(routeId);
-  const { notes, categories, addNote, updateNote, deleteNote, togglePinNote, updateNoteCategory } = useNotes();
+  const { notes, categories, addNote, updateNote, deleteNote, togglePinNote, updateNoteCategory, addCategory, updateCategory, deleteCategory } = useNotes();
   const { exportAsTxt, exportAsMarkdown, exportAsImage, exportAsWord } = useExport();
   const { t } = useTranslation();
   const router = useRouter();
@@ -23,10 +23,13 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
   const [canRedo, setCanRedo] = useState(false);
 
   const [titleError, setTitleError] = useState('');
-
   const [showExportModal, setShowExportModal] = useState(false);
   const [showOptionsMenu, setShowOptionsMenu] = useState(false);
   const [showPageSettings, setShowPageSettings] = useState(false);
+
+  // 分类管理相关状态
+  const [categoryModalVisible, setCategoryModalVisible] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
 
   const [lastEditedTime, setLastEditedTime] = useState<number | undefined>(undefined);
   
@@ -337,12 +340,52 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
     const handlePageSettingsChange = (settings: Partial<PageSettings>) => {
     setPageSettings(prev => ({ ...prev, ...settings }));
   };
-
   // 处理分类选择
   const handleCategoryChange = (categoryId: string) => {
     setSelectedCategoryId(categoryId);
   };
-  return {
+
+  // 添加分类
+  const handleAddCategory = () => {
+    setEditingCategory(null);
+    setCategoryModalVisible(true);
+  };
+
+  // 编辑分类
+  const handleEditCategory = (category: Category) => {
+    setEditingCategory(category);
+    setCategoryModalVisible(true);
+  };
+
+  // 保存分类
+  const handleSaveCategory = async (categoryData: Omit<Category, 'id' | 'createdAt' | 'updatedAt'>) => {
+    if (editingCategory) {
+      // 编辑现有分类
+      const updatedCategory: Category = {
+        ...editingCategory,
+        ...categoryData,
+        updatedAt: Date.now(),
+      };
+      await updateCategory(updatedCategory);
+    } else {
+      // 添加新分类
+      const newCategory: Category = {
+        id: uuidv4(),
+        ...categoryData,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      };
+      await addCategory(newCategory);
+    }
+  };
+
+  // 删除分类
+  const handleDeleteCategory = async (categoryId: string) => {
+    await deleteCategory(categoryId);
+    if (selectedCategoryId === categoryId) {
+      setSelectedCategoryId('all');
+    }
+  };  return {
     title,
     setTitle,
     content,
@@ -364,6 +407,10 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
     noteViewRef,
     lastEditedTime,
     currentNoteId,
+    // 分类管理相关
+    categoryModalVisible,
+    setCategoryModalVisible,
+    editingCategory,
     handleSave,
     handleSaveAndBack,
     handleBack,
@@ -379,6 +426,10 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
     handleOpenPageSettings,
     handlePageSettingsChange,
     handleCategoryChange,
+    handleAddCategory,
+    handleEditCategory,
+    handleSaveCategory,
+    handleDeleteCategory,
     MAX_TITLE_LENGTH,
     colorScheme,
     setCanUndo,

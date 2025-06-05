@@ -1,7 +1,7 @@
 import React, { useRef, useState, useEffect, useCallback, useMemo } from 'react';
 import { View, ImageBackground, Platform, Keyboard, KeyboardAvoidingView, Text, TextInput } from 'react-native';
 import { useEditorBridge, TenTapStarterKit } from '@10play/tentap-editor';
-import { NoteHeader, RichTextContent, ExportModal, PageSettingsModal, CustomToolbar, styles, Toast, ExportView, CategorySelector, type ToastRef } from './components';
+import { NoteHeader, RichTextContent, ExportModal, PageSettingsModal, CustomToolbar, styles, Toast, ExportView, CategorySelector, CategoryModal, type ToastRef } from './components';
 import { useEditorContent } from './components/hooks/useEditorContent';
 import { useNoteEdit } from './useNoteEdit';
 import { themes, getBackgroundColor, getTextColor, getEditorBackgroundColor, getEditorBorderColor, getContentPadding } from './noteEditUtils';
@@ -10,7 +10,7 @@ export default function NoteEditScreen() {
   const toastRef = useRef<ToastRef>(null);
   const titleInputRef = useRef<TextInput>(null);
   const [isKeyboardVisible, setKeyboardVisible] = useState(false);
-  const [keyboardHeight, setKeyboardHeight] = useState(0);  const [isEditorReady, setIsEditorReady] = useState(false);const {
+  const [keyboardHeight, setKeyboardHeight] = useState(0);  const [isEditorReady, setIsEditorReady] = useState(false);  const {
     title,
     content,
     canUndo,
@@ -28,7 +28,12 @@ export default function NoteEditScreen() {
     categories,
     isNewNote,
     noteViewRef,
-    lastEditedTime,    handleSave,
+    lastEditedTime,
+    // 分类管理相关
+    categoryModalVisible,
+    setCategoryModalVisible,
+    editingCategory,
+    handleSave,
     handleBack,
     handleDelete,
     handleExport,
@@ -43,6 +48,10 @@ export default function NoteEditScreen() {
     handleOpenPageSettings,
     handlePageSettingsChange,
     handleCategoryChange,
+    handleAddCategory,
+    handleEditCategory,
+    handleSaveCategory,
+    handleDeleteCategory,
     MAX_TITLE_LENGTH,
     colorScheme,
   } = useNoteEdit(themes, toastRef, titleInputRef);// 创建编辑器实例 - 确保内容加载后再创建
@@ -276,8 +285,7 @@ export default function NoteEditScreen() {
             paddingTop: 0,
             paddingBottom: 0          }}>
             
-            {editor && isEditorReady ? (
-              <RichTextContent
+            {editor && isEditorReady ? (              <RichTextContent
                 title={title}
                 content={content}
                 onChangeContent={handleContentChange}
@@ -289,10 +297,11 @@ export default function NoteEditScreen() {
                 maxLength={MAX_TITLE_LENGTH}
                 titleError={titleError}
                 editor={editor}
-                titleInputRef={titleInputRef}
-                categories={categories}
+                titleInputRef={titleInputRef}                categories={categories}
                 selectedCategoryId={selectedCategoryId}
                 onCategoryChange={handleCategoryChange}
+                onAddCategory={handleAddCategory}
+                onEditCategory={handleEditCategory}
               />
             ) : (
               <View style={{
@@ -332,13 +341,20 @@ export default function NoteEditScreen() {
           onExportAsMarkdown={handleExportAsMarkdown}
           onExportAsImage={handleExportAsImage}
           onExportAsWord={handleExportAsWord}
-        />
-
-        <PageSettingsModal
+        />        <PageSettingsModal
           isVisible={showPageSettings}
           onClose={() => setShowPageSettings(false)}
           currentSettings={pageSettings}
           onSettingsChange={handlePageSettingsChange}
+        />
+
+        {/* 分类管理模态框 */}
+        <CategoryModal
+          isVisible={categoryModalVisible}
+          category={editingCategory}
+          onClose={() => setCategoryModalVisible(false)}
+          onSave={handleSaveCategory}
+          onDelete={handleDeleteCategory}
         />
 
         <Toast ref={toastRef} />

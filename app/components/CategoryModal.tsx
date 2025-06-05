@@ -149,12 +149,16 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
                 </TouchableOpacity>
               </View>
 
-              <ScrollView style={localStyles.content} showsVerticalScrollIndicator={false}>
-                {/* 分类名称 */}
+              <ScrollView style={localStyles.content} showsVerticalScrollIndicator={false}>                {/* 分类名称 */}
                 <View style={localStyles.section}>
-                  <Text style={[localStyles.sectionTitle, { color: colors.text }]}>
-                    {t('categoryName', '分类名称')}
-                  </Text>
+                  <View style={localStyles.sectionTitleRow}>
+                    <Text style={[localStyles.sectionTitle, { color: colors.text }]}>
+                      {t('categoryName', '分类名称')}
+                    </Text>
+                    <Text style={[localStyles.charCount, { color: colors.secondaryText }]}>
+                      {name.length}/20
+                    </Text>
+                  </View>
                   <TextInput
                     style={[
                       localStyles.nameInput,
@@ -283,14 +287,23 @@ const localStyles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 12,
     maxHeight: 280,
-  },
-  section: {
+  },  section: {
     marginBottom: 16,
   },
   sectionTitle: {
     fontSize: 16,
     fontWeight: '600',
     marginBottom: 6,
+  },
+  sectionTitleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  charCount: {
+    fontSize: 12,
+    fontWeight: '400',
   },
   nameInput: {
     borderWidth: 1,
