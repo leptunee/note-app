@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo, useCallback, useMemo } from 'react';
 import { View, Text, TouchableOpacity, useColorScheme } from 'react-native';
 import { styles } from './styles';
 import { useTranslation } from 'react-i18next';
@@ -26,7 +26,7 @@ interface NoteHeaderProps {
   onPageSettings: () => void;
 }
 
-export const NoteHeader: React.FC<NoteHeaderProps> = ({
+export const NoteHeader = memo<NoteHeaderProps>(({
   isNewNote,
   onBack,
   onSave,
@@ -45,20 +45,68 @@ export const NoteHeader: React.FC<NoteHeaderProps> = ({
   const { t } = useTranslation();
   const colorScheme = useColorScheme() ?? 'light';
 
+  // 缓存事件处理函数
+  const handleBack = useCallback(() => {
+    onBack();
+  }, [onBack]);
+
+  const handleSave = useCallback(() => {
+    onSave();
+  }, [onSave]);
+
+  const handleUndo = useCallback(() => {
+    onUndo?.();
+  }, [onUndo]);
+
+  const handleRedo = useCallback(() => {
+    onRedo?.();
+  }, [onRedo]);
+
+  const handlePageSettings = useCallback(() => {
+    onPageSettings();
+  }, [onPageSettings]);
+
+  const handleToggleOptionsMenu = useCallback(() => {
+    toggleOptionsMenu();
+  }, [toggleOptionsMenu]);
+
+  // 缓存样式计算
+  const backButtonTextStyle = useMemo(() => [
+    styles.actionText, 
+    { color: Colors[colorScheme].tint, marginLeft: 5 }
+  ], [colorScheme]);
+
+  const saveButtonTextStyle = useMemo(() => [
+    styles.actionText, 
+    { color: Colors[colorScheme].tint, marginLeft: 5 }
+  ], [colorScheme]);
+
+  const undoIconColor = useMemo(() => 
+    canUndo ? Colors[colorScheme].tint : '#888', 
+    [canUndo, colorScheme]
+  );
+
+  const redoIconColor = useMemo(() => 
+    canRedo ? Colors[colorScheme].tint : '#888', 
+    [canRedo, colorScheme]
+  );
+
   return (
-    <View style={styles.header}>      
-      <TouchableOpacity onPress={onBack} style={styles.headerButton}>
+    <View style={styles.header}>
+      <TouchableOpacity onPress={handleBack} style={styles.headerButton}>
         <FontAwesome 
           name="chevron-left" 
           size={ICON_SIZE} 
           color={Colors[colorScheme].tint} 
         />
-        <Text style={[styles.actionText, { color: Colors[colorScheme].tint, marginLeft: 5 }]}>
+        <Text style={backButtonTextStyle}>
           {String(t('back'))}
         </Text>
-      </TouchableOpacity>      <View style={styles.headerActions}>
+      </TouchableOpacity>
+
+      <View style={styles.headerActions}>
         <TouchableOpacity 
-          onPress={onPageSettings}
+          onPress={handlePageSettings}
           style={styles.headerIconButton}
         >
           <FontAwesome 
@@ -69,7 +117,7 @@ export const NoteHeader: React.FC<NoteHeaderProps> = ({
         </TouchableOpacity>
         
         <TouchableOpacity 
-          onPress={onUndo}
+          onPress={handleUndo}
           style={styles.headerIconButton}
           disabled={!canUndo}
           activeOpacity={canUndo ? 0.7 : 1}
@@ -77,12 +125,12 @@ export const NoteHeader: React.FC<NoteHeaderProps> = ({
           <FontAwesome 
             name="undo" 
             size={ICON_SIZE} 
-            color={canUndo ? Colors[colorScheme].tint : '#888'} 
+            color={undoIconColor} 
           />
         </TouchableOpacity>
         
         <TouchableOpacity 
-          onPress={onRedo}
+          onPress={handleRedo}
           style={styles.headerIconButton}
           disabled={!canRedo}
           activeOpacity={canRedo ? 0.7 : 1}
@@ -90,28 +138,32 @@ export const NoteHeader: React.FC<NoteHeaderProps> = ({
           <FontAwesome 
             name="repeat" 
             size={ICON_SIZE} 
-            color={canRedo ? Colors[colorScheme].tint : '#888'} 
+            color={redoIconColor} 
           />
-        </TouchableOpacity>        {!isNewNote && (
+        </TouchableOpacity>
+
+        {!isNewNote && (
           <OptionsMenu 
             isVisible={showOptionsMenu} 
-            onHide={toggleOptionsMenu}
+            onHide={handleToggleOptionsMenu}
             onExport={onExport}
             onDelete={onDelete}
             onTogglePin={onTogglePin}
             isPinned={isPinned}
           />
-        )}<TouchableOpacity onPress={onSave} style={styles.saveButton}>
+        )}
+
+        <TouchableOpacity onPress={handleSave} style={styles.saveButton}>
           <FontAwesome 
             name="check" 
             size={ICON_SIZE} 
             color={Colors[colorScheme].tint} 
           />
-          <Text style={[styles.actionText, { color: Colors[colorScheme].tint, marginLeft: 5 }]}>
+          <Text style={saveButtonTextStyle}>
             {String(t('save'))}
           </Text>
         </TouchableOpacity>
       </View>
     </View>
   );
-}
+});

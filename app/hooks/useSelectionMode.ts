@@ -1,5 +1,5 @@
 // 选择模式管理Hook
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { Animated, Alert, BackHandler } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 
@@ -13,10 +13,12 @@ interface UseSelectionModeProps {
 export default function useSelectionMode({ deleteNote, deleteNotes, togglePinNote, setPinNotes }: UseSelectionModeProps) {
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [selectedNotes, setSelectedNotes] = useState<Set<string>>(new Set());
-  const [toolbarAnimation] = useState(new Animated.Value(0));
   const [showExportDialog, setShowExportDialog] = useState(false);
+  
+  // 使用 useMemo 缓存动画值，避免重复创建
+  const toolbarAnimation = useMemo(() => new Animated.Value(0), []);
 
-  // 进入选择模式
+  // 使用 useCallback 优化进入选择模式
   const enterSelectionMode = useCallback((noteId: string) => {
     setIsSelectionMode(true);
     setSelectedNotes(new Set([noteId]));
@@ -27,7 +29,7 @@ export default function useSelectionMode({ deleteNote, deleteNotes, togglePinNot
     }).start();
   }, [toolbarAnimation]);
 
-  // 退出选择模式
+  // 使用 useCallback 优化退出选择模式
   const exitSelectionMode = useCallback(() => {
     setIsSelectionMode(false);
     setSelectedNotes(new Set());
@@ -36,25 +38,27 @@ export default function useSelectionMode({ deleteNote, deleteNotes, togglePinNot
       toValue: 0,
       useNativeDriver: true,
     }).start();
-  }, [toolbarAnimation]);
-  // 切换笔记选择状态
+  }, [toolbarAnimation]);  // 切换笔记选择状态
   const toggleNoteSelection = useCallback((noteId: string) => {
-    const newSelectedNotes = new Set(selectedNotes);
-    if (newSelectedNotes.has(noteId)) {
-      newSelectedNotes.delete(noteId);
-    } else {
-      newSelectedNotes.add(noteId);
-    }
-    setSelectedNotes(newSelectedNotes);
-  }, [selectedNotes]);
-  // 全选/取消全选
+    setSelectedNotes(prevSelected => {
+      const newSelectedNotes = new Set(prevSelected);
+      if (newSelectedNotes.has(noteId)) {
+        newSelectedNotes.delete(noteId);
+      } else {
+        newSelectedNotes.add(noteId);
+      }
+      return newSelectedNotes;
+    });
+  }, []);  // 全选/取消全选
   const toggleSelectAll = useCallback((allNotes: any[]) => {
-    if (selectedNotes.size === allNotes.length) {
-      setSelectedNotes(new Set());
-    } else {
-      setSelectedNotes(new Set(allNotes.map(note => note.id)));
-    }
-  }, [selectedNotes]);
+    setSelectedNotes(prevSelected => {
+      if (prevSelected.size === allNotes.length) {
+        return new Set();
+      } else {
+        return new Set(allNotes.map(note => note.id));
+      }
+    });
+  }, []);
   // 删除选中的笔记
   const deleteSelectedNotes = useCallback(() => {
     const selectedCount = selectedNotes.size;

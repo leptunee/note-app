@@ -1,5 +1,5 @@
 // 分类管理模态框组件
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, memo, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -46,7 +46,7 @@ const CATEGORY_COLORS = [
   '#607D8B', // 蓝灰色
 ];
 
-export const CategoryModal: React.FC<CategoryModalProps> = ({
+export const CategoryModal = memo<CategoryModalProps>(({
   isVisible,
   category,
   onClose,
@@ -61,8 +61,8 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
   const [selectedIcon, setSelectedIcon] = useState('folder');
   const [selectedColor, setSelectedColor] = useState('#2196F3');
   const [nameError, setNameError] = useState('');
-
-  const colors = {
+  // 缓存颜色配置
+  const colors = useMemo(() => ({
     background: isDark ? '#1a1a1a' : '#ffffff',
     surface: isDark ? '#2a2a2a' : '#f8f9fa',
     text: isDark ? '#ffffff' : '#000000',
@@ -70,7 +70,9 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
     border: isDark ? '#404040' : '#e0e0e0',
     inputBackground: isDark ? '#333333' : '#ffffff',
     inputBorder: isDark ? '#555555' : '#dddddd',
-  };  // 初始化表单数据
+  }), [isDark]);
+
+  // 初始化表单数据
   useEffect(() => {
     if (category) {
       setName(category.name);
@@ -84,15 +86,16 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
     setNameError('');
   }, [category, isVisible]);
 
-  const handleSave = () => {
+  // 使用 useCallback 缓存事件处理函数
+  const handleSave = useCallback(() => {
     // 验证输入
     if (!name.trim()) {
-      setNameError(t('categoryNameRequired', '分类名称不能为空'));
+      setNameError(String(t('categoryNameRequired', '分类名称不能为空')));
       return;
     }
 
     if (name.trim().length > 20) {
-      setNameError(t('categoryNameTooLong', '分类名称不能超过20个字符'));
+      setNameError(String(t('categoryNameTooLong', '分类名称不能超过20个字符')));
       return;
     }
 
@@ -103,21 +106,21 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
     });
     
     onClose();
-  };
+  }, [name, selectedIcon, selectedColor, onSave, onClose, t]);
 
-  const handleDelete = () => {
+  const handleDelete = useCallback(() => {
     if (!category || !onDelete) return;
 
     Alert.alert(
-      t('confirmDelete', '确认删除'),
-      t('confirmDeleteCategory', '确定要删除这个分类吗？该分类下的笔记将移动到"全部笔记"分类。'),
+      String(t('confirmDelete', '确认删除')),
+      String(t('confirmDeleteCategory', '确定要删除这个分类吗？该分类下的笔记将移动到"全部笔记"分类。')),
       [
         {
-          text: t('cancel', '取消'),
+          text: String(t('cancel', '取消')),
           style: 'cancel',
         },
         {
-          text: t('delete', '删除'),
+          text: String(t('delete', '删除')),
           style: 'destructive',
           onPress: () => {
             onDelete(category.id);
@@ -126,8 +129,38 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
         },
       ]
     );
-  };
-  return (
+  }, [category, onDelete, onClose, t]);
+
+  const handleIconSelect = useCallback((icon: string) => {
+    setSelectedIcon(icon);
+  }, []);
+
+  const handleColorSelect = useCallback((color: string) => {
+    setSelectedColor(color);
+  }, []);
+
+  const handleNameChange = useCallback((text: string) => {
+    setName(text);
+    if (nameError) {
+      setNameError('');
+    }
+  }, [nameError]);
+
+  // 缓存样式计算
+  const modalContainerStyle = useMemo(() => [
+    styles.modalContainer, 
+    { backgroundColor: colors.background }
+  ], [colors.background]);
+
+  const headerStyle = useMemo(() => [
+    localStyles.header, 
+    { borderBottomColor: colors.border }
+  ], [colors.border]);
+
+  const headerTitleStyle = useMemo(() => [
+    localStyles.headerTitle, 
+    { color: colors.text }
+  ], [colors.text]);  return (
     <Modal
       visible={isVisible}
       animationType="fade"
@@ -138,11 +171,11 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
       <TouchableWithoutFeedback onPress={onClose}>
         <View style={styles.modalOverlay}>
           <TouchableWithoutFeedback onPress={() => {}}>
-            <View style={[styles.modalContainer, { backgroundColor: colors.background }]}>
+            <View style={modalContainerStyle}>
               {/* 头部 */}
-              <View style={[localStyles.header, { borderBottomColor: colors.border }]}>
-                <Text style={[localStyles.headerTitle, { color: colors.text }]}>
-                  {category ? t('editCategory', '编辑分类') : t('addCategory', '新建分类')}
+              <View style={headerStyle}>
+                <Text style={headerTitleStyle}>
+                  {category ? String(t('editCategory', '编辑分类')) : String(t('addCategory', '新建分类'))}
                 </Text>
                 <TouchableOpacity style={localStyles.closeButton} onPress={onClose}>
                   <FontAwesome name="times" size={20} color={colors.secondaryText} />
@@ -168,11 +201,7 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
                         color: colors.text,
                       },
                     ]}
-                    value={name}
-                    onChangeText={(text) => {
-                      setName(text);
-                      setNameError('');
-                    }}
+                    value={name}                    onChangeText={handleNameChange}
                     placeholder={t('enterCategoryName', '请输入分类名称')}
                     placeholderTextColor={colors.secondaryText}
                     maxLength={20}
@@ -197,7 +226,7 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
                               selectedIcon === icon ? selectedColor : colors.surface,
                           },
                         ]}
-                        onPress={() => setSelectedIcon(icon)}
+                        onPress={() => handleIconSelect(icon)}
                       >                        <FontAwesome
                           name={icon as any}
                           size={16}
@@ -222,7 +251,7 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
                             borderColor: selectedColor === color ? colors.text : 'transparent',
                           },
                         ]}
-                        onPress={() => setSelectedColor(color)}
+                        onPress={() => handleColorSelect(color)}
                       >                        {selectedColor === color && (
                           <FontAwesome name="check" size={14} color="#ffffff" />
                         )}
@@ -262,10 +291,9 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
             </View>
           </TouchableWithoutFeedback>
         </View>
-      </TouchableWithoutFeedback>
-    </Modal>
+      </TouchableWithoutFeedback>    </Modal>
   );
-};
+});
 
 const localStyles = StyleSheet.create({
   header: {
@@ -287,7 +315,7 @@ const localStyles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 12,
     maxHeight: 280,
-  },  section: {
+  },section: {
     marginBottom: 16,
   },
   sectionTitle: {

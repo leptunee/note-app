@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect, useCallback, useMemo } from 'react';
-import { View, ImageBackground, Platform, Keyboard, KeyboardAvoidingView, Text, TextInput } from 'react-native';
+import { View, ImageBackground, Platform, Keyboard, KeyboardAvoidingView, Text, TextInput, StatusBar } from 'react-native';
 import { useEditorBridge, TenTapStarterKit } from '@10play/tentap-editor';
 import { NoteHeader, RichTextContent, ExportModal, PageSettingsModal, CustomToolbar, styles, Toast, ExportView, CategorySelector, CategoryModal, type ToastRef } from './components';
 import { useEditorContent } from './components/hooks/useEditorContent';
@@ -239,6 +239,12 @@ export default function NoteEditScreen() {
     return getEditorBorderColor(pageSettings, colorScheme);
   }, [pageSettings, colorScheme]);return (
     <View style={{ flex: 1 }}>
+      <StatusBar 
+        barStyle={colorScheme === 'dark' ? 'light-content' : 'dark-content'}
+        backgroundColor={containerBackgroundColor}
+        translucent={false}
+      />
+      
       {/* 导出视图 - 独立渲染，不受任何容器约束 */}
       <ExportView
         ref={noteViewRef}

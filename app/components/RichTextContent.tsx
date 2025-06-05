@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, memo, useCallback, useMemo } from 'react';
 import { View, Text, TextInput, useColorScheme } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
@@ -32,7 +32,7 @@ interface RichTextContentProps {
   onEditCategory?: (category: Category) => void;
 }
 
-export const RichTextContent: React.FC<RichTextContentProps> = ({
+export const RichTextContent = memo<RichTextContentProps>(({
   title,
   content,
   onChangeContent,
@@ -50,11 +50,15 @@ export const RichTextContent: React.FC<RichTextContentProps> = ({
   onEditCategory,
 }) => {
   const { t } = useTranslation();
-  const colorScheme = useColorScheme();  const [showCategorySelector, setShowCategorySelector] = useState(false);
+  const colorScheme = useColorScheme();
+
+  const [showCategorySelector, setShowCategorySelector] = useState(false);
   
   // 创建内部引用，如果没有传入外部引用的话
   const internalTitleRef = useRef<TextInput | null>(null);
-  const finalTitleRef = titleInputRef || internalTitleRef;  // 使用自定义 Hook 管理编辑器内容
+  const finalTitleRef = titleInputRef || internalTitleRef;
+
+  // 使用自定义 Hook 管理编辑器内容
   const { isUpdating, getCurrentContent, forceReloadContent } = useEditorContent({
     editor,
     initialContent: content,
@@ -62,18 +66,25 @@ export const RichTextContent: React.FC<RichTextContentProps> = ({
     debounceMs: 500
   });
 
-  // 获取当前选中的分类
-  const selectedCategory = categories.find(cat => cat.id === selectedCategoryId) || 
-    { id: 'uncategorized', name: '未分类', icon: 'folder', color: '#999999', createdAt: 0, updatedAt: 0 };
+  // 缓存当前选中的分类
+  const selectedCategory = useMemo(() => 
+    categories.find(cat => cat.id === selectedCategoryId) || 
+    { id: 'uncategorized', name: '未分类', icon: 'folder', color: '#999999', createdAt: 0, updatedAt: 0 },
+    [categories, selectedCategoryId]
+  );
 
-  const handleCategoryPress = () => {
+  // 使用 useCallback 缓存事件处理函数
+  const handleCategoryPress = useCallback(() => {
     setShowCategorySelector(true);
-  };
+  }, []);
 
-  const handleCategorySelect = (categoryId: string) => {
+  const handleCategorySelect = useCallback((categoryId: string) => {
     onCategoryChange(categoryId);
     setShowCategorySelector(false);
-  };
+  }, [onCategoryChange]);
+  const handleCloseCategorySelector = useCallback(() => {
+    setShowCategorySelector(false);
+  }, []);
 
   return (
     <View style={styles.contentContainer}>      {/* 标题和元数据部分 */}
@@ -97,10 +108,9 @@ export const RichTextContent: React.FC<RichTextContentProps> = ({
         categories={categories}
         selectedCategoryId={selectedCategoryId}
         onCategoryChange={handleCategorySelect}
-        onClose={() => setShowCategorySelector(false)}
+        onClose={handleCloseCategorySelector}
         onAddCategory={onAddCategory}
         onEditCategory={onEditCategory}
-      />
-    </View>
+      />    </View>
   );
-};
+});

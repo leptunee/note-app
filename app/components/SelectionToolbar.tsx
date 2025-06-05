@@ -1,5 +1,5 @@
 // 选择模式工具栏组件
-import React from 'react';
+import React, { memo, useMemo, useCallback } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Animated } from 'react-native';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 
@@ -12,21 +12,34 @@ interface ToolbarButtonProps {
   iconSize?: number;
 }
 
-const ToolbarButton: React.FC<ToolbarButtonProps> = ({ 
+const ToolbarButton = memo<ToolbarButtonProps>(({ 
   onPress, 
   iconName, 
   text, 
   iconColor, 
   textColor, 
   iconSize = 24 
-}) => (
-  <TouchableOpacity style={styles.toolbarButton} onPress={onPress} activeOpacity={0.7}>
-    <View style={styles.iconContainer}>
-      <FontAwesome name={iconName as any} size={iconSize} color={iconColor} />
-    </View>
-    <Text style={[styles.toolbarButtonText, { color: textColor }]}>{text}</Text>
-  </TouchableOpacity>
-);
+}) => {
+  // 缓存样式计算
+  const textStyle = useMemo(() => [
+    styles.toolbarButtonText, 
+    { color: textColor }
+  ], [textColor]);
+
+  // 缓存事件处理函数
+  const handlePress = useCallback(() => {
+    onPress();
+  }, [onPress]);
+
+  return (
+    <TouchableOpacity style={styles.toolbarButton} onPress={handlePress} activeOpacity={0.7}>
+      <View style={styles.iconContainer}>
+        <FontAwesome name={iconName as any} size={iconSize} color={iconColor} />
+      </View>
+      <Text style={textStyle}>{text}</Text>
+    </TouchableOpacity>
+  );
+});
 
 interface SelectionToolbarProps {
   isVisible: boolean;
@@ -48,7 +61,7 @@ interface SelectionToolbarProps {
   notes: Array<{ id: string; pinned?: boolean }>;
 }
 
-export const SelectionToolbar: React.FC<SelectionToolbarProps> = ({
+export const SelectionToolbar = memo<SelectionToolbarProps>(({
   isVisible,
   toolbarAnimation,
   selectedCount,
@@ -57,40 +70,76 @@ export const SelectionToolbar: React.FC<SelectionToolbarProps> = ({
   onExitSelection,
   onToggleSelectAll,
   onDeleteSelected,
-  onPinSelected,  onUnpinSelected,
+  onPinSelected,
+  onUnpinSelected,
   onExportSelected,
   onMoveSelected,
   selectedNotes,
   notes
 }) => {
-  if (!isVisible) return null;
-
-  const isAllSelected = selectedCount === totalCount;
+  // 缓存计算值
+  const isAllSelected = useMemo(() => selectedCount === totalCount, [selectedCount, totalCount]);
   
-  // 检查选中的笔记中有多少已经被置顶
-  const selectedNotesArray = Array.from(selectedNotes);
-  const selectedNotesData = notes.filter(note => selectedNotesArray.includes(note.id));
-  const pinnedSelectedCount = selectedNotesData.filter(note => note.pinned).length;
-  const unpinnedSelectedCount = selectedNotesData.length - pinnedSelectedCount;
-  // 决定显示置顶还是取消置顶按钮
-  // 只有当所有选中的笔记都已置顶时，才显示取消置顶按钮
-  // 否则显示置顶按钮
-  const allSelectedArePinned = unpinnedSelectedCount === 0 && pinnedSelectedCount > 0;
+  // 缓存选中笔记的置顶状态计算
+  const pinnedStatus = useMemo(() => {
+    const selectedNotesArray = Array.from(selectedNotes);
+    const selectedNotesData = notes.filter(note => selectedNotesArray.includes(note.id));
+    const pinnedSelectedCount = selectedNotesData.filter(note => note.pinned).length;
+    const unpinnedSelectedCount = selectedNotesData.length - pinnedSelectedCount;
+    const allSelectedArePinned = unpinnedSelectedCount === 0 && pinnedSelectedCount > 0;
+    
+    return { allSelectedArePinned, pinnedSelectedCount, unpinnedSelectedCount };
+  }, [selectedNotes, notes]);
+
+  // 缓存动画样式
+  const toolbarStyle = useMemo(() => [
+    styles.toolbar,
+    {
+      transform: [{ 
+        translateY: toolbarAnimation.interpolate({
+          inputRange: [0, 1],
+          outputRange: [100, 0],
+        })
+      }],
+      backgroundColor: colors.toolbarBackground,
+    }
+  ], [toolbarAnimation, colors.toolbarBackground]);
+
+  // 使用 useCallback 缓存事件处理函数
+  const handleExitSelection = useCallback(() => {
+    onExitSelection();
+  }, [onExitSelection]);
+
+  const handleToggleSelectAll = useCallback(() => {
+    onToggleSelectAll();
+  }, [onToggleSelectAll]);
+
+  const handleDeleteSelected = useCallback(() => {
+    onDeleteSelected();
+  }, [onDeleteSelected]);
+
+  const handlePinAction = useCallback(() => {
+    if (pinnedStatus.allSelectedArePinned) {
+      onUnpinSelected();
+    } else {
+      onPinSelected();
+    }
+  }, [pinnedStatus.allSelectedArePinned, onUnpinSelected, onPinSelected]);
+
+  const handleMoveSelected = useCallback(() => {
+    onMoveSelected();
+  }, [onMoveSelected]);
+
+  const handleExportSelected = useCallback(() => {
+    onExportSelected();
+  }, [onExportSelected]);
+
+  if (!isVisible) return null;
   
   return (
-    <Animated.View 
-      style={[
-        styles.toolbar,
-        {
-          transform: [{ translateY: toolbarAnimation.interpolate({
-            inputRange: [0, 1],
-            outputRange: [100, 0],
-          })}],
-          backgroundColor: colors.toolbarBackground,
-        }
-      ]}
-    >      <ToolbarButton 
-        onPress={onExitSelection}
+    <Animated.View style={toolbarStyle}>
+      <ToolbarButton 
+        onPress={handleExitSelection}
         iconName="chevron-left"
         text="返回"
         iconColor={colors.tint}
@@ -98,7 +147,7 @@ export const SelectionToolbar: React.FC<SelectionToolbarProps> = ({
       />
       
       <ToolbarButton 
-        onPress={onToggleSelectAll}
+        onPress={handleToggleSelectAll}
         iconName={isAllSelected ? "check-square" : "square-o"}
         text="全选"
         iconColor={colors.tint}
@@ -106,22 +155,23 @@ export const SelectionToolbar: React.FC<SelectionToolbarProps> = ({
       />
       
       <ToolbarButton 
-        onPress={onDeleteSelected}
+        onPress={handleDeleteSelected}
         iconName="trash-o"
         text="删除"
         iconColor="#ff3b30"
         textColor="#ff3b30"
       />
-        <ToolbarButton 
-        onPress={allSelectedArePinned ? onUnpinSelected : onPinSelected}
-        iconName={allSelectedArePinned ? "times" : "thumb-tack"}
-        text={allSelectedArePinned ? "取消" : "置顶"}
+        
+      <ToolbarButton 
+        onPress={handlePinAction}
+        iconName={pinnedStatus.allSelectedArePinned ? "times" : "thumb-tack"}
+        text={pinnedStatus.allSelectedArePinned ? "取消" : "置顶"}
         iconColor={colors.tint}
         textColor={colors.toolbarText}
       />
       
       <ToolbarButton 
-        onPress={onMoveSelected}
+        onPress={handleMoveSelected}
         iconName="folder-o"
         text="移动"
         iconColor={colors.tint}
@@ -129,7 +179,7 @@ export const SelectionToolbar: React.FC<SelectionToolbarProps> = ({
       />
       
       <ToolbarButton 
-        onPress={onExportSelected}
+        onPress={handleExportSelected}
         iconName="download"
         text="导出"
         iconColor={colors.tint}
@@ -137,7 +187,7 @@ export const SelectionToolbar: React.FC<SelectionToolbarProps> = ({
       />
     </Animated.View>
   );
-};
+});
 
 const styles = StyleSheet.create({  toolbar: {
     position: 'absolute',

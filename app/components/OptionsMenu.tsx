@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo, useCallback, useMemo } from 'react';
 import { TouchableOpacity, View, Text, Alert, useColorScheme } from 'react-native';
 import { styles } from './styles';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
@@ -17,7 +17,7 @@ interface OptionsMenuProps {
   isPinned?: boolean;
 }
 
-export const OptionsMenu: React.FC<OptionsMenuProps> = ({ 
+export const OptionsMenu = memo<OptionsMenuProps>(({ 
   isVisible, 
   onHide,
   onExport, 
@@ -28,6 +28,47 @@ export const OptionsMenu: React.FC<OptionsMenuProps> = ({
   const { t } = useTranslation();
   const colorScheme = useColorScheme() ?? 'light';
 
+  // 缓存事件处理函数
+  const handleExportPress = useCallback(() => {
+    onHide();
+    onExport();
+  }, [onHide, onExport]);
+
+  const handleTogglePinPress = useCallback(() => {
+    onHide();
+    onTogglePin?.();
+  }, [onHide, onTogglePin]);
+
+  const handleDeletePress = useCallback(() => {
+    onHide();
+    Alert.alert(
+      String(t('deleteConfirmTitle')),
+      String(t('deleteConfirmMessage')),
+      [
+        { text: String(t('cancel')), style: 'cancel' },
+        { text: String(t('delete')), onPress: onDelete, style: 'destructive' }
+      ]
+    );
+  }, [onHide, onDelete, t]);
+
+  // 缓存样式计算
+  const menuStyle = useMemo(() => [
+    styles.optionsMenu, 
+    { 
+      backgroundColor: colorScheme === 'dark' ? '#333' : '#fff',
+      borderColor: colorScheme === 'dark' ? '#444' : '#eaeaea'
+    }
+  ], [colorScheme]);
+
+  const textColor = useMemo(() => ({ 
+    color: colorScheme === 'dark' ? '#fff' : '#000' 
+  }), [colorScheme]);
+
+  const iconColor = useMemo(() => 
+    colorScheme === 'dark' ? '#fff' : '#000', 
+    [colorScheme]
+  );
+
   return (
     <View style={styles.optionsMenuContainer}>
       {/* 按钮总是显示，不受isVisible状态影响 */}
@@ -37,52 +78,35 @@ export const OptionsMenu: React.FC<OptionsMenuProps> = ({
       >
         <FontAwesome name="ellipsis-v" size={ICON_SIZE} color={Colors[colorScheme].tint} />
       </TouchableOpacity>
-      
-      {/* 下拉菜单根据isVisible状态显示或隐藏 */}
+        {/* 下拉菜单根据isVisible状态显示或隐藏 */}
       {isVisible && (
-        <View style={[styles.optionsMenu, { 
-          backgroundColor: colorScheme === 'dark' ? '#333' : '#fff',
-          borderColor: colorScheme === 'dark' ? '#444' : '#eaeaea'
-        }]}>          <TouchableOpacity 
+        <View style={menuStyle}>
+          <TouchableOpacity 
             style={styles.optionItem} 
-            onPress={() => {
-              onHide();
-              onExport();
-            }}
+            onPress={handleExportPress}
           >
-            <FontAwesome name="download" size={ICON_SIZE} color={colorScheme === 'dark' ? '#fff' : '#000'} style={styles.optionIcon} />
-            <Text style={[styles.optionText, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>导出笔记</Text>
-          </TouchableOpacity>          <TouchableOpacity 
+            <FontAwesome name="download" size={ICON_SIZE} color={iconColor} style={styles.optionIcon} />
+            <Text style={[styles.optionText, textColor]}>导出笔记</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
             style={styles.optionItem} 
-            onPress={() => {
-              onHide();
-              onTogglePin?.();
-            }}
+            onPress={handleTogglePinPress}
           >
             <FontAwesome 
               name="thumb-tack" 
               size={ICON_SIZE} 
-              color={colorScheme === 'dark' ? '#fff' : '#000'} 
+              color={iconColor} 
               style={styles.optionIcon} 
             />
-            <Text style={[styles.optionText, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
+            <Text style={[styles.optionText, textColor]}>
               {isPinned ? '取消置顶' : '置顶笔记'}
             </Text>
           </TouchableOpacity>
           
           <TouchableOpacity 
             style={styles.optionItem} 
-            onPress={() => {
-              onHide();
-              Alert.alert(
-                String(t('deleteConfirmTitle')),
-                String(t('deleteConfirmMessage')),
-                [
-                  { text: String(t('cancel')), style: 'cancel' },
-                  { text: String(t('delete')), onPress: onDelete, style: 'destructive' }
-                ]
-              );
-            }}
+            onPress={handleDeletePress}
           >
             <FontAwesome name="trash-o" size={ICON_SIZE} color="#ff3b30" style={styles.optionIcon} />
             <Text style={[styles.optionText, { color: '#ff3b30' }]}>删除笔记</Text>
@@ -91,4 +115,4 @@ export const OptionsMenu: React.FC<OptionsMenuProps> = ({
       )}
     </View>
   );
-};
+});

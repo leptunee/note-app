@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 
 export type Note = {
   id: string;
@@ -86,15 +86,21 @@ export function useNotes() {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [lastRefreshTime, setLastRefreshTime] = useState(0);
 
-  // 刷新笔记列表的函数，添加防抖动处理
-  const refreshNotes = () => {
+  // 缓存默认分类 ID 集合，避免重复计算
+  const defaultCategoryIds = useMemo(() => 
+    new Set(DEFAULT_CATEGORIES.map(cat => cat.id)), 
+    []
+  );
+
+  // 使用 useCallback 优化刷新笔记列表的函数，添加防抖动处理
+  const refreshNotes = useCallback(() => {
     const now = Date.now();
     // 如果距离上次刷新不足500毫秒，则忽略此次刷新请求
     if (now - lastRefreshTime < 500) return;
     
     setLastRefreshTime(now);
     setRefreshTrigger(prev => prev + 1);
-  };  useEffect(() => {
+  }, [lastRefreshTime]);useEffect(() => {
     const loadData = async () => {
       try {
         // 加载笔记
@@ -156,75 +162,81 @@ export function useNotes() {
       }
     };    loadData();
   }, [refreshTrigger]);
-
-  const saveNotes = async (newNotes: Note[]) => {
+  // 使用 useCallback 缓存保存函数
+  const saveNotes = useCallback(async (newNotes: Note[]) => {
     setNotes(newNotes);
     await AsyncStorage.setItem(NOTES_KEY, JSON.stringify(newNotes));
-  };
+  }, []);
 
-  const addNote = async (note: Note) => {
-    const defaultPageSettings: PageSettings = {
-      themeId: 'default', // 默认主题
-      marginValue: 20, // 默认边距值 (例如，可以映射为中等边距)
-      backgroundImageOpacity: 0.5, // 默认透明度设为50%
-      backgroundImageBlur: 0, // 默认无模糊
-      // 移除了默认背景图片
-    };
+  // 使用 useMemo 缓存默认页面设置
+  const defaultPageSettings = useMemo((): PageSettings => ({
+    themeId: 'default', // 默认主题
+    marginValue: 20, // 默认边距值 (例如，可以映射为中等边距)
+    backgroundImageOpacity: 0.5, // 默认透明度设为50%
+    backgroundImageBlur: 0, // 默认无模糊
+    // 移除了默认背景图片
+  }), []);
+
+  const addNote = useCallback(async (note: Note) => {
     const noteWithDefaults = {
       ...note,
       pageSettings: note.pageSettings || defaultPageSettings,
     };
     const newNotes = [noteWithDefaults, ...notes];
     await saveNotes(newNotes);
-  };
+  }, [notes, saveNotes, defaultPageSettings]);
 
-  const updateNote = async (note: Note) => {
+  const updateNote = useCallback(async (note: Note) => {
     const newNotes = notes.map(n => (n.id === note.id ? { ...n, ...note } : n));
     await saveNotes(newNotes);
-  };  const deleteNote = async (id: string) => {
+  }, [notes, saveNotes]);
+
+  const deleteNote = useCallback(async (id: string) => {
     const newNotes = notes.filter(n => n.id !== id);
     await saveNotes(newNotes);
-  };
+  }, [notes, saveNotes]);
 
-  // 批量删除笔记
-  const deleteNotes = async (ids: string[]) => {
+  // 批量删除笔记 - 使用 useCallback 优化
+  const deleteNotes = useCallback(async (ids: string[]) => {
     const idSet = new Set(ids);
     const newNotes = notes.filter(n => !idSet.has(n.id));
     await saveNotes(newNotes);
-  };
-  const togglePinNote = async (id: string) => {
+  }, [notes, saveNotes]);
+
+  const togglePinNote = useCallback(async (id: string) => {
     const newNotes = notes.map(n => 
       n.id === id ? { ...n, pinned: !n.pinned } : n
     );
     await saveNotes(newNotes);
-  };
+  }, [notes, saveNotes]);
 
-  // 批量设置置顶状态，避免多次刷新
-  const setPinNotes = async (ids: string[], pinned: boolean) => {
+    // 批量设置置顶状态，避免多次刷新 - 使用 useCallback 优化
+  const setPinNotes = useCallback(async (ids: string[], pinned: boolean) => {
     const idSet = new Set(ids);
     const newNotes = notes.map(n => 
       idSet.has(n.id) ? { ...n, pinned } : n
     );
-    await saveNotes(newNotes);  };
-  // 分类管理函数
-  const saveCategories = async (newCategories: Category[]) => {
+    await saveNotes(newNotes);
+  }, [notes, saveNotes]);
+
+  // 分类管理函数 - 使用 useCallback 优化
+  const saveCategories = useCallback(async (newCategories: Category[]) => {
     setCategories(newCategories);
     // 只保存自定义分类到存储，默认分类不需要保存
-    const defaultCategoryIds = DEFAULT_CATEGORIES.map(cat => cat.id);
-    const customCategories = newCategories.filter(cat => !defaultCategoryIds.includes(cat.id));
+    const customCategories = newCategories.filter(cat => !defaultCategoryIds.has(cat.id));
     await AsyncStorage.setItem(CATEGORIES_KEY, JSON.stringify(customCategories));
-  };
+  }, [defaultCategoryIds]);
 
-  const addCategory = async (category: Category) => {
+  const addCategory = useCallback(async (category: Category) => {
     const newCategories = [...categories, category];
     await saveCategories(newCategories);
-  };
+  }, [categories, saveCategories]);
 
-  const updateCategory = async (category: Category) => {
+  const updateCategory = useCallback(async (category: Category) => {
     const newCategories = categories.map(c => (c.id === category.id ? { ...c, ...category } : c));
     await saveCategories(newCategories);
-  };
-  const deleteCategory = async (id: string) => {
+  }, [categories, saveCategories]);
+  const deleteCategory = useCallback(async (id: string) => {
     // 不允许删除系统分类
     if (id === 'all' || id === 'uncategorized') return;
     
@@ -237,16 +249,26 @@ export function useNotes() {
     // 删除分类
     const newCategories = categories.filter(c => c.id !== id);
     await saveCategories(newCategories);
-  };
+  }, [notes, categories, saveNotes, saveCategories]);
 
-  const updateNoteCategory = async (noteId: string, categoryId: string) => {
+  // 批量更新笔记分类，避免竞态条件
+  const updateMultipleNoteCategories = useCallback(async (noteIds: string[], categoryId: string) => {
+    const noteIdSet = new Set(noteIds);
+    const newNotes = notes.map(n => 
+      noteIdSet.has(n.id) ? { ...n, categoryId } : n
+    );
+    await saveNotes(newNotes);
+  }, [notes, saveNotes]);
+
+  const updateNoteCategory = useCallback(async (noteId: string, categoryId: string) => {
     const newNotes = notes.map(n => 
       n.id === noteId ? { ...n, categoryId } : n
     );
     await saveNotes(newNotes);
-  };
-  // 按分类筛选笔记
-  const getNotesByCategory = (categoryId: string) => {
+  }, [notes, saveNotes]);
+
+  // 使用 useCallback 和 useMemo 优化分类筛选功能  // 使用 useCallback 和 useMemo 优化分类筛选功能
+  const getNotesByCategory = useCallback((categoryId: string) => {
     if (categoryId === 'all') {
       return notes;
     }
@@ -254,8 +276,8 @@ export function useNotes() {
       return notes.filter(note => !note.categoryId || note.categoryId === 'uncategorized');
     }
     return notes.filter(note => note.categoryId === categoryId);
-  };
-  // 移除清理所有数据的功能
+  }, [notes]);
+  
   return { 
     notes, 
     categories,
@@ -271,6 +293,7 @@ export function useNotes() {
     updateCategory,
     deleteCategory,
     updateNoteCategory,
+    updateMultipleNoteCategories,
     getNotesByCategory
   };
 }

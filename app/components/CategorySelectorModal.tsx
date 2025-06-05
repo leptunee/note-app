@@ -1,5 +1,4 @@
-// 分类选择模态框组件 - 专门用于在笔记编辑页面显示
-import React from 'react';
+import React, { memo, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -27,7 +26,7 @@ interface CategorySelectorModalProps {
   onEditCategory?: (category: Category) => void;
 }
 
-export const CategorySelectorModal: React.FC<CategorySelectorModalProps> = ({
+export const CategorySelectorModal = memo<CategorySelectorModalProps>(({
   visible,
   categories,
   selectedCategoryId,
@@ -41,7 +40,8 @@ export const CategorySelectorModal: React.FC<CategorySelectorModalProps> = ({
   const isDark = colorScheme === 'dark';
   const insets = useSafeAreaInsets();
 
-  const colors = {
+  // 缓存颜色主题
+  const colors = useMemo(() => ({
     background: isDark ? '#2a2a2a' : '#f8f9fa',
     text: isDark ? '#ffffff' : '#000000',
     secondaryText: isDark ? '#cccccc' : '#666666',
@@ -49,21 +49,66 @@ export const CategorySelectorModal: React.FC<CategorySelectorModalProps> = ({
     activeBackground: isDark ? '#333333' : '#e3f2fd',
     activeText: Colors[colorScheme].tint,
     dropdownBackground: isDark ? '#1a1a1a' : '#ffffff',
-  };  const handleCategorySelect = (categoryId: string) => {
+  }), [isDark, colorScheme]);
+
+  // 缓存事件处理函数
+  const handleCategorySelect = useCallback((categoryId: string) => {
     onCategoryChange(categoryId);
     onClose();
-  };
+  }, [onCategoryChange, onClose]);
 
-  const handleEditCategory = (category: Category) => {
-    // 不允许编辑系统分类
+  const handleAddCategory = useCallback(() => {
+    if (onAddCategory) {
+      onAddCategory();
+    }
+  }, [onAddCategory]);
+
+  const handleEditCategory = useCallback((category: Category) => {
     if (category.id !== 'all' && category.id !== 'uncategorized' && onEditCategory) {
       onClose();
       onEditCategory(category);
     }
-  };
+  }, [onEditCategory, onClose]);
 
-  // 过滤掉"全部笔记"分类，只显示可选择的分类
-  const selectableCategories = categories.filter(cat => cat.id !== 'all');
+  // 缓存过滤后的分类
+  const selectableCategories = useMemo(() => 
+    categories.filter(cat => cat.id !== 'all'), 
+    [categories]
+  );
+
+  // 缓存样式对象
+  const modalOverlayStyle = useMemo(() => [
+    styles.modalOverlay,
+    {
+      paddingTop: Platform.OS === 'ios' ? insets.top : StatusBar.currentHeight || 0,
+    }
+  ], [insets.top]);
+
+  const dropdownStyle = useMemo(() => [
+    styles.dropdown, 
+    { backgroundColor: colors.dropdownBackground }
+  ], [colors.dropdownBackground]);
+
+  const headerStyle = useMemo(() => [
+    styles.header, 
+    { borderBottomColor: colors.border }
+  ], [colors.border]);
+
+  const headerTitleStyle = useMemo(() => [
+    styles.headerTitle, 
+    { color: colors.text }
+  ], [colors.text]);
+
+  const footerStyle = useMemo(() => [
+    styles.footer, 
+    { borderTopColor: colors.border }
+  ], [colors.border]);
+
+  const addButtonStyle = useMemo(() => [
+    styles.addButton,
+    { backgroundColor: Colors[colorScheme].tint }
+  ], [colorScheme]);
+
   return (
     <Modal
       visible={visible}
@@ -72,7 +117,6 @@ export const CategorySelectorModal: React.FC<CategorySelectorModalProps> = ({
       onRequestClose={onClose}
       statusBarTranslucent={true}
     >
-      {/* 修改状态栏样式，在模态框显示时使用浅色内容 */}
       {visible && (
         <StatusBar
           barStyle="light-content"
@@ -80,35 +124,32 @@ export const CategorySelectorModal: React.FC<CategorySelectorModalProps> = ({
           translucent={true}
         />
       )}
-        <TouchableOpacity
-        style={[
-          styles.modalOverlay,
-          {
-            paddingTop: Platform.OS === 'ios' ? insets.top : StatusBar.currentHeight || 0,
-          }
-        ]}
+      
+      <TouchableOpacity
+        style={modalOverlayStyle}
         activeOpacity={1}
         onPress={onClose}
       >
         <TouchableOpacity
-          style={[styles.dropdown, { backgroundColor: colors.dropdownBackground }]}
+          style={dropdownStyle}
           activeOpacity={1}
           onPress={(e) => e.stopPropagation()}
         >
-          {/* 头部 */}
-          <View style={[styles.header, { borderBottomColor: colors.border }]}>
-            <Text style={[styles.headerTitle, { color: colors.text }]}>
+          <View style={headerStyle}>
+            <Text style={headerTitleStyle}>
               {t('selectCategory', '选择分类')}
             </Text>
             <TouchableOpacity style={styles.closeButton} onPress={onClose}>
               <FontAwesome name="times" size={18} color={colors.secondaryText} />
             </TouchableOpacity>
-          </View>          {/* 分类列表 */}
+          </View>
+          
           <ScrollView style={styles.dropdownScroll} showsVerticalScrollIndicator={false}>
             {selectableCategories.map((category) => {
               const isSelected = category.id === selectedCategoryId;
               
-              return (                <TouchableOpacity
+              return (
+                <TouchableOpacity
                   key={category.id}
                   style={[
                     styles.categoryOption,
@@ -158,38 +199,31 @@ export const CategorySelectorModal: React.FC<CategorySelectorModalProps> = ({
             })}
           </ScrollView>
 
-          {/* 底部按钮 */}
           {onAddCategory && (
-            <View style={[styles.footer, { borderTopColor: colors.border }]}>
+            <View style={footerStyle}>
               <TouchableOpacity
-                style={[
-                  styles.addButton,
-                  { backgroundColor: Colors[colorScheme].tint }
-                ]}
-                onPress={() => {
-                  onClose();
-                  onAddCategory();
-                }}
+                style={addButtonStyle}
+                onPress={handleAddCategory}
               >
                 <FontAwesome name="plus" size={14} color="#ffffff" />
                 <Text style={styles.addButtonText}>
                   {t('addCategory', '新建分类')}
                 </Text>
-              </TouchableOpacity>            </View>
+              </TouchableOpacity>
+            </View>
           )}
         </TouchableOpacity>
       </TouchableOpacity>
     </Modal>
   );
-};
+});
 
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)', // 增加覆盖层的不透明度
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
-    // 确保覆盖整个屏幕，包括状态栏
     position: 'absolute',
     top: 0,
     left: 0,

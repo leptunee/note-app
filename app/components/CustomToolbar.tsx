@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo, useCallback, useMemo } from 'react';
 import { View, TouchableOpacity, Text, StyleSheet, Alert, useColorScheme } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
@@ -10,18 +10,41 @@ interface CustomToolbarProps {
   backgroundColor?: string; // 新增背景色控制
 }
 
-export const CustomToolbar: React.FC<CustomToolbarProps> = ({ 
+export const CustomToolbar = memo<CustomToolbarProps>(({ 
   editor, 
   isVisible = true, 
   backgroundColor 
 }) => {
   const colorScheme = useColorScheme();
 
+  // 缓存样式计算
+  const toolbarStyle = useMemo(() => [
+    styles.toolbar,
+    {
+      backgroundColor: backgroundColor || (colorScheme === 'dark' ? '#2c2c2c' : '#ffffff'),
+      borderTopWidth: 1,
+      borderTopColor: colorScheme === 'dark' ? '#404040' : '#e0e0e0',
+    }
+  ], [backgroundColor, colorScheme]);
+
+  const buttonStyle = useMemo(() => [
+    styles.button, 
+    {
+      backgroundColor: colorScheme === 'dark' ? '#404040' : '#f0f0f0'
+    }
+  ], [colorScheme]);
+
+  const iconColor = useMemo(() => 
+    colorScheme === 'dark' ? '#ffffff' : '#333333', 
+    [colorScheme]
+  );
+
   // 如果不可见，直接返回null
   if (!isVisible) {
     return null;
   }
-  const handleBold = () => {
+  // 使用 useCallback 优化事件处理函数
+  const handleBold = useCallback(() => {
     try {
       if (editor && typeof editor.toggleBold === 'function') {
         editor.toggleBold();
@@ -29,9 +52,9 @@ export const CustomToolbar: React.FC<CustomToolbarProps> = ({
     } catch (error) {
       console.warn('Bold toggle failed:', error);
     }
-  };
+  }, [editor]);
 
-  const handleItalic = () => {
+  const handleItalic = useCallback(() => {
     try {
       if (editor && typeof editor.toggleItalic === 'function') {
         editor.toggleItalic();
@@ -39,9 +62,9 @@ export const CustomToolbar: React.FC<CustomToolbarProps> = ({
     } catch (error) {
       console.warn('Italic toggle failed:', error);
     }
-  };
+  }, [editor]);
 
-  const handleUnderline = () => {
+  const handleUnderline = useCallback(() => {
     try {
       if (editor && typeof editor.toggleUnderline === 'function') {
         editor.toggleUnderline();
@@ -49,8 +72,7 @@ export const CustomToolbar: React.FC<CustomToolbarProps> = ({
     } catch (error) {
       console.warn('Underline toggle failed:', error);
     }
-  };
-  const handleBulletList = () => {
+  }, [editor]);  const handleBulletList = useCallback(() => {
     try {
       if (editor && typeof editor.toggleBulletList === 'function') {
         editor.toggleBulletList();
@@ -58,9 +80,9 @@ export const CustomToolbar: React.FC<CustomToolbarProps> = ({
     } catch (error) {
       console.warn('Bullet list toggle failed:', error);
     }
-  };
+  }, [editor]);
 
-  const handleOrderedList = () => {
+  const handleOrderedList = useCallback(() => {
     try {
       if (editor && typeof editor.toggleOrderedList === 'function') {
         editor.toggleOrderedList();
@@ -68,7 +90,7 @@ export const CustomToolbar: React.FC<CustomToolbarProps> = ({
     } catch (error) {
       console.warn('Ordered list toggle failed:', error);
     }
-  };const insertImages = async (images: ImagePicker.ImagePickerAsset[]) => {
+  }, [editor]);const insertImages = useCallback(async (images: ImagePicker.ImagePickerAsset[]) => {
     if (!editor) return;
 
     try {
@@ -152,9 +174,8 @@ export const CustomToolbar: React.FC<CustomToolbarProps> = ({
       console.error('Failed to insert images:', error);
       Alert.alert('插入失败', '图片插入失败，请重试');
     }
-  };
-
-  const handleImagePicker = async () => {
+  }, [editor]);
+  const handleImagePicker = useCallback(async () => {
     try {
       // 请求相册权限
       const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -177,75 +198,58 @@ export const CustomToolbar: React.FC<CustomToolbarProps> = ({
       console.error('Image picker failed:', error);
       Alert.alert('错误', '选择图片时出现错误');
     }
-  };  return (
-    <View style={[
-      styles.toolbar,
-      {
-        backgroundColor: backgroundColor || (colorScheme === 'dark' ? '#2c2c2c' : '#ffffff'),
-        borderTopWidth: 1,
-        borderTopColor: colorScheme === 'dark' ? '#404040' : '#e0e0e0',
-      }
-    ]}>      <TouchableOpacity style={[styles.button, {
-        backgroundColor: colorScheme === 'dark' ? '#404040' : '#f0f0f0'
-      }]} onPress={handleBold}>
+  }, [insertImages]);  return (
+    <View style={toolbarStyle}>
+      <TouchableOpacity style={buttonStyle} onPress={handleBold}>
         <FontAwesome 
           name="bold" 
           size={14} 
-          color={colorScheme === 'dark' ? '#ffffff' : '#333333'} 
+          color={iconColor} 
         />
       </TouchableOpacity>
       
-      <TouchableOpacity style={[styles.button, {
-        backgroundColor: colorScheme === 'dark' ? '#404040' : '#f0f0f0'
-      }]} onPress={handleItalic}>
+      <TouchableOpacity style={buttonStyle} onPress={handleItalic}>
         <FontAwesome 
           name="italic" 
           size={14} 
-          color={colorScheme === 'dark' ? '#ffffff' : '#333333'} 
+          color={iconColor} 
         />
       </TouchableOpacity>
       
-      <TouchableOpacity style={[styles.button, {
-        backgroundColor: colorScheme === 'dark' ? '#404040' : '#f0f0f0'
-      }]} onPress={handleUnderline}>
+      <TouchableOpacity style={buttonStyle} onPress={handleUnderline}>
         <FontAwesome 
           name="underline" 
           size={14} 
-          color={colorScheme === 'dark' ? '#ffffff' : '#333333'} 
+          color={iconColor} 
         />
       </TouchableOpacity>
-        <TouchableOpacity style={[styles.button, {
-        backgroundColor: colorScheme === 'dark' ? '#404040' : '#f0f0f0'
-      }]} onPress={handleBulletList}>
+        
+      <TouchableOpacity style={buttonStyle} onPress={handleBulletList}>
         <FontAwesome 
           name="list-ul" 
           size={14} 
-          color={colorScheme === 'dark' ? '#ffffff' : '#333333'} 
+          color={iconColor} 
         />
       </TouchableOpacity>
       
-      <TouchableOpacity style={[styles.button, {
-        backgroundColor: colorScheme === 'dark' ? '#404040' : '#f0f0f0'
-      }]} onPress={handleOrderedList}>
+      <TouchableOpacity style={buttonStyle} onPress={handleOrderedList}>
         <FontAwesome 
           name="list-ol" 
           size={14} 
-          color={colorScheme === 'dark' ? '#ffffff' : '#333333'} 
+          color={iconColor} 
         />
       </TouchableOpacity>
       
-      <TouchableOpacity style={[styles.button, {
-        backgroundColor: colorScheme === 'dark' ? '#404040' : '#f0f0f0'
-      }]} onPress={handleImagePicker}>
+      <TouchableOpacity style={buttonStyle} onPress={handleImagePicker}>
         <FontAwesome 
           name="image" 
           size={14} 
-          color={colorScheme === 'dark' ? '#ffffff' : '#333333'} 
+          color={iconColor} 
         />
       </TouchableOpacity>
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   toolbar: {

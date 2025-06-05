@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react'; // Added useRef
+import React, { useState, useRef, memo, useCallback } from 'react'; // Added useRef, memo, useCallback
 import { Modal, View, Text, TouchableOpacity, useColorScheme, TouchableWithoutFeedback } from 'react-native'; // Added TouchableWithoutFeedback
 import { styles } from './styles';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
@@ -16,7 +16,7 @@ interface ExportModalProps {
   onExportAsImage: () => Promise<ExportResult>;
 }
 
-export const ExportModal: React.FC<ExportModalProps> = ({
+export const ExportModal = memo<ExportModalProps>(({
   isVisible,
   onClose,
   onExportAsTxt,
@@ -27,7 +27,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
   const toastRef = useRef<ToastRef>(null); // Added toastRef
 
   // Updated handleExport to be async and use the result from exportFn to show toast
-  const handleExport = async (exportFn: () => Promise<ExportResult>) => {
+  const handleExport = useCallback(async (exportFn: () => Promise<ExportResult>) => {
     onClose(); // Close modal first
     try {
       const result = await exportFn(); // Call the actual export function passed
@@ -39,7 +39,13 @@ export const ExportModal: React.FC<ExportModalProps> = ({
       console.error("Export failed from Modal: ", error);
       toastRef.current?.show('导出操作失败，请重试。', 'error');
     }
-  };
+  }, [onClose]);
+
+  // Memoize export handlers
+  const handleExportAsTxt = useCallback(() => handleExport(onExportAsTxt), [handleExport, onExportAsTxt]);
+  const handleExportAsWord = useCallback(() => handleExport(onExportAsWord), [handleExport, onExportAsWord]);
+  const handleExportAsMarkdown = useCallback(() => handleExport(onExportAsMarkdown), [handleExport, onExportAsMarkdown]);
+  const handleExportAsImage = useCallback(() => handleExport(onExportAsImage), [handleExport, onExportAsImage]);
 
   return (
     <>      <Modal
@@ -62,10 +68,9 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                     <FontAwesome name="times" size={22} color={colorScheme === 'dark' ? '#ccc' : '#666'} />
                   </TouchableOpacity>
                 </View>
-                
-                <TouchableOpacity 
+                  <TouchableOpacity 
                   style={styles.exportOption} 
-                  onPress={() => handleExport(onExportAsTxt)}
+                  onPress={handleExportAsTxt}
                 >
                   <FontAwesome name="file-text-o" size={24} color={Colors[colorScheme].tint} />
                   <Text style={[styles.exportOptionText, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>文本文件 (.txt)</Text>
@@ -73,7 +78,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                 
                 <TouchableOpacity 
                   style={styles.exportOption} 
-                  onPress={() => handleExport(onExportAsWord)}
+                  onPress={handleExportAsWord}
                 >
                   <FontAwesome name="file-word-o" size={24} color="#2B579A" />
                   <Text style={[styles.exportOptionText, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>Word文档 (.html)</Text>
@@ -81,7 +86,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                 
                 <TouchableOpacity 
                   style={styles.exportOption} 
-                  onPress={() => handleExport(onExportAsMarkdown)}
+                  onPress={handleExportAsMarkdown}
                 >
                   <FontAwesome name="file-code-o" size={24} color="#663399" />
                   <Text style={[styles.exportOptionText, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>Markdown (.md)</Text>
@@ -89,7 +94,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                 
                 <TouchableOpacity 
                   style={styles.exportOption} 
-                  onPress={() => handleExport(onExportAsImage)}
+                  onPress={handleExportAsImage}
                 >
                   <FontAwesome name="file-image-o" size={24} color="#4CAF50" />
                   <Text style={[styles.exportOptionText, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>图片 (.png)</Text>
@@ -107,9 +112,8 @@ export const ExportModal: React.FC<ExportModalProps> = ({
           </View>
         </TouchableWithoutFeedback>
       </Modal>
-      
-      {/* Pass ref to Toast component */}
+        {/* Pass ref to Toast component */}
       <Toast ref={toastRef} />
     </>
   );
-};
+});

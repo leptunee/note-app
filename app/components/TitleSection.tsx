@@ -1,5 +1,5 @@
 // 标题和信息栏组件
-import React, { forwardRef } from 'react';
+import React, { forwardRef, memo, useMemo } from 'react';
 import { View, Text, TextInput, useColorScheme } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { getPlainTextLength } from './utils/contentUtils';
@@ -18,7 +18,7 @@ interface TitleSectionProps {
   onCategoryPress?: () => void;
 }
 
-export const TitleSection = forwardRef<TextInput, TitleSectionProps>(({
+export const TitleSection = memo(forwardRef<TextInput, TitleSectionProps>(({
   title,
   content,
   onChangeTitle,
@@ -30,41 +30,68 @@ export const TitleSection = forwardRef<TextInput, TitleSectionProps>(({
 }, ref) => {
   const { t } = useTranslation();
   const colorScheme = useColorScheme() ?? 'light';
-  return (
+
+  // 缓存文本输入样式
+  const textInputStyle = useMemo(() => [
+    {
+      backgroundColor: 'transparent',
+      color: textColor || (colorScheme === 'dark' ? '#fff' : '#000'),
+      paddingHorizontal: 0,
+      paddingVertical: 4,
+      fontSize: 20,
+      fontWeight: 'bold' as const,
+      marginBottom: 2,
+      minHeight: 32,
+      textAlignVertical: 'top' as const,
+    }
+  ], [textColor, colorScheme]);
+
+  // 缓存占位符颜色
+  const placeholderTextColor = useMemo(() => 
+    colorScheme === 'dark' ? '#888' : '#888', 
+    [colorScheme]
+  );
+
+  // 缓存容器样式
+  const containerStyle = useMemo(() => ({ 
+    flexDirection: 'row' as const, 
+    justifyContent: 'space-between' as const, 
+    alignItems: 'center' as const,
+    paddingHorizontal: 0, 
+    marginBottom: 2
+  }), []);
+
+  // 缓存字数统计样式
+  const wordCountStyle = useMemo(() => ({ 
+    color: colorScheme === 'dark' ? '#999' : '#888', 
+    fontSize: 12 
+  }), [colorScheme]);
+
+  // 缓存字数
+  const characterCount = useMemo(() => getPlainTextLength(content), [content]);
+
+  // 缓存字数文本
+  const characterText = useMemo(() => 
+    `${characterCount} ${characterCount > 0 ? String(t('characters')) : String(t('character'))}`,
+    [characterCount, t]
+  );  return (
     <>
       {/* 标题输入区域 */}
       <TextInput
-        ref={ref}        style={[
-          {
-            backgroundColor: 'transparent',
-            color: textColor || (colorScheme === 'dark' ? '#fff' : '#000'),
-            paddingHorizontal: 0,
-            paddingVertical: 4,
-            fontSize: 20, // 减小字体以确保64字符能在3行内显示
-            fontWeight: 'bold',
-            marginBottom: 2,
-            minHeight: 32, // 确保至少有一行的高度
-            textAlignVertical: 'top', // 文本从顶部开始对齐
-          }
-        ]}
+        ref={ref}
+        style={textInputStyle}
         placeholder={String(t('title'))}
         value={title}
         onChangeText={onChangeTitle}
         maxLength={maxLength}
-        placeholderTextColor={colorScheme === 'dark' ? '#888' : '#888'}
+        placeholderTextColor={placeholderTextColor}
         multiline={true}
         scrollEnabled={false}
-        numberOfLines={3} // 最多显示3行，超过后可以滚动
+        numberOfLines={3}
       />
 
       {/* 分类显示和字数统计 */}
-      <View style={{ 
-        flexDirection: 'row', 
-        justifyContent: 'space-between', 
-        alignItems: 'center',
-        paddingHorizontal: 0, 
-        marginBottom: 2
-      }}>
+      <View style={containerStyle}>
         {/* 分类显示 - 左侧 */}
         {selectedCategory && onCategoryPress ? (
           <CategoryDisplay
@@ -77,8 +104,8 @@ export const TitleSection = forwardRef<TextInput, TitleSectionProps>(({
         )}
         
         {/* 字数统计 - 右侧 */}
-        <Text style={{ color: colorScheme === 'dark' ? '#999' : '#888', fontSize: 12 }}>
-          {getPlainTextLength(content)} {getPlainTextLength(content) > 0 ? String(t('characters')) : String(t('character'))}
+        <Text style={wordCountStyle}>
+          {characterText}
         </Text>
       </View>
 
@@ -86,4 +113,4 @@ export const TitleSection = forwardRef<TextInput, TitleSectionProps>(({
       {titleError ? <Text style={styles.errorText}>{titleError}</Text> : null}
     </>
   );
-});
+}));

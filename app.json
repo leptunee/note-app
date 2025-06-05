@@ -12,9 +12,9 @@
       "image": "./assets/images/splash-icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
-    },
-    "ios": {
-      "supportsTablet": true
+    },    "ios": {
+      "supportsTablet": true,
+      "statusBarStyle": "auto"
     },
     "android": {
       "adaptiveIcon": {
@@ -22,7 +22,9 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.leptunee.takenotes"
+      "package": "com.leptunee.takenotes",
+      "statusBarStyle": "auto",
+      "statusBarTranslucent": false
     },
     "web": {
       "bundler": "metro",

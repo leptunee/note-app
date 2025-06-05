@@ -1,5 +1,5 @@
 // 分类显示组件 - 小型可点击的分类标签
-import React from 'react';
+import React, { memo, useMemo } from 'react';
 import {
   View,
   Text,
@@ -17,7 +17,7 @@ interface CategoryDisplayProps {
   textColor?: string;
 }
 
-export const CategoryDisplay: React.FC<CategoryDisplayProps> = ({
+export const CategoryDisplay = memo<CategoryDisplayProps>(({
   category,
   onPress,
   textColor,
@@ -25,7 +25,20 @@ export const CategoryDisplay: React.FC<CategoryDisplayProps> = ({
   const { t } = useTranslation();
   const colorScheme = useColorScheme() ?? 'light';
   
-  const defaultTextColor = textColor || (colorScheme === 'dark' ? '#999' : '#888');
+  const defaultTextColor = useMemo(() => 
+    textColor || (colorScheme === 'dark' ? '#999' : '#888'),
+    [textColor, colorScheme]
+  );
+  
+  const iconStyle = useMemo(() => [
+    styles.categoryIcon,
+    { backgroundColor: category.color },
+  ], [category.color]);
+  
+  const textStyle = useMemo(() => [
+    styles.categoryName, 
+    { color: defaultTextColor }
+  ], [defaultTextColor]);
   
   return (
     <TouchableOpacity
@@ -33,12 +46,8 @@ export const CategoryDisplay: React.FC<CategoryDisplayProps> = ({
       onPress={onPress}
       activeOpacity={0.7}
     >
-      <View style={styles.content}>
-        <View
-          style={[
-            styles.categoryIcon,
-            { backgroundColor: category.color },
-          ]}
+      <View style={styles.content}>        <View
+          style={iconStyle}
         >
           <FontAwesome
             name={category.icon as any}
@@ -46,7 +55,7 @@ export const CategoryDisplay: React.FC<CategoryDisplayProps> = ({
             color="#ffffff"
           />
         </View>
-        <Text style={[styles.categoryName, { color: defaultTextColor }]}>
+        <Text style={textStyle}>
           {category.name}
         </Text>
         <FontAwesome 
@@ -55,10 +64,9 @@ export const CategoryDisplay: React.FC<CategoryDisplayProps> = ({
           color={defaultTextColor} 
           style={styles.arrow}
         />
-      </View>
-    </TouchableOpacity>
+      </View>    </TouchableOpacity>
   );
-};
+});
 
 const styles = StyleSheet.create({
   container: {

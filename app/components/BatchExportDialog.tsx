@@ -1,5 +1,5 @@
 // 批量导出选项对话框组件
-import React, { useRef } from 'react';
+import React, { useRef, memo, useCallback, useMemo } from 'react';
 import { Modal, View, Text, TouchableOpacity, useColorScheme, TouchableWithoutFeedback } from 'react-native';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { Note } from '@/components/useNotes';
@@ -15,16 +15,53 @@ interface BatchExportDialogProps {
   selectedCount: number;
 }
 
-export const BatchExportDialog: React.FC<BatchExportDialogProps> = ({
+export const BatchExportDialog = memo<BatchExportDialogProps>(({
   visible,
   onClose,
   notes,
   selectedCount
-}) => {  const colorScheme = useColorScheme() ?? 'light';
+}) => {
+  const colorScheme = useColorScheme() ?? 'light';
   const toastRef = useRef<ToastRef>(null);
   const { exportMultipleAsTxt, exportMultipleAsWord, exportMultipleAsMarkdown } = useExport();
 
-  const handleExport = async (exportFunction: (notes: Note[]) => Promise<any>) => {
+  // 缓存样式计算
+  const modalContainerStyle = useMemo(() => [
+    styles.modalContainer, 
+    { backgroundColor: colorScheme === 'dark' ? '#333' : '#fff' }
+  ], [colorScheme]);
+
+  const titleStyle = useMemo(() => [
+    styles.modalTitle, 
+    { color: colorScheme === 'dark' ? '#fff' : '#000' }
+  ], [colorScheme]);
+
+  const optionTextStyle = useMemo(() => [
+    styles.exportOptionText, 
+    { color: colorScheme === 'dark' ? '#fff' : '#000' }
+  ], [colorScheme]);
+
+  const closeButtonStyle = useMemo(() => [
+    styles.closeButton, 
+    { backgroundColor: colorScheme === 'dark' ? '#444' : '#f0f0f0' }
+  ], [colorScheme]);
+
+  const closeButtonTextStyle = useMemo(() => [
+    styles.closeButtonText, 
+    { color: colorScheme === 'dark' ? '#fff' : '#333' }
+  ], [colorScheme]);
+
+  const closeIconColor = useMemo(() => 
+    colorScheme === 'dark' ? '#ccc' : '#666', 
+    [colorScheme]
+  );
+
+  const tintColor = useMemo(() => 
+    Colors[colorScheme].tint, 
+    [colorScheme]
+  );
+
+  const handleExport = useCallback(async (exportFunction: (notes: Note[]) => Promise<any>) => {
     onClose(); // 先关闭对话框
     
     try {
@@ -37,7 +74,19 @@ export const BatchExportDialog: React.FC<BatchExportDialogProps> = ({
       console.error('批量导出过程中出错:', error);
       toastRef.current?.show('导出过程中发生错误，请重试。', 'error');
     }
-  };
+  }, [notes, onClose]);
+
+  const handleTxtExport = useCallback(() => {
+    handleExport(exportMultipleAsTxt);
+  }, [handleExport, exportMultipleAsTxt]);
+
+  const handleWordExport = useCallback(() => {
+    handleExport(exportMultipleAsWord);
+  }, [handleExport, exportMultipleAsWord]);
+
+  const handleMarkdownExport = useCallback(() => {
+    handleExport(exportMultipleAsMarkdown);
+  }, [handleExport, exportMultipleAsMarkdown]);
 
   return (
     <>      <Modal
@@ -48,59 +97,57 @@ export const BatchExportDialog: React.FC<BatchExportDialogProps> = ({
         onRequestClose={onClose}
       >
         <TouchableWithoutFeedback onPress={onClose}>
-          <View style={styles.modalOverlay}>
-            <TouchableWithoutFeedback>
-              <View style={[styles.modalContainer, { backgroundColor: colorScheme === 'dark' ? '#333' : '#fff' }]}>
+          <View style={styles.modalOverlay}>            <TouchableWithoutFeedback>
+              <View style={modalContainerStyle}>
                 <View style={styles.modalHeader}>
-                  <Text style={[styles.modalTitle, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
+                  <Text style={titleStyle}>
                     批量导出 ({selectedCount} 篇笔记)
                   </Text>
                   <TouchableOpacity 
                     style={styles.modalCloseBtn}
                     onPress={onClose}
                   >
-                    <FontAwesome name="times" size={22} color={colorScheme === 'dark' ? '#ccc' : '#666'} />
+                    <FontAwesome name="times" size={22} color={closeIconColor} />
                   </TouchableOpacity>
                 </View>
                 
                 <TouchableOpacity 
                   style={styles.exportOption} 
-                  onPress={() => handleExport(exportMultipleAsTxt)}
+                  onPress={handleTxtExport}
                 >
-                  <FontAwesome name="file-text-o" size={24} color={Colors[colorScheme].tint} />
-                  <Text style={[styles.exportOptionText, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>文本文件 (.txt)</Text>
+                  <FontAwesome name="file-text-o" size={24} color={tintColor} />
+                  <Text style={optionTextStyle}>文本文件 (.txt)</Text>
                 </TouchableOpacity>
                 
                 <TouchableOpacity 
                   style={styles.exportOption} 
-                  onPress={() => handleExport(exportMultipleAsWord)}
+                  onPress={handleWordExport}
                 >
                   <FontAwesome name="file-word-o" size={24} color="#2B579A" />
-                  <Text style={[styles.exportOptionText, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>Word文档 (.html)</Text>
+                  <Text style={optionTextStyle}>Word文档 (.html)</Text>
                 </TouchableOpacity>
                 
                 <TouchableOpacity 
                   style={styles.exportOption} 
-                  onPress={() => handleExport(exportMultipleAsMarkdown)}
+                  onPress={handleMarkdownExport}
                 >
                   <FontAwesome name="file-code-o" size={24} color="#663399" />
-                  <Text style={[styles.exportOptionText, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>Markdown (.md)</Text>
+                  <Text style={optionTextStyle}>Markdown (.md)</Text>
                 </TouchableOpacity>
                 
                 <TouchableOpacity 
-                  style={[styles.closeButton, { backgroundColor: colorScheme === 'dark' ? '#444' : '#f0f0f0' }]} 
+                  style={closeButtonStyle} 
                   onPress={onClose}
                 >
-                  <FontAwesome name="times-circle" size={16} color={colorScheme === 'dark' ? '#ccc' : '#666'} style={{marginRight: 6}} />
-                  <Text style={[styles.closeButtonText, { color: colorScheme === 'dark' ? '#fff' : '#333' }]}>取消</Text>
+                  <FontAwesome name="times-circle" size={16} color={closeIconColor} style={{marginRight: 6}} />
+                  <Text style={closeButtonTextStyle}>取消</Text>
                 </TouchableOpacity>
               </View>
             </TouchableWithoutFeedback>
           </View>
         </TouchableWithoutFeedback>
       </Modal>
-      
-      <Toast ref={toastRef} />
+        <Toast ref={toastRef} />
     </>
   );
-};
+});

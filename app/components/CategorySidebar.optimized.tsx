@@ -1,4 +1,4 @@
-// 分类目录侧边栏组件
+// 分类目录侧边栏组件 - 性能优化版本
 import React, { useEffect, memo, useMemo, useCallback } from 'react';
 import {
   View,
@@ -32,6 +32,70 @@ interface CategorySidebarProps {
 const { width: screenWidth } = Dimensions.get('window');
 const SIDEBAR_WIDTH = screenWidth * 0.75; // 侧边栏宽度为屏幕宽度的75%
 
+// 缓存分类项组件
+const CategoryItem = memo<{
+  category: Category;
+  isSelected: boolean;
+  notesCount: number;
+  colors: any;
+  onSelect: () => void;
+  onEdit: () => void;
+}>(({ category, isSelected, notesCount, colors, onSelect, onEdit }) => (
+  <TouchableOpacity
+    style={[
+      styles.categoryItem,
+      {
+        backgroundColor: isSelected ? colors.activeBackground : 'transparent',
+      },
+    ]}
+    onPress={onSelect}
+    onLongPress={onEdit}
+  >
+    <View style={styles.categoryContent}>
+      <View style={styles.categoryLeft}>
+        <View
+          style={[
+            styles.categoryIcon,
+            {
+              backgroundColor: isSelected ? category.color : colors.surface,
+            },
+          ]}
+        >
+          <FontAwesome
+            name={category.icon as any}
+            size={16}
+            color={isSelected ? '#ffffff' : category.color}
+          />
+        </View>
+        <Text
+          style={[
+            styles.categoryName,
+            {
+              color: isSelected ? colors.activeText : colors.text,
+              fontWeight: isSelected ? '600' : '400',
+            },
+          ]}
+        >
+          {category.name}
+        </Text>
+      </View>
+      
+      <View style={styles.categoryRight}>
+        <Text
+          style={[
+            styles.notesCount,
+            {
+              color: isSelected ? colors.activeText : colors.secondaryText,
+            },
+          ]}
+        >
+          {notesCount}
+        </Text>
+      </View>
+    </View>
+  </TouchableOpacity>
+));
+
 export const CategorySidebar = memo<CategorySidebarProps>(({
   isVisible,
   categories,
@@ -60,11 +124,15 @@ export const CategorySidebar = memo<CategorySidebarProps>(({
     };
   }, [colorScheme]);
 
+  // 缓存默认分类 ID
+  const defaultCategoryIds = useMemo(() => ['all', 'uncategorized', 'work', 'personal', 'study'], []);
+
   // 使用 useCallback 缓存事件处理函数
   const handleCategorySelect = useCallback((categoryId: string) => {
     onCategorySelect(categoryId);
     onClose();
   }, [onCategorySelect, onClose]);
+
   const handleEditCategory = useCallback((category: Category) => {
     // 不允许编辑系统分类
     if (category.id !== 'all' && category.id !== 'uncategorized') {
@@ -83,10 +151,11 @@ export const CategorySidebar = memo<CategorySidebarProps>(({
     };
 
     const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
-
     return () => backHandler.remove();
-  }, [isVisible, onClose]);  // 处理滑动手势
-  const panResponder = PanResponder.create({
+  }, [isVisible, onClose]);
+
+  // 处理滑动手势
+  const panResponder = useMemo(() => PanResponder.create({
     onMoveShouldSetPanResponder: (evt, gestureState) => {
       // 只有当水平滑动距离大于垂直滑动距离时才响应
       return Math.abs(gestureState.dx) > Math.abs(gestureState.dy) && Math.abs(gestureState.dx) > 10;
@@ -103,10 +172,13 @@ export const CategorySidebar = memo<CategorySidebarProps>(({
         // 直接设置动画值，跟随手势移动
         slideAnimation.setValue(1 - clampedProgress);
       }
-    },    onPanResponderRelease: (evt, gestureState) => {
+    },
+    onPanResponderRelease: (evt, gestureState) => {
       // 调整关闭阈值到30%，并保留速度检测
       const dragDistance = Math.abs(gestureState.dx);
-      const dragVelocity = Math.abs(gestureState.vx);      const shouldClose = 
+      const dragVelocity = Math.abs(gestureState.vx);
+
+      const shouldClose = 
         (dragDistance > SIDEBAR_WIDTH * 0.3 && gestureState.dx < 0) || // 距离阈值：30%
         (dragVelocity > 0.3 && gestureState.dx < 0); // 降低速度阈值到0.3，更容易触发
       
@@ -140,7 +212,42 @@ export const CategorySidebar = memo<CategorySidebarProps>(({
         }).start();
       }
     },
-  });
+  }), [slideAnimation, onClose]);
+
+  // 渲染分类列表，使用缓存优化
+  const renderCategories = useMemo(() => {
+    return categories.map((category, index) => {
+      const isSelected = category.id === selectedCategoryId;
+      const notesCount = notesCounts[category.id] || 0;
+      
+      const isDefaultCategory = defaultCategoryIds.includes(category.id);
+      
+      // 判断是否需要显示分割线
+      const nextCategory = categories[index + 1];
+      const shouldShowDivider = isDefaultCategory && 
+        nextCategory && 
+        !defaultCategoryIds.includes(nextCategory.id);
+      
+      return (
+        <React.Fragment key={category.id}>
+          <CategoryItem
+            category={category}
+            isSelected={isSelected}
+            notesCount={notesCount}
+            colors={colors}
+            onSelect={() => handleCategorySelect(category.id)}
+            onEdit={() => handleEditCategory(category)}
+          />
+          
+          {/* 分割线 */}
+          {shouldShowDivider && (
+            <View style={[styles.divider, { backgroundColor: colors.border }]} />
+          )}
+        </React.Fragment>
+      );
+    });
+  }, [categories, selectedCategoryId, notesCounts, colors, defaultCategoryIds, handleCategorySelect, handleEditCategory]);
+
   if (!isVisible) return null;
 
   return (
@@ -151,7 +258,8 @@ export const CategorySidebar = memo<CategorySidebarProps>(({
         activeOpacity={1}
         onPress={onClose}
       />
-        {/* 侧边栏内容 */}
+        
+      {/* 侧边栏内容 */}
       <Animated.View
         {...panResponder.panHandlers}
         style={[
@@ -180,93 +288,15 @@ export const CategorySidebar = memo<CategorySidebarProps>(({
           >
             <FontAwesome name="times" size={20} color={colors.secondaryText} />
           </TouchableOpacity>
-        </View>        {/* 分类列表 */}
-        <ScrollView style={styles.categoriesList} showsVerticalScrollIndicator={false}>
-          {categories.map((category, index) => {
-            const isSelected = category.id === selectedCategoryId;
-            const notesCount = notesCounts[category.id] || 0;
-            
-            // 默认分类ID列表
-            const defaultCategoryIds = ['all', 'uncategorized', 'work', 'personal', 'study'];
-            const isDefaultCategory = defaultCategoryIds.includes(category.id);
-            
-            // 判断是否需要显示分割线（在最后一个默认分类后面，且有自定义分类的情况下）
-            const nextCategory = categories[index + 1];
-            const shouldShowDivider = isDefaultCategory && 
-              nextCategory && 
-              !defaultCategoryIds.includes(nextCategory.id);
-            
-            return (
-              <React.Fragment key={category.id}>
-                <TouchableOpacity
-                  style={[
-                    styles.categoryItem,
-                    {
-                      backgroundColor: isSelected ? colors.activeBackground : 'transparent',
-                    },
-                  ]}
-                  onPress={() => {
-                    onCategorySelect(category.id);
-                    onClose();
-                  }}
-                  onLongPress={() => {
-                    // 不允许编辑系统分类
-                    if (category.id !== 'all' && category.id !== 'uncategorized') {
-                      onEditCategory(category);
-                    }
-                  }}
-                >
-                  <View style={styles.categoryContent}>
-                    <View style={styles.categoryLeft}>
-                      <View
-                        style={[
-                          styles.categoryIcon,
-                          {
-                            backgroundColor: isSelected ? category.color : colors.surface,
-                          },
-                        ]}
-                      >
-                        <FontAwesome
-                          name={category.icon as any}
-                          size={16}
-                          color={isSelected ? '#ffffff' : category.color}
-                        />
-                      </View>
-                      <Text
-                        style={[
-                          styles.categoryName,
-                          {
-                            color: isSelected ? colors.activeText : colors.text,
-                            fontWeight: isSelected ? '600' : '400',
-                          },
-                        ]}
-                      >
-                        {category.name}
-                      </Text>
-                    </View>
-                    
-                    <View style={styles.categoryRight}>
-                      <Text
-                        style={[
-                          styles.notesCount,
-                          {
-                            color: isSelected ? colors.activeText : colors.secondaryText,
-                          },
-                        ]}
-                      >
-                        {notesCount}
-                      </Text>
-                    </View>
-                  </View>
-                </TouchableOpacity>
-                
-                {/* 分割线 */}
-                {shouldShowDivider && (
-                  <View style={[styles.divider, { backgroundColor: colors.border }]} />
-                )}
-              </React.Fragment>
-            );
-          })}
+        </View>
+
+        {/* 分类列表 */}
+        <ScrollView 
+          style={styles.categoriesList} 
+          showsVerticalScrollIndicator={false}
+          removeClippedSubviews={true}
+        >
+          {renderCategories}
         </ScrollView>
 
         {/* 底部操作按钮 */}
@@ -287,7 +317,8 @@ export const CategorySidebar = memo<CategorySidebarProps>(({
           </TouchableOpacity>
         </View>
       </Animated.View>
-    </View>  );
+    </View>
+  );
 });
 
 const styles = StyleSheet.create({
@@ -370,7 +401,8 @@ const styles = StyleSheet.create({
   },
   categoryRight: {
     marginLeft: 8,
-  },  notesCount: {
+  },
+  notesCount: {
     fontSize: 14,
     fontWeight: '500',
     minWidth: 20,

@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, useColorScheme, Linking, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, useColorScheme, Linking, Image, StatusBar } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
@@ -14,7 +14,13 @@ export default function AboutScreen() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#000' : '#fff' }]}>      <View style={styles.header}>
+    <View style={[styles.container, { backgroundColor: Colors[colorScheme].background }]}>
+      <StatusBar 
+        barStyle={colorScheme === 'dark' ? 'light-content' : 'dark-content'}
+        backgroundColor={Colors[colorScheme].background}
+        translucent={false}
+      />
+      <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
           onPress={() => router.back()}
@@ -25,14 +31,16 @@ export default function AboutScreen() {
             color={Colors[colorScheme].tint} 
           />
         </TouchableOpacity>
-      </View><View style={styles.content}>
+      </View>
+      <View style={styles.content}>
         <View style={styles.appIconContainer}>
           <Image 
             source={require('@/assets/images/icon.png')}
             style={styles.appIcon}
             resizeMode="cover"
           />
-        </View><Text style={[styles.appName, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
+        </View>
+        <Text style={[styles.appName, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
           {t('appName')}
         </Text>
 
@@ -43,7 +51,8 @@ export default function AboutScreen() {
               size={20} 
               color={Colors[colorScheme].tint} 
               style={styles.infoIcon} 
-            />            <Text style={[styles.infoLabel, { color: colorScheme === 'dark' ? '#ccc' : '#666' }]}>
+            />            
+            <Text style={[styles.infoLabel, { color: colorScheme === 'dark' ? '#ccc' : '#666' }]}>
               {t('version')}：
             </Text>
             <Text style={[styles.infoValue, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
@@ -57,13 +66,16 @@ export default function AboutScreen() {
               size={20} 
               color={Colors[colorScheme].tint} 
               style={styles.infoIcon} 
-            />            <Text style={[styles.infoLabel, { color: colorScheme === 'dark' ? '#ccc' : '#666' }]}>
+            />            
+            <Text style={[styles.infoLabel, { color: colorScheme === 'dark' ? '#ccc' : '#666' }]}>
               {t('authorEmail')}：
             </Text>
             <Text style={[styles.infoValue, styles.emailText, { color: Colors[colorScheme].tint }]}>
               leptunee@qq.com
-            </Text>          </TouchableOpacity>
-        </View>        <Text style={[styles.description, { color: colorScheme === 'dark' ? '#888' : '#999' }]}>
+            </Text>          
+          </TouchableOpacity>
+        </View>        
+        <Text style={[styles.description, { color: colorScheme === 'dark' ? '#888' : '#999' }]}>
           {t('description')}
         </Text>
       </View>
@@ -74,13 +86,15 @@ export default function AboutScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },  header: {
+  },  
+  header: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingTop: 60,
     paddingBottom: 20,
-  },  backButton: {
+  },  
+  backButton: {
     padding: 8,
   },
   content: {
@@ -90,7 +104,8 @@ const styles = StyleSheet.create({
   },
   appIconContainer: {
     marginBottom: 24,
-  },  appIcon: {
+  },  
+  appIcon: {
     width: 100,
     height: 100,
     borderRadius: 20,

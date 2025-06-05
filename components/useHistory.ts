@@ -16,10 +16,12 @@ export function useHistory<T>(initialValue: T) {
   const [value, setValue] = useState<T>(initialValue);
   
   const { history, currentIndex } = historyState;
-  
-  // 判断是否可以撤销和重做
+    // 判断是否可以撤销和重做
   const canUndo = currentIndex > 0;
-  const canRedo = currentIndex < history.length - 1;  // 设置新值并更新历史记录  const updateValue = useCallback((newValue: T) => {
+  const canRedo = currentIndex < history.length - 1;
+  
+  // 设置新值并更新历史记录
+  const updateValue = useCallback((newValue: T) => {
     // 先检查值是否真的发生了变化
     if (newValue === value) {
       return; // 没有变化，直接返回
@@ -32,19 +34,19 @@ export function useHistory<T>(initialValue: T) {
     setHistoryState(prevState => {
       // 如果当前不是在历史记录的最后位置，需要截断历史记录
       const historyToUpdate = prevState.currentIndex < prevState.history.length - 1 
-        ? prevState.history.slice(0, prevState.currentIndex + 1)
-        : prevState.history;
-        // 添加新版本的内容到历史记录
+        ? prevState.history.slice(0, prevState.currentIndex + 1)        : prevState.history;
+      
+      // 添加新版本的内容到历史记录
       const newHistory = [...historyToUpdate, newValue];
       const newIndex = newHistory.length - 1;
       
       return {
         history: newHistory,
         currentIndex: newIndex
-      };
-    });
+      };    });
   }, [value, currentIndex, history.length]);
-    // 撤销操作
+  
+  // 撤销操作
   const undo = useCallback(() => {
     if (canUndo) {
       const newIndex = currentIndex - 1;
@@ -74,9 +76,9 @@ export function useHistory<T>(initialValue: T) {
     setHistoryState({
       history: [newValue],
       currentIndex: 0
-    });
-  }, []);
-    return {
+    });  }, []);
+  
+  return {
     value,       // 当前内容值
     setValue: updateValue,  // 更新内容并记录历史的函数
     undo,        // 撤销函数

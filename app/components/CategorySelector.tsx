@@ -1,5 +1,5 @@
 // 分类选择组件
-import React, { useState } from 'react';
+import React, { useState, memo, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -22,18 +22,19 @@ interface CategorySelectorProps {
   showAddButton?: boolean; // 新增：是否显示添加按钮
 }
 
-export const CategorySelector: React.FC<CategorySelectorProps> = ({
+export const CategorySelector = memo<CategorySelectorProps>(({
   categories,
   selectedCategoryId,
   onCategoryChange,
   onAddCategory,
   showAddButton = true,
 }) => {
-  const { t } = useTranslation();
-  const colorScheme = useColorScheme() ?? 'light';
+  const { t } = useTranslation();  const colorScheme = useColorScheme() ?? 'light';
   const isDark = colorScheme === 'dark';
   const [showDropdown, setShowDropdown] = useState(false);
-  const colors = {
+  
+  // 缓存颜色配置
+  const colors = useMemo(() => ({
     background: isDark ? '#2a2a2a' : '#f8f9fa',
     text: isDark ? '#ffffff' : '#000000',
     secondaryText: isDark ? '#cccccc' : '#666666',
@@ -41,16 +42,31 @@ export const CategorySelector: React.FC<CategorySelectorProps> = ({
     activeBackground: isDark ? '#333333' : '#e3f2fd',
     activeText: Colors[colorScheme].tint,
     dropdownBackground: isDark ? '#1a1a1a' : '#ffffff',
-  };
+  }), [isDark, colorScheme]);
 
   // 过滤掉"全部笔记"分类，只显示可选择的分类
-  const selectableCategories = categories.filter(cat => cat.id !== 'all');
-  const selectedCategory = selectableCategories.find(cat => cat.id === selectedCategoryId) || selectableCategories[0];
+  const selectableCategories = useMemo(() => 
+    categories.filter(cat => cat.id !== 'all'), 
+    [categories]
+  );
+  
+  const selectedCategory = useMemo(() => 
+    selectableCategories.find(cat => cat.id === selectedCategoryId) || selectableCategories[0],
+    [selectableCategories, selectedCategoryId]
+  );
 
-  const handleCategorySelect = (categoryId: string) => {
+  const handleCategorySelect = useCallback((categoryId: string) => {
     onCategoryChange(categoryId);
     setShowDropdown(false);
-  };
+  }, [onCategoryChange]);
+
+  const handleDropdownToggle = useCallback(() => {
+    setShowDropdown(true);
+  }, []);
+
+  const handleDropdownClose = useCallback(() => {
+    setShowDropdown(false);
+  }, []);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -70,7 +86,7 @@ export const CategorySelector: React.FC<CategorySelectorProps> = ({
               flex: 1,
             }
           ]}
-          onPress={() => setShowDropdown(true)}
+          onPress={handleDropdownToggle}
         >
           <View style={styles.selectedCategory}>
             <View
@@ -118,12 +134,12 @@ export const CategorySelector: React.FC<CategorySelectorProps> = ({
         visible={showDropdown}
         transparent={true}
         animationType="fade"
-        onRequestClose={() => setShowDropdown(false)}
+        onRequestClose={handleDropdownClose}
       >
         <TouchableOpacity
           style={styles.modalOverlay}
           activeOpacity={1}
-          onPress={() => setShowDropdown(false)}
+          onPress={handleDropdownClose}
         >
           <View style={[styles.dropdown, { backgroundColor: colors.dropdownBackground }]}
           >            <ScrollView style={styles.dropdownScroll} showsVerticalScrollIndicator={false}>
@@ -181,10 +197,9 @@ export const CategorySelector: React.FC<CategorySelectorProps> = ({
             </ScrollView>
           </View>
         </TouchableOpacity>
-      </Modal>
-    </View>
+      </Modal>    </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   container: {

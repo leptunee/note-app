@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState, useRef } from 'react';
-import { View, StyleSheet, useColorScheme, Animated } from 'react-native';
+import { View, StyleSheet, useColorScheme, Animated, StatusBar } from 'react-native';
 import { useNotes, Category } from '@/components/useNotes';
 import { useTranslation } from 'react-i18next';
 import { useRouter, useFocusEffect } from 'expo-router';
@@ -9,7 +9,8 @@ import { BatchExportDialog } from './components/BatchExportDialog';
 import useSelectionMode from './hooks/useSelectionMode';
 import { v4 as uuidv4 } from 'uuid';
 
-export default function NotesScreen() {  const { 
+export default function NotesScreen() {
+  const { 
     notes, 
     categories, 
     refreshNotes, 
@@ -21,6 +22,7 @@ export default function NotesScreen() {  const {
     updateCategory,
     deleteCategory,
     updateNoteCategory,
+    updateMultipleNoteCategories,
     getNotesByCategory
   } = useNotes();
   const { t } = useTranslation();
@@ -130,15 +132,12 @@ export default function NotesScreen() {  const {
   const handleMoveSelected = () => {
     setMoveSelectorVisible(true);
   };
-
   // 移动选择的笔记到指定分类
   const handleMoveNotesToCategory = async (categoryId: string) => {
     const selectedNotesArray = Array.from(selectedNotes);
     
-    // 批量更新笔记分类
-    for (const noteId of selectedNotesArray) {
-      await updateNoteCategory(noteId, categoryId);
-    }
+    // 使用批量更新避免竞态条件
+    await updateMultipleNoteCategories(selectedNotesArray, categoryId);
     
     // 关闭移动选择器并退出选择模式
     setMoveSelectorVisible(false);
@@ -207,7 +206,14 @@ export default function NotesScreen() {  const {
     const selectedIds = Array.from(selectedNotes);
     return notes.filter(note => selectedIds.includes(note.id));
   }, [notes, selectedNotes]);  return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>        <NotesHeader
+    <View style={[styles.container, { backgroundColor: Colors[colorScheme].background }]}>
+      <StatusBar 
+        barStyle={colorScheme === 'dark' ? 'light-content' : 'dark-content'}
+        backgroundColor={Colors[colorScheme].background}
+        translucent={false}
+      />
+      
+      <NotesHeader
         title={selectedCategory.name}
         categoryIcon={selectedCategory.icon}
         categoryColor={selectedCategory.color}

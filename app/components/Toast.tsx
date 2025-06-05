@@ -1,4 +1,4 @@
-import React, { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
+import React, { useState, useEffect, forwardRef, useImperativeHandle, useCallback, useMemo } from 'react';
 import { Text, StyleSheet, View, Animated, Easing, Dimensions, ActivityIndicator } from 'react-native';
 
 interface ToastProps {
@@ -75,28 +75,28 @@ const Toast = forwardRef<ToastRef, ToastProps>(
           setMessage('');
         });
       },
-    }));    const getBackgroundColor = () => {
+    }));    const getBackgroundColor = useCallback(() => {
       if (toastType === 'success') return '#4CAF50'; // Green
       if (toastType === 'error') return '#F44336';   // Red
       if (toastType === 'loading') return '#2196F3';  // Blue
       if (toastType === 'info') return backgroundColor; // Default or custom
       return backgroundColor;
-    };
-      const positionStyle = () => {
+    }, [toastType, backgroundColor]);
+      
+    const positionStyle = useMemo(() => {
       const { height } = Dimensions.get('window');
       if (position === 'top') return { top: 50 };
       if (position === 'bottom') return { bottom: 50 };
       if (position === 'center') return { top: height / 2 - 50 }; // Adjust 50 based on expected toast height
       return { bottom: 50 }; // Default
-    };
+    }, [position]);
 
     if (!visible) {
       return null;
     }
 
-    return (
-      <View 
-        style={[styles.container, positionStyle()]} 
+    return (      <View 
+        style={[styles.container, positionStyle]} 
         pointerEvents="none" // 允许触摸事件穿透到下层组件
       >        <Animated.View
           style={[

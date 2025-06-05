@@ -1,5 +1,5 @@
 // 笔记列表头部组件
-import React from 'react';
+import React, { memo, useMemo, useCallback } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 
@@ -18,7 +18,7 @@ interface NotesHeaderProps {
   onSidebarPress: () => void;
 }
 
-export const NotesHeader: React.FC<NotesHeaderProps> = ({
+export const NotesHeader = memo<NotesHeaderProps>(({
   title,
   categoryIcon,
   categoryColor,
@@ -27,11 +27,39 @@ export const NotesHeader: React.FC<NotesHeaderProps> = ({
   onAddPress,
   onSearchPress,
   onSidebarPress
-}) => {return (
+}) => {
+  // 缓存图标容器样式
+  const categoryIconContainerStyle = useMemo(() => [
+    styles.categoryIconContainer,
+    { backgroundColor: categoryColor || colors.tint }
+  ], [categoryColor, colors.tint]);
+
+  // 缓存标题样式
+  const titleStyle = useMemo(() => [
+    styles.header, 
+    { color: colors.text }
+  ], [colors.text]);
+
+  // 使用 useCallback 缓存事件处理函数
+  const handleAboutPress = useCallback(() => {
+    onAboutPress();
+  }, [onAboutPress]);
+
+  const handleAddPress = useCallback(() => {
+    onAddPress();
+  }, [onAddPress]);
+
+  const handleSearchPress = useCallback(() => {
+    onSearchPress();
+  }, [onSearchPress]);
+
+  const handleSidebarPress = useCallback(() => {
+    onSidebarPress();
+  }, [onSidebarPress]);return (
     <View style={styles.headerContainer}>
       <View style={styles.leftSection}>        <TouchableOpacity
           style={styles.actionButton}
-          onPress={onSidebarPress}
+          onPress={handleSidebarPress}
         >
           <FontAwesome 
             name="bars" 
@@ -42,12 +70,7 @@ export const NotesHeader: React.FC<NotesHeaderProps> = ({
         
         <View style={styles.titleSection}>
           {categoryIcon && (
-            <View
-              style={[
-                styles.categoryIconContainer,
-                { backgroundColor: categoryColor || colors.tint }
-              ]}
-            >
+            <View style={categoryIconContainerStyle}>
               <FontAwesome 
                 name={categoryIcon as any} 
                 size={16} 
@@ -56,7 +79,7 @@ export const NotesHeader: React.FC<NotesHeaderProps> = ({
             </View>
           )}
           <Text 
-            style={[styles.header, { color: colors.text }]}
+            style={titleStyle}
             numberOfLines={1}
             ellipsizeMode="tail"
           >
@@ -68,7 +91,7 @@ export const NotesHeader: React.FC<NotesHeaderProps> = ({
       <View style={styles.rightButtons}>
         <TouchableOpacity
           style={styles.actionButton}
-          onPress={onAboutPress}
+          onPress={handleAboutPress}
         >
           <FontAwesome 
             name="info-circle" 
@@ -79,7 +102,7 @@ export const NotesHeader: React.FC<NotesHeaderProps> = ({
         
         <TouchableOpacity
           style={styles.actionButton}
-          onPress={onSearchPress}
+          onPress={handleSearchPress}
         >
           <FontAwesome 
             name="search" 
@@ -90,14 +113,14 @@ export const NotesHeader: React.FC<NotesHeaderProps> = ({
         
         <TouchableOpacity
           style={styles.actionButton}
-          onPress={onAddPress}
+          onPress={handleAddPress}
         >
           <FontAwesome name="plus" size={20} color={colors.text} />
         </TouchableOpacity>
       </View>
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   headerContainer: {

@@ -8,7 +8,8 @@ import {
   useColorScheme,
   TouchableOpacity,
   ScrollView,
-  Pressable
+  Pressable,
+  StatusBar
 } from 'react-native';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { useRouter } from 'expo-router';
@@ -147,7 +148,13 @@ export default function SearchScreen() {
   }, []);
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <View style={[styles.container, { backgroundColor: Colors[colorScheme].background }]}>
+      <StatusBar 
+        barStyle={colorScheme === 'dark' ? 'light-content' : 'dark-content'}
+        backgroundColor={Colors[colorScheme].background}
+        translucent={false}
+      />
+      
       {/* 头部搜索栏 */}
       <View style={[styles.header, { backgroundColor: colors.background }]}>
         <TouchableOpacity
