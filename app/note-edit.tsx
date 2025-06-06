@@ -83,7 +83,6 @@ export default function NoteEditScreen() {
 
   // 使用useBridgeState监听编辑器状态
   const editorState = useBridgeState(editor);
-
   // 监听编辑器状态变化，更新undo/redo状态
   useEffect(() => {
     if (editor && editorState) {
@@ -93,7 +92,26 @@ export default function NoteEditScreen() {
       setCanUndo(newCanUndo);
       setCanRedo(newCanRedo);
     }
-  }, [editor, editorState, setCanUndo, setCanRedo]);
+  }, [editor, editorState, setCanUndo, setCanRedo]);  // 获取当前格式状态
+  const formatStates = useMemo(() => {
+    if (!editorState) {
+      return {
+        isBold: false,
+        isItalic: false,
+        isUnderline: false,
+        isBulletList: false,
+        isOrderedList: false
+      };
+    }
+    
+    return {
+      isBold: editorState.isBoldActive || false,
+      isItalic: editorState.isItalicActive || false,
+      isUnderline: editorState.isUnderlineActive || false,
+      isBulletList: editorState.isBulletListActive || false,
+      isOrderedList: editorState.isOrderedListActive || false
+    };
+  }, [editorState]);
 
   // 检查编辑器是否准备就绪
   useEffect(() => {
@@ -334,10 +352,14 @@ export default function NoteEditScreen() {
             left: 0,
             right: 0,
             zIndex: 1000,
-          }}>
-            <CustomToolbar
+          }}>            <CustomToolbar
               editor={editor}
               isVisible={isKeyboardVisible}
+              isBold={formatStates.isBold}
+              isItalic={formatStates.isItalic}
+              isUnderline={formatStates.isUnderline}
+              isBulletList={formatStates.isBulletList}
+              isOrderedList={formatStates.isOrderedList}
             />
           </View>
         )}

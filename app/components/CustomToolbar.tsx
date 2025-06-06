@@ -8,12 +8,23 @@ interface CustomToolbarProps {
   editor: any;
   isVisible?: boolean; // 新增可见性控制
   backgroundColor?: string; // 新增背景色控制
+  // 新增格式状态props
+  isBold?: boolean;
+  isItalic?: boolean;
+  isUnderline?: boolean;
+  isBulletList?: boolean;
+  isOrderedList?: boolean;
 }
 
 export const CustomToolbar = memo<CustomToolbarProps>(({ 
   editor, 
   isVisible = true, 
-  backgroundColor 
+  backgroundColor,
+  isBold = false,
+  isItalic = false,
+  isUnderline = false,
+  isBulletList = false,
+  isOrderedList = false
 }) => {
   const colorScheme = useColorScheme();
 
@@ -33,9 +44,25 @@ export const CustomToolbar = memo<CustomToolbarProps>(({
       backgroundColor: colorScheme === 'dark' ? '#404040' : '#f0f0f0'
     }
   ], [colorScheme]);
-
   const iconColor = useMemo(() => 
     colorScheme === 'dark' ? '#ffffff' : '#333333', 
+    [colorScheme]
+  );
+
+  // 激活状态的样式
+  const getButtonStyle = useCallback((isActive: boolean) => [
+    styles.button,
+    {
+      backgroundColor: isActive 
+        ? (colorScheme === 'dark' ? '#555555' : '#007AFF')  // 激活时的背景色
+        : (colorScheme === 'dark' ? '#404040' : '#f0f0f0')   // 默认背景色
+    }
+  ], [colorScheme]);
+
+  const getIconColor = useCallback((isActive: boolean) => 
+    isActive 
+      ? '#ffffff'  // 激活时为白色
+      : (colorScheme === 'dark' ? '#ffffff' : '#333333'),  // 默认颜色
     [colorScheme]
   );
 
@@ -200,43 +227,43 @@ export const CustomToolbar = memo<CustomToolbarProps>(({
     }
   }, [insertImages]);  return (
     <View style={toolbarStyle}>
-      <TouchableOpacity style={buttonStyle} onPress={handleBold}>
+      <TouchableOpacity style={getButtonStyle(isBold)} onPress={handleBold}>
         <FontAwesome 
           name="bold" 
           size={14} 
-          color={iconColor} 
+          color={getIconColor(isBold)} 
         />
       </TouchableOpacity>
       
-      <TouchableOpacity style={buttonStyle} onPress={handleItalic}>
+      <TouchableOpacity style={getButtonStyle(isItalic)} onPress={handleItalic}>
         <FontAwesome 
           name="italic" 
           size={14} 
-          color={iconColor} 
+          color={getIconColor(isItalic)} 
         />
       </TouchableOpacity>
       
-      <TouchableOpacity style={buttonStyle} onPress={handleUnderline}>
+      <TouchableOpacity style={getButtonStyle(isUnderline)} onPress={handleUnderline}>
         <FontAwesome 
           name="underline" 
           size={14} 
-          color={iconColor} 
+          color={getIconColor(isUnderline)} 
         />
       </TouchableOpacity>
         
-      <TouchableOpacity style={buttonStyle} onPress={handleBulletList}>
+      <TouchableOpacity style={getButtonStyle(isBulletList)} onPress={handleBulletList}>
         <FontAwesome 
           name="list-ul" 
           size={14} 
-          color={iconColor} 
+          color={getIconColor(isBulletList)} 
         />
       </TouchableOpacity>
       
-      <TouchableOpacity style={buttonStyle} onPress={handleOrderedList}>
+      <TouchableOpacity style={getButtonStyle(isOrderedList)} onPress={handleOrderedList}>
         <FontAwesome 
           name="list-ol" 
           size={14} 
-          color={iconColor} 
+          color={getIconColor(isOrderedList)} 
         />
       </TouchableOpacity>
       
