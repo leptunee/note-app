@@ -14,6 +14,7 @@ interface CustomToolbarProps {
   isBulletList?: boolean;
   isOrderedList?: boolean;
   onOpenDrawing?: () => void;
+  isDisabled?: boolean;
 }
 
 export const CustomToolbar = memo<CustomToolbarProps>(({ 
@@ -25,11 +26,10 @@ export const CustomToolbar = memo<CustomToolbarProps>(({
   isUnderline = false,
   isBulletList = false,
   isOrderedList = false,
-  onOpenDrawing
+  onOpenDrawing,
+  isDisabled = false
 }) => {
-  const colorScheme = useColorScheme();
-
-  const toolbarStyle = useMemo(() => [
+  const colorScheme = useColorScheme();  const toolbarStyle = useMemo(() => [
     styles.toolbar,
     {
       backgroundColor: backgroundColor || (colorScheme === 'dark' ? '#2c2c2c' : '#ffffff'),
@@ -43,13 +43,10 @@ export const CustomToolbar = memo<CustomToolbarProps>(({
     {
       backgroundColor: colorScheme === 'dark' ? '#404040' : '#f0f0f0'
     }
-  ], [colorScheme]);
-
-  const iconColor = useMemo(() => 
+  ], [colorScheme]);  const iconColor = useMemo(() => 
     colorScheme === 'dark' ? '#ffffff' : '#333333', 
     [colorScheme]
   );
-
   const getButtonStyle = useCallback((isActive: boolean) => [
     styles.button,
     {
@@ -223,9 +220,7 @@ export const CustomToolbar = memo<CustomToolbarProps>(({
     } catch (error) {
       Alert.alert('错误', '选择图片时出现错误');
     }
-  }, [insertImages]);
-
-  return (
+  }, [insertImages]);  return (
     <View style={toolbarStyle}>
       <TouchableOpacity style={getButtonStyle(isBold)} onPress={handleBold}>
         <FontAwesome 

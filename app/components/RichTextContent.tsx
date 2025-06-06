@@ -29,6 +29,9 @@ interface RichTextContentProps {
   selectedCategoryId: string;  onCategoryChange: (categoryId: string) => void;
   onAddCategory?: () => void;
   onEditCategory?: (category: Category) => void;
+  // 标题焦点处理
+  onTitleFocus?: () => void;
+  onTitleBlur?: () => void;
 }
 
 export const RichTextContent = memo<RichTextContentProps>(({
@@ -45,7 +48,9 @@ export const RichTextContent = memo<RichTextContentProps>(({
   categories,
   selectedCategoryId,  onCategoryChange,
   onAddCategory,
-  onEditCategory
+  onEditCategory,
+  onTitleFocus,
+  onTitleBlur
 }) => {
   const { t } = useTranslation();
   const colorScheme = useColorScheme();
@@ -95,7 +100,9 @@ export const RichTextContent = memo<RichTextContentProps>(({
         titleError={titleError}
         selectedCategory={selectedCategory}
         onCategoryPress={handleCategoryPress}
-      />      {/* 富文本编辑器 */}
+        onFocus={onTitleFocus}
+        onBlur={onTitleBlur}
+      />{/* 富文本编辑器 */}
       <EditorComponent
         editor={editor}
         content={content}

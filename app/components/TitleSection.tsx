@@ -16,6 +16,8 @@ interface TitleSectionProps {
   titleError?: string;
   selectedCategory?: Category;
   onCategoryPress?: () => void;
+  onFocus?: () => void;
+  onBlur?: () => void;
 }
 
 export const TitleSection = memo(forwardRef<TextInput, TitleSectionProps>(({
@@ -26,7 +28,9 @@ export const TitleSection = memo(forwardRef<TextInput, TitleSectionProps>(({
   maxLength,
   titleError,
   selectedCategory,
-  onCategoryPress
+  onCategoryPress,
+  onFocus,
+  onBlur
 }, ref) => {
   const { t } = useTranslation();
   const colorScheme = useColorScheme() ?? 'light';
@@ -75,8 +79,7 @@ export const TitleSection = memo(forwardRef<TextInput, TitleSectionProps>(({
     `${characterCount} ${characterCount > 0 ? String(t('characters')) : String(t('character'))}`,
     [characterCount, t]
   );  return (
-    <>
-      {/* 标题输入区域 */}
+    <>      {/* 标题输入区域 */}
       <TextInput
         ref={ref}
         style={textInputStyle}
@@ -88,6 +91,8 @@ export const TitleSection = memo(forwardRef<TextInput, TitleSectionProps>(({
         multiline={true}
         scrollEnabled={false}
         numberOfLines={3}
+        onFocus={onFocus}
+        onBlur={onBlur}
       />
 
       {/* 分类显示和字数统计 */}

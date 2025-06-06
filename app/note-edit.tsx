@@ -10,10 +10,10 @@ export default function NoteEditScreen() {
   const toastRef = useRef<ToastRef>(null);  const titleInputRef = useRef<TextInput>(null);
   const [isKeyboardVisible, setKeyboardVisible] = useState(false);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
-  const [isEditorReady, setIsEditorReady] = useState(false);
-  // 涂鸦功能相关状态
+  const [isEditorReady, setIsEditorReady] = useState(false);  // 涂鸦功能相关状态
   const [isEditorFocused, setIsEditorFocused] = useState(false);
   const [showDrawingCanvas, setShowDrawingCanvas] = useState(false);
+  const [isTitleFocused, setIsTitleFocused] = useState(false);
 
   const {
     title,
@@ -355,9 +355,17 @@ export default function NoteEditScreen() {
       setShowDrawingCanvas(false);
     }
   }, [editor]);
-
   const handleCancelDrawing = useCallback(() => {
     setShowDrawingCanvas(false);
+  }, []);
+
+  // 标题输入框焦点处理函数
+  const handleTitleFocus = useCallback(() => {
+    setIsTitleFocused(true);
+  }, []);
+
+  const handleTitleBlur = useCallback(() => {
+    setIsTitleFocused(false);
   }, []);
 
   return (
@@ -423,8 +431,7 @@ export default function NoteEditScreen() {
             paddingTop: 0,
             paddingBottom: 0
           }}>
-            
-            {editor && isEditorReady ? (
+              {editor && isEditorReady ? (
               <RichTextContent
                 title={title}
                 content={content}
@@ -443,6 +450,8 @@ export default function NoteEditScreen() {
                 onCategoryChange={handleCategoryChange}
                 onAddCategory={handleAddCategory}
                 onEditCategory={handleEditCategory}
+                onTitleFocus={handleTitleFocus}
+                onTitleBlur={handleTitleBlur}
               />
             ) : (
               <View style={{
@@ -461,8 +470,8 @@ export default function NoteEditScreen() {
               </View>
             )}
           </View>
-        </KeyboardAvoidingView>        {/* 自定义工具栏：基于键盘显示状态或编辑器焦点状态显示 */}
-        {editor && isEditorReady && (isKeyboardVisible || isEditorFocused) && (
+        </KeyboardAvoidingView>        {/* 自定义工具栏：基于键盘显示状态、编辑器焦点状态或标题焦点状态显示 */}
+        {editor && isEditorReady && (isKeyboardVisible || isEditorFocused || isTitleFocused) && (
           <View style={{
             position: 'absolute',
             bottom: keyboardHeight,
@@ -472,14 +481,27 @@ export default function NoteEditScreen() {
           }}>
             <CustomToolbar
               editor={editor}
-              isVisible={isKeyboardVisible || isEditorFocused}
+              isVisible={isKeyboardVisible || isEditorFocused || isTitleFocused}
               isBold={formatStates.isBold}
               isItalic={formatStates.isItalic}
               isUnderline={formatStates.isUnderline}
               isBulletList={formatStates.isBulletList}
               isOrderedList={formatStates.isOrderedList}
               onOpenDrawing={handleOpenDrawing}
+              isDisabled={false}
             />
+              {/* 标题聚焦时的白色半透明遮罩 */}
+            {isTitleFocused && (
+              <View style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                backgroundColor: 'rgba(255, 255, 255, 0.7)',
+                zIndex: 1001,
+              }} />
+            )}
           </View>
         )}
 
