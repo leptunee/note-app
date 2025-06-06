@@ -17,5 +17,6 @@ export { CategoryModal } from './CategoryModal';
 export { CategorySelector } from './CategorySelector';
 export { CategorySelectorModal } from './CategorySelectorModal';
 export { CategoryDisplay } from './CategoryDisplay';
+export { DrawingCanvas } from './DrawingCanvas';
 export { styles } from './styles';
 export { default as Toast, type ToastRef } from './Toast'; // Export Toast and ToastRef

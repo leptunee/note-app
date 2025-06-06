@@ -1,17 +1,19 @@
 import React, { useRef, useState, useEffect, useCallback, useMemo } from 'react';
-import { View, ImageBackground, Platform, Keyboard, KeyboardAvoidingView, Text, TextInput, StatusBar } from 'react-native';
+import { View, ImageBackground, Platform, Keyboard, KeyboardAvoidingView, Text, TextInput, StatusBar, Alert, Dimensions } from 'react-native';
 import { useEditorBridge, TenTapStarterKit, useBridgeState } from '@10play/tentap-editor';
-import { NoteHeader, RichTextContent, ExportModal, PageSettingsModal, CustomToolbar, styles, Toast, ExportView, CategorySelector, CategoryModal, type ToastRef } from './components';
+import { NoteHeader, RichTextContent, ExportModal, PageSettingsModal, CustomToolbar, styles, Toast, ExportView, CategorySelector, CategoryModal, DrawingCanvas, type ToastRef } from './components';
 import { useEditorContent } from './components/hooks/useEditorContent';
 import { useNoteEdit } from './useNoteEdit';
 import { themes, getBackgroundColor, getTextColor, getEditorBackgroundColor, getEditorBorderColor, getContentPadding } from './noteEditUtils';
 
 export default function NoteEditScreen() {
-  const toastRef = useRef<ToastRef>(null);
-  const titleInputRef = useRef<TextInput>(null);
+  const toastRef = useRef<ToastRef>(null);  const titleInputRef = useRef<TextInput>(null);
   const [isKeyboardVisible, setKeyboardVisible] = useState(false);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
   const [isEditorReady, setIsEditorReady] = useState(false);
+  // 涂鸦功能相关状态
+  const [isEditorFocused, setIsEditorFocused] = useState(false);
+  const [showDrawingCanvas, setShowDrawingCanvas] = useState(false);
 
   const {
     title,
@@ -59,13 +61,20 @@ export default function NoteEditScreen() {
     MAX_TITLE_LENGTH,
     colorScheme,
   } = useNoteEdit(themes, toastRef, titleInputRef);
-
   // 创建编辑器实例
   const editor = useEditorBridge({
     autofocus: false,
     avoidIosKeyboard: false,
     initialContent: content || '',
     bridgeExtensions: TenTapStarterKit,
+  });
+
+  // 添加调试日志
+  console.log('Toolbar visibility states:', {
+    isKeyboardVisible,
+    isEditorFocused,
+    isEditorReady,
+    shouldShowToolbar: (isKeyboardVisible || isEditorFocused) && isEditorReady && editor
   });
 
   // 使用TenTap的原生undo/redo方法
@@ -92,7 +101,55 @@ export default function NoteEditScreen() {
       setCanUndo(newCanUndo);
       setCanRedo(newCanRedo);
     }
-  }, [editor, editorState, setCanUndo, setCanRedo]);  // 获取当前格式状态
+  }, [editor, editorState, setCanUndo, setCanRedo]);
+  // 监听键盘显示状态来控制工具栏显示（更可靠的方式）
+  useEffect(() => {
+    // 当键盘显示时，假设编辑器获得了焦点
+    if (isKeyboardVisible) {
+      setIsEditorFocused(true);
+    }
+  }, [isKeyboardVisible]);
+
+  // 监听编辑器焦点状态（用于控制工具栏显示）
+  useEffect(() => {
+    if (!editor) return;
+
+    const handleFocus = () => {
+      console.log('Editor focused');
+      setIsEditorFocused(true);
+    };
+
+    const handleBlur = () => {
+      console.log('Editor blurred');
+      // 延迟处理blur，避免在点击工具栏时立即隐藏
+      setTimeout(() => {
+        setIsEditorFocused(false);
+      }, 100);
+    };
+
+    // 尝试添加焦点监听器
+    try {
+      if (typeof editor.on === 'function') {
+        editor.on('focus', handleFocus);
+        editor.on('blur', handleBlur);
+      }
+    } catch (error) {
+      console.warn('Failed to add focus listeners:', error);
+    }
+
+    return () => {
+      try {
+        if (typeof editor.off === 'function') {
+          editor.off('focus', handleFocus);
+          editor.off('blur', handleBlur);
+        }
+      } catch (error) {
+        console.warn('Failed to remove focus listeners:', error);
+      }
+    };
+  }, [editor]);
+
+  // 获取当前格式状态
   const formatStates = useMemo(() => {
     if (!editorState) {
       return {
@@ -241,6 +298,115 @@ export default function NoteEditScreen() {
     return getEditorBorderColor(pageSettings, colorScheme);
   }, [pageSettings, colorScheme]);
 
+  // 涂鸦画板相关处理函数
+  const handleOpenDrawing = useCallback(() => {
+    console.log('Opening drawing canvas...');
+    setShowDrawingCanvas(true);
+  }, []);
+
+  const handleSaveDrawing = useCallback(async (imageData: string) => {
+    console.log('Saving drawing with image data length:', imageData.length);
+    if (!editor) {
+      console.warn('Editor not available');
+      setShowDrawingCanvas(false);
+      return;
+    }
+
+    try {
+      // 创建图片HTML，参考CustomToolbar中图片插入的成功实现
+      const imageHtml = `<img src="${imageData}" style="max-width: 100%; height: auto; display: block; margin: 10px 0; border-radius: 4px;" alt="涂鸦" title="涂鸦" />`;
+
+      console.log('Attempting to insert drawing image HTML:', imageHtml.substring(0, 100) + '...');
+
+      // 尝试插入涂鸦图片，参考图片插入的成功方法
+      let insertSuccess = false;
+
+      // 方法1: 使用直接的 insertContent（参考图片插入的成功方法）
+      if (!insertSuccess) {
+        try {
+          console.log('Trying direct insertContent...');
+          if (typeof editor.insertContent === 'function') {
+            await editor.insertContent(imageHtml);
+            insertSuccess = true;
+            console.log('Direct insertContent succeeded');
+          }
+        } catch (e) {
+          console.warn('Direct insertContent failed:', e);
+        }
+      }
+
+      // 方法2: 使用 commands.insertContent
+      if (!insertSuccess) {
+        try {
+          console.log('Trying commands.insertContent...');
+          if (editor.commands && typeof editor.commands.insertContent === 'function') {
+            await editor.commands.insertContent(imageHtml);
+            insertSuccess = true;
+            console.log('commands.insertContent succeeded');
+          }
+        } catch (e) {
+          console.warn('commands.insertContent failed:', e);
+        }
+      }
+
+      // 方法3: 使用 chain().insertContent()
+      if (!insertSuccess) {
+        try {
+          console.log('Trying chain().insertContent()...');
+          if (editor.chain && typeof editor.chain === 'function') {
+            await editor.chain().focus().insertContent(imageHtml).run();
+            insertSuccess = true;
+            console.log('chain().insertContent() succeeded');
+          }
+        } catch (e) {
+          console.warn('chain().insertContent() failed:', e);
+        }
+      }
+
+      // 方法4: 使用 setContent 在当前内容后追加（作为备用方案）
+      if (!insertSuccess) {
+        try {
+          console.log('Trying setContent append...');
+          if (typeof editor.getHTML === 'function' && typeof editor.setContent === 'function') {
+            const currentContent = await editor.getHTML();
+            const newContent = currentContent + imageHtml;
+            editor.setContent(newContent);
+            insertSuccess = true;
+            console.log('setContent append succeeded');
+          }
+        } catch (e) {
+          console.warn('setContent append failed:', e);
+        }
+      }
+
+      if (!insertSuccess) {
+        console.warn('All drawing insertion methods failed');
+        Alert.alert('插入失败', '无法将涂鸦插入到编辑器中，请检查编辑器状态');
+      } else {
+        console.log('Drawing inserted successfully');
+        // 验证插入结果
+        try {
+          if (typeof editor.getHTML === 'function') {
+            const resultContent = await editor.getHTML();
+            console.log('Final content after drawing insertion:', resultContent.length, 'characters');
+          }
+        } catch (e) {
+          console.warn('Failed to verify insertion:', e);
+        }
+      }
+
+    } catch (error) {
+      console.error('Failed to insert drawing:', error);
+      Alert.alert('插入失败', '涂鸦插入失败，请重试');
+    } finally {
+      setShowDrawingCanvas(false);
+    }
+  }, [editor]);
+
+  const handleCancelDrawing = useCallback(() => {
+    setShowDrawingCanvas(false);
+  }, []);
+
   return (
     <View style={{ flex: 1 }}>
       <StatusBar 
@@ -342,24 +508,24 @@ export default function NoteEditScreen() {
               </View>
             )}
           </View>
-        </KeyboardAvoidingView>
-
-        {/* 工具栏 - 只在键盘弹起时显示，并固定在键盘上方 */}
-        {editor && isEditorReady && isKeyboardVisible && (
+        </KeyboardAvoidingView>        {/* 自定义工具栏：基于键盘显示状态或编辑器焦点状态显示 */}
+        {editor && isEditorReady && (isKeyboardVisible || isEditorFocused) && (
           <View style={{
             position: 'absolute',
             bottom: keyboardHeight,
             left: 0,
             right: 0,
             zIndex: 1000,
-          }}>            <CustomToolbar
+          }}>
+            <CustomToolbar
               editor={editor}
-              isVisible={isKeyboardVisible}
+              isVisible={isKeyboardVisible || isEditorFocused}
               isBold={formatStates.isBold}
               isItalic={formatStates.isItalic}
               isUnderline={formatStates.isUnderline}
               isBulletList={formatStates.isBulletList}
               isOrderedList={formatStates.isOrderedList}
+              onOpenDrawing={handleOpenDrawing}
             />
           </View>
         )}
@@ -390,7 +556,16 @@ export default function NoteEditScreen() {
         />
 
         <Toast ref={toastRef} />
-      </View>
+      </View>      {/* 涂鸦画板 - 独立于其他视图之上，始终显示在最上层 */}
+      {showDrawingCanvas && (
+        <DrawingCanvas
+          width={Dimensions.get('window').width - 32}
+          height={Dimensions.get('window').height * 0.6}
+          visible={showDrawingCanvas}
+          onCancel={handleCancelDrawing}
+          onSave={handleSaveDrawing}
+        />
+      )}
     </View>
   );
 }

@@ -14,6 +14,8 @@ interface CustomToolbarProps {
   isUnderline?: boolean;
   isBulletList?: boolean;
   isOrderedList?: boolean;
+  // 新增涂鸦回调
+  onOpenDrawing?: () => void;
 }
 
 export const CustomToolbar = memo<CustomToolbarProps>(({ 
@@ -24,7 +26,8 @@ export const CustomToolbar = memo<CustomToolbarProps>(({
   isItalic = false,
   isUnderline = false,
   isBulletList = false,
-  isOrderedList = false
+  isOrderedList = false,
+  onOpenDrawing
 }) => {
   const colorScheme = useColorScheme();
 
@@ -266,14 +269,23 @@ export const CustomToolbar = memo<CustomToolbarProps>(({
           color={getIconColor(isOrderedList)} 
         />
       </TouchableOpacity>
-      
-      <TouchableOpacity style={buttonStyle} onPress={handleImagePicker}>
+        <TouchableOpacity style={buttonStyle} onPress={handleImagePicker}>
         <FontAwesome 
           name="image" 
           size={14} 
           color={iconColor} 
         />
       </TouchableOpacity>
+      
+      {onOpenDrawing && (
+        <TouchableOpacity style={buttonStyle} onPress={onOpenDrawing}>
+          <FontAwesome 
+            name="paint-brush" 
+            size={14} 
+            color={iconColor} 
+          />
+        </TouchableOpacity>
+      )}
     </View>
   );
 });
