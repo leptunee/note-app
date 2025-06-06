@@ -77,18 +77,13 @@ export function useHistory<T>(initialValue: T) {
       history: [newValue],
       currentIndex: 0
     });  }, []);
-  
-  return {
+    return {
     value,       // 当前内容值
     setValue: updateValue,  // 更新内容并记录历史的函数
     undo,        // 撤销函数
     redo,        // 重做函数
     reset,       // 重置历史记录函数
     canUndo,     // 是否可以撤销
-    canRedo,     // 是否可以重做
-    // 调试信息
-    historyLength: history.length,
-    currentIndex,
-    historyDebug: history
+    canRedo      // 是否可以重做
   };
 }

@@ -25,9 +25,8 @@ export function useEditorContent({
     
     try {
       await editor.setContent(initialContent);
-      lastContentRef.current = initialContent;
-    } catch (error) {
-      console.warn('Failed to force reload content:', error);
+      lastContentRef.current = initialContent;    } catch (error) {
+      // 静默处理错误
     }
   }, [editor, initialContent]);
   // 简化的初始化逻辑 - 直接设置内容，不等待
@@ -39,19 +38,14 @@ export function useEditorContent({
         // 如果有初始内容，立即设置，不做任何检查
         if (initialContent && initialContent.trim() !== '') {
           await editor.setContent(initialContent);
-          lastContentRef.current = initialContent;
-            // 延迟一点时间后，通过commands重新设置内容以确保创建历史记录点
+          lastContentRef.current = initialContent;          // 延迟一点时间后，通过commands重新设置内容以确保创建历史记录点
           setTimeout(async () => {
             try {
               if (editor.commands && typeof editor.commands.setContent === 'function') {
-                console.log('🔄 [DEBUG] 通过commands设置初始内容以创建历史记录点');
                 editor.commands.setContent(initialContent);
-                console.log('✅ [DEBUG] 初始历史记录点创建成功');
-              } else {
-                console.log('⚠️ [DEBUG] editor.commands.setContent 不可用');
               }
             } catch (error) {
-              console.log('❌ [DEBUG] 创建初始历史记录点失败:', error);
+              // 静默处理错误
             }
           }, 200);
         }
@@ -63,25 +57,18 @@ export function useEditorContent({
           try {
             if (initialContent && initialContent.trim() !== '') {
               await editor.setContent(initialContent);
-              lastContentRef.current = initialContent;
-                // 确保创建历史记录点
+              lastContentRef.current = initialContent;              // 确保创建历史记录点
               setTimeout(async () => {
                 try {
                   if (editor.commands && typeof editor.commands.setContent === 'function') {
-                    console.log('🔄 [DEBUG] 重试时通过commands设置初始内容以创建历史记录点');
                     editor.commands.setContent(initialContent);
-                    console.log('✅ [DEBUG] 重试时初始历史记录点创建成功');
-                  } else {
-                    console.log('⚠️ [DEBUG] 重试时editor.commands.setContent 不可用');
                   }
                 } catch (error) {
-                  console.log('❌ [DEBUG] 重试时创建初始历史记录点失败:', error);
+                  // 静默处理错误
                 }
               }, 200);
             }
-            isInitializedRef.current = true;
-          } catch (retryError) {
-            console.warn('Editor initialization failed after retry:', retryError);
+            isInitializedRef.current = true;          } catch (retryError) {
             isInitializedRef.current = true;
           }
         }, 100);
@@ -115,9 +102,8 @@ export function useEditorContent({
           }
           
           isProcessingRef.current = false;
-        } catch (error) {
-          isProcessingRef.current = false;
-          console.warn('Error handling content update:', error);
+        } catch (error) {          isProcessingRef.current = false;
+          // 静默处理错误
         }
       }, debounceMs);
     };
@@ -146,11 +132,10 @@ export function useEditorContent({
         if (currentHTML !== lastContentRef.current) {
           lastContentRef.current = currentHTML;
           onContentChange(currentHTML);
-        }
-        isProcessingRef.current = false;
+        }        isProcessingRef.current = false;
       } catch (error) {
         isProcessingRef.current = false;
-        console.warn('Error handling blur:', error);
+        // 静默处理错误
       }
     };
 

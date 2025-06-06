@@ -26,8 +26,7 @@ interface RichTextContentProps {
   titleInputRef?: React.RefObject<TextInput | null>;
   // 分类相关props
   categories: Category[];
-  selectedCategoryId: string;
-  onCategoryChange: (categoryId: string) => void;
+  selectedCategoryId: string;  onCategoryChange: (categoryId: string) => void;
   onAddCategory?: () => void;
   onEditCategory?: (category: Category) => void;
 }
@@ -44,10 +43,9 @@ export const RichTextContent = memo<RichTextContentProps>(({
   editor,
   titleInputRef,
   categories,
-  selectedCategoryId,
-  onCategoryChange,
+  selectedCategoryId,  onCategoryChange,
   onAddCategory,
-  onEditCategory,
+  onEditCategory
 }) => {
   const { t } = useTranslation();
   const colorScheme = useColorScheme();
@@ -101,7 +99,7 @@ export const RichTextContent = memo<RichTextContentProps>(({
       <EditorComponent
         editor={editor}
         content={content}
-      />      {/* 分类选择器模态框 - 只在需要时显示 */}
+      />{/* 分类选择器模态框 - 只在需要时显示 */}
       <CategorySelectorModal
         visible={showCategorySelector}
         categories={categories}

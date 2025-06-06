@@ -1,5 +1,5 @@
 // 编辑器组件 - 富文本编辑器封装
-import React, { memo, useMemo } from 'react';
+import React, { memo, useMemo, useEffect } from 'react';
 import { View, useColorScheme } from 'react-native';
 import { RichText } from '@10play/tentap-editor';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
@@ -11,9 +11,8 @@ interface EditorComponentProps {
 
 export const EditorComponent = memo<EditorComponentProps>(({ 
   editor, 
-  content = '' 
-}) => {
-  const colorScheme = useColorScheme() ?? 'light';
+  content = ''
+}) => {const colorScheme = useColorScheme() ?? 'light';
 
   // 缓存样式计算
   const containerStyle = useMemo(() => ({ 
@@ -42,11 +41,12 @@ export const EditorComponent = memo<EditorComponentProps>(({
   const scrollViewContentContainerStyle = useMemo(() => ({ 
     flexGrow: 1, 
     paddingBottom: 0 
-  }), []);
-
-  if (!editor) {
+  }), []);  if (!editor) {
     return <View style={{ flex: 1, minHeight: 200 }} />;
   }
+
+  // 注意：图片点击事件现在通过 ImageClickExtension (ProseMirror 扩展) 处理
+  // 不再需要通过 JavaScript 注入的方式处理
     return (
     <KeyboardAwareScrollView 
       enableOnAndroid={true}

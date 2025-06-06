@@ -90,9 +90,7 @@ export function useExport() {
         return { success: true, message: '笔记已成功导出为文本文件。' };
       } else {
         return { success: false, message: '分享功能不可用，无法导出文本文件。' };
-      }
-    } catch (error) {
-      console.error('导出笔记时出错:', error);
+      }    } catch (error) {
       return { success: false, message: '导出文本文件失败，请重试。' };
     }
   };
@@ -210,9 +208,7 @@ export function useExport() {
         return { success: true, message: '笔记已导出为Word文档并分享成功。' };
       } else {
         return { success: false, message: '分享功能不可用，无法导出Word文档。' };
-      }
-    } catch (error) {
-      console.error('导出Word文档时出错:', error);
+      }    } catch (error) {
       return { success: false, message: '导出Word文档失败，请重试。' };
     }
   };
@@ -261,9 +257,7 @@ export function useExport() {
         return { success: true, message: '笔记已导出为Markdown文件并分享成功。' };
       } else {
         return { success: false, message: '分享功能不可用，无法导出Markdown文件。' };
-      }
-    } catch (error) {
-      console.error('导出Markdown笔记时出错:', error);
+      }    } catch (error) {
       return { success: false, message: '导出Markdown失败，请重试。' };
     }
   };  /**
@@ -279,13 +273,10 @@ export function useExport() {
         const { status } = await MediaLibrary.requestPermissionsAsync();        if (status !== 'granted') {
           return { success: false, message: '需要存储权限来保存图片。' };
         }
-      }
-
-      // 截取视图为图片 - 确保捕获视图的有效性
+      }      // 截取视图为图片 - 确保捕获视图的有效性
       if (!viewRef.current) {
-        console.error('视图引用无效');
         return { success: false, message: '无法获取笔记视图以截图。' };
-      }      // 临时显示导出视图以进行截图
+      }// 临时显示导出视图以进行截图
       let totalHeight = 800; // 默认高度
       try {
         if (viewRef.current) {
@@ -366,11 +357,10 @@ export function useExport() {
         if (hasImages) waitTime += 2000; // 有图片额外加2秒
         if (isLongContent) waitTime += 2000; // 长内容额外加2秒
         if (isVeryLongContent) waitTime += 3000; // 超长内容额外加3秒
-        
-        await new Promise(resolve => setTimeout(resolve, waitTime));
+          await new Promise(resolve => setTimeout(resolve, waitTime));
       } catch (error) {
-        console.error('设置视图样式时出错:', error);
-      }      // 使用更安全的截图配置
+        // 静默处理错误
+      }// 使用更安全的截图配置
       const fileName = `${note.title.replace(/[\\/:*?"<>|]/g, '_')}_${Date.now()}.png`;
       const fileUri = `${FileSystem.cacheDirectory}${fileName}`;
       
@@ -402,10 +392,9 @@ export function useExport() {
               margin: 0,
               padding: 0,
             }
-          });
-        }
+          });        }
       } catch (error) {
-        console.error('恢复视图样式时出错:', error);
+        // 静默处理错误
       }
 
       // Android平台保存到相册
@@ -417,23 +406,19 @@ export function useExport() {
           if (album === null) {
             await MediaLibrary.createAlbumAsync('笔记应用', asset, false);
           } else {
-            await MediaLibrary.addAssetsToAlbumAsync([asset], album, false);
-          }
+            await MediaLibrary.addAssetsToAlbumAsync([asset], album, false);          }
           savedToGallery = true;
         } catch (error) {
-          console.error('保存到媒体库时出错:', error);
+          // 静默处理保存到媒体库的错误
         }
       }
 
       // 验证文件是否存在
-      try {
-        const fileInfo = await FileSystem.getInfoAsync(fileUri);
+      try {        const fileInfo = await FileSystem.getInfoAsync(fileUri);
         if (!fileInfo.exists) {
-          console.error('导出文件不存在');
           return { success: false, message: '创建的图片文件无效或无法访问。' };
         }
       } catch (error) {
-        console.error('检查文件时出错:', error);
         return { success: false, message: '检查文件时出错，无法访问图片。' };
       }
 
@@ -455,17 +440,14 @@ export function useExport() {
           } else if (Platform.OS === 'ios') {
             return { success: false, message: '分享功能不可用，无法完成图片导出。' };
           }
-          return { success: false, message: '分享功能不可用。' };
-        }
+          return { success: false, message: '分享功能不可用。' };        }
       } catch (error) {
-        console.error('分享图片时出错:', error);
         if (Platform.OS === 'android' && savedToGallery) {
           return { success: true, message: '图片已保存到相册，但分享失败。' };
         }
         return { success: false, message: '图片分享失败。' };
       }
     } catch (error) {
-      console.error('导出笔记为图片时出错:', error);
       return { success: false, message: '导出图片失败，请重试。' };
     }
   };
@@ -523,10 +505,8 @@ export function useExport() {
         });
         return { success: true, message: `已成功导出 ${notes.length} 篇笔记为文本文件。` };
       } else {
-        return { success: false, message: '分享功能不可用，无法导出文本文件。' };
-      }
+        return { success: false, message: '分享功能不可用，无法导出文本文件。' };      }
     } catch (error) {
-      console.error('批量导出笔记时出错:', error);
       return { success: false, message: '批量导出文本文件失败，请重试。' };
     }
   };
@@ -647,10 +627,8 @@ export function useExport() {
         });
         return { success: true, message: `已成功导出 ${notes.length} 篇笔记为Word文档。` };
       } else {
-        return { success: false, message: '分享功能不可用，无法导出Word文档。' };
-      }
+        return { success: false, message: '分享功能不可用，无法导出Word文档。' };      }
     } catch (error) {
-      console.error('批量导出Word文档时出错:', error);
       return { success: false, message: '批量导出Word文档失败，请重试。' };
     }
   };
@@ -711,10 +689,8 @@ export function useExport() {
         });
         return { success: true, message: `已成功导出 ${notes.length} 篇笔记为Markdown文件。` };
       } else {
-        return { success: false, message: '分享功能不可用，无法导出Markdown文件。' };
-      }
+        return { success: false, message: '分享功能不可用，无法导出Markdown文件。' };      }
     } catch (error) {
-      console.error('批量导出Markdown时出错:', error);
       return { success: false, message: '批量导出Markdown失败，请重试。' };
     }
   };

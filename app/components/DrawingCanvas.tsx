@@ -28,49 +28,34 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
   width,
   height,
   onSave,
-  onCancel,
-  visible
+  onCancel,  visible
 }) => {
-  console.log('DrawingCanvas render, visible:', visible, 'width:', width, 'height:', height);
   const colorScheme = useColorScheme();
   const [paths, setPaths] = useState<DrawingPath[]>([]);
   const [currentPath, setCurrentPath] = useState<string>('');
-  const [currentColor, setCurrentColor] = useState('#000000');  const [currentWidth, setCurrentWidth] = useState(3);
-  const pathRef = useRef<string>('');
+  const [currentColor, setCurrentColor] = useState('#000000');  const [currentWidth, setCurrentWidth] = useState(3);  const pathRef = useRef<string>('');
   const svgRef = useRef<View>(null); // 添加SVG容器的引用
-
-  // 添加调试信息
-  console.log('DrawingCanvas state - paths count:', paths.length, 'currentPath:', currentPath.length > 0 ? 'drawing' : 'empty');
   const colors = ['#000000', '#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF', '#00FFFF'];
   const widths = [1, 3, 5, 8];
-
   // 监听visible状态变化
   useEffect(() => {
-    console.log('DrawingCanvas visible changed to:', visible);
     if (visible) {
       // 当画布打开时，重置状态
-      console.log('Resetting drawing state on open');
       setPaths([]);
       setCurrentPath('');
       pathRef.current = '';
     }
-  }, [visible]);const panResponder = useMemo(() => PanResponder.create({
-    onStartShouldSetPanResponder: () => {
-      console.log('onStartShouldSetPanResponder');
+  }, [visible]);const panResponder = useMemo(() => PanResponder.create({    onStartShouldSetPanResponder: () => {
       return true;
     },
     onMoveShouldSetPanResponder: () => true,
     onStartShouldSetPanResponderCapture: () => false,
     onMoveShouldSetPanResponderCapture: () => false,
-    onShouldBlockNativeResponder: () => false,
-
-    onPanResponderGrant: (event) => {
+    onShouldBlockNativeResponder: () => false,    onPanResponderGrant: (event) => {
       const { locationX, locationY } = event.nativeEvent;
-      console.log('onPanResponderGrant at:', locationX, locationY);
       const newPath = `M${locationX.toFixed(2)},${locationY.toFixed(2)}`;
       pathRef.current = newPath;
       setCurrentPath(newPath);
-      console.log('Started new path:', newPath);
     },
 
     onPanResponderMove: (event) => {
@@ -78,29 +63,21 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
       const newPath = pathRef.current + ` L${locationX.toFixed(2)},${locationY.toFixed(2)}`;
       pathRef.current = newPath;
       setCurrentPath(newPath);
-    },
-
-    onPanResponderRelease: () => {
-      console.log('onPanResponderRelease, pathRef:', pathRef.current);
+    },    onPanResponderRelease: () => {
       if (pathRef.current) {
         const newPathObj = {
           path: pathRef.current,
           color: currentColor,
           width: currentWidth
         };
-        console.log('Adding path to paths:', newPathObj);
         setPaths(prev => {
           const updated = [...prev, newPathObj];
-          console.log('Updated paths array length:', updated.length);
           return updated;
         });
         setCurrentPath('');
         pathRef.current = '';
       }
-    },
-
-    onPanResponderTerminate: () => {
-      console.log('onPanResponderTerminate, pathRef:', pathRef.current);
+    },    onPanResponderTerminate: () => {
       // 处理意外终止的情况
       if (pathRef.current) {
         const newPathObj = {
@@ -108,10 +85,8 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
           color: currentColor,
           width: currentWidth
         };
-        console.log('Adding terminated path to paths:', newPathObj);
         setPaths(prev => {
           const updated = [...prev, newPathObj];
-          console.log('Updated paths array length (terminate):', updated.length);
           return updated;
         });
         setCurrentPath('');
@@ -129,17 +104,13 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
   const handleUndo = useCallback(() => {
     setPaths(prev => prev.slice(0, -1));
   }, []);  const handleSave = useCallback(async () => {
-    console.log('Saving drawing with', paths.length, 'paths');
-    
     if (paths.length === 0) {
-      console.log('No paths to save');
       onCancel();
       return;
     }
     
     try {
       if (svgRef.current) {
-        console.log('Capturing SVG as image...');
         // 使用view-shot将SVG容器截图为base64图片
         const imageUri = await captureRef(svgRef.current, {
           format: 'png',
@@ -147,14 +118,11 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
           result: 'data-uri', // 直接返回data:image/png;base64,xxx格式
         });
         
-        console.log('Generated image data length:', imageUri.length);
         onSave(imageUri);
       } else {
-        console.error('SVG ref not available');
         onCancel();
       }
     } catch (error) {
-      console.error('Failed to capture drawing:', error);
       onCancel();
     }
   }, [paths, onSave, onCancel]);

@@ -7,6 +7,9 @@ export const themes = [
 ];
 
 export function getBackgroundColor(pageSettings: any, colorScheme: string) {
+  if (!pageSettings) {
+    return '#fff';
+  }
   if (pageSettings.backgroundImageUri) {
     return 'transparent';
   }
@@ -19,6 +22,9 @@ export function getBackgroundColor(pageSettings: any, colorScheme: string) {
 }
 
 export function getTextColor(pageSettings: any, colorScheme: string) {
+  if (!pageSettings) {
+    return '#000';
+  }
   const themeDefinition = themes.find(t => t.id === pageSettings.themeId);
   if (themeDefinition) {
     return themeDefinition.textColor;
@@ -28,6 +34,9 @@ export function getTextColor(pageSettings: any, colorScheme: string) {
 }
 
 export function getEditorBackgroundColor(pageSettings: any, colorScheme: string) {
+  if (!pageSettings) {
+    return '#f5f5f5';
+  }
   const themeDefinition = themes.find(t => t.id === pageSettings.themeId);
   if (themeDefinition) {
     return themeDefinition.editorBackgroundColor || themeDefinition.backgroundColor;
@@ -37,6 +46,9 @@ export function getEditorBackgroundColor(pageSettings: any, colorScheme: string)
 }
 
 export function getEditorBorderColor(pageSettings: any, colorScheme: string) {
+  if (!pageSettings) {
+    return '#ddd';
+  }
   const themeDefinition = themes.find(t => t.id === pageSettings.themeId);
   if (themeDefinition) {
     return themeDefinition.editorBorderColor || '#ddd';

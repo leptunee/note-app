@@ -69,9 +69,7 @@ export const BatchExportDialog = memo<BatchExportDialogProps>(({
       
       if (result.message) {
         toastRef.current?.show(result.message, result.success ? 'success' : 'error');
-      }
-    } catch (error) {
-      console.error('批量导出过程中出错:', error);
+      }    } catch (error) {
       toastRef.current?.show('导出过程中发生错误，请重试。', 'error');
     }
   }, [notes, onClose]);

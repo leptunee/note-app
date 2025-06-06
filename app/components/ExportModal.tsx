@@ -33,10 +33,8 @@ export const ExportModal = memo<ExportModalProps>(({
       const result = await exportFn(); // Call the actual export function passed
       if (result.message) { // Show toast if a message is present
         toastRef.current?.show(result.message, result.success ? 'success' : 'error');
-      }
-    } catch (error) {
+      }    } catch (error) {
       // This catch is a fallback for unexpected errors during the export call itself
-      console.error("Export failed from Modal: ", error);
       toastRef.current?.show('导出操作失败，请重试。', 'error');
     }
   }, [onClose]);
