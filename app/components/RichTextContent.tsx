@@ -57,9 +57,8 @@ export const RichTextContent = memo<RichTextContentProps>(({
   // 创建内部引用，如果没有传入外部引用的话
   const internalTitleRef = useRef<TextInput | null>(null);
   const finalTitleRef = titleInputRef || internalTitleRef;
-
   // 使用自定义 Hook 管理编辑器内容
-  const { isUpdating, getCurrentContent, forceReloadContent } = useEditorContent({
+  const { getCurrentContent, forceReloadContent } = useEditorContent({
     editor,
     initialContent: content,
     onContentChange: onChangeContent,
