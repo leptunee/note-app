@@ -34,12 +34,6 @@ interface PageSettingsModalProps {
   onSettingsChange: (settings: Partial<PageSettings>) => void;
 }
 
-interface AspectRatioOption {
-  id: string;
-  name: string;
-  value: [number, number];
-}
-
 const themes: PageTheme[] = [
   { id: 'default', name: '默认', backgroundColor: '#ffffff', textColor: '#000000', editorBackgroundColor: '#f5f5f5', editorBorderColor: '#ddd' },
   { id: 'dark', name: '淡绿', backgroundColor: '#e8f5e9', textColor: '#1b5e20', editorBackgroundColor: '#c8e6c9', editorBorderColor: '#81c784' },
@@ -52,25 +46,18 @@ export const PageSettingsModal: React.FC<PageSettingsModalProps> = memo(({
   onClose,
   currentSettings,
   onSettingsChange
-}) => {  const { t } = useTranslation();
-  const colorScheme = useColorScheme() ?? 'light';
-  // 始终使用亮色主题样式，不受系统暗黑模式影响
+}) => {  const { t } = useTranslation();  const colorScheme = useColorScheme() ?? 'light';  // 始终使用亮色主题样式，不受系统暗黑模式影响
   const isDark = useMemo(() => false, []);
   const screenHeight = useMemo(() => Dimensions.get('window').height, []);
-  
-  // 定义裁切比例选项
-  const aspectRatioOptions: AspectRatioOption[] = useMemo(() => [
-    { id: 'original', name: '原始比例', value: [0, 0] },
-    { id: '1:1', name: '1:1 (正方形)', value: [1, 1] },
-    { id: '4:3', name: '4:3 (经典)', value: [4, 3] },
-    { id: '16:9', name: '16:9 (宽屏)', value: [16, 9] },
-    { id: '3:4', name: '3:4 (竖屏)', value: [3, 4] },
-    { id: '9:16', name: '9:16 (全屏)', value: [9, 16] },
-  ], []);
-  
-  // 增加当前选择的裁切比例状态
-  const [selectedAspectRatio, setSelectedAspectRatio] = useState<string>('4:3');
-
+  // 定义裁切比例选项（已移除，直接使用expo-image-picker默认裁切）
+  // const aspectRatioOptions: AspectRatioOption[] = useMemo(() => [
+  //   { id: 'free', name: '自由裁切', value: null },
+  //   { id: '1:1', name: '1:1 (正方形)', value: [1, 1] },
+  //   { id: '4:3', name: '4:3 (经典)', value: [4, 3] },
+  //   { id: '16:9', name: '16:9 (宽屏)', value: [16, 9] },
+  //   { id: '3:4', name: '3:4 (竖屏)', value: [3, 4] },
+  //   { id: '9:16', name: '9:16 (全屏)', value: [9, 16] },
+  // ], []);
   const handleChooseImage = useCallback(async () => {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (permissionResult.granted === false) {
@@ -78,29 +65,19 @@ export const PageSettingsModal: React.FC<PageSettingsModalProps> = memo(({
       return;
     }
 
-    // 获取选定的裁切比例
-    const aspectRatio = aspectRatioOptions.find(option => option.id === selectedAspectRatio)?.value || [4, 3];
-    
-    // 根据是否为原始比例调整选项
-    const pickerOptions: ImagePicker.ImagePickerOptions = {
+    const pickerResult = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       quality: 1,
-    };
-    
-    // 只有当不是原始比例时才添加aspect属性
-    if (aspectRatio[0] !== 0 && aspectRatio[1] !== 0) {
-      pickerOptions.aspect = aspectRatio;
-    }
+    });
 
-    const pickerResult = await ImagePicker.launchImageLibraryAsync(pickerOptions);
-
-    if (!pickerResult.canceled && pickerResult.assets && pickerResult.assets.length > 0) {      onSettingsChange({ 
+    if (!pickerResult.canceled && pickerResult.assets && pickerResult.assets.length > 0) {
+      onSettingsChange({ 
         backgroundImageUri: pickerResult.assets[0].uri,
         backgroundImageOpacity: 0.5 // 设置默认透明度为50%
       });
     }
-  }, [aspectRatioOptions, onSettingsChange, selectedAspectRatio]);
+  }, [onSettingsChange]);
 
   const handleRemoveImage = useCallback(() => {
     onSettingsChange({ backgroundImageUri: undefined });
@@ -124,14 +101,9 @@ export const PageSettingsModal: React.FC<PageSettingsModalProps> = memo(({
   const handleBlurChange = useCallback((value: number) => {
     onSettingsChange({ backgroundImageBlur: value });
   }, [onSettingsChange]);
-
   const handleMarginChange = useCallback((value: number) => {
     onSettingsChange({ marginValue: Math.round(value) });
   }, [onSettingsChange]);
-  // 裁切比例选择处理器
-  const handleAspectRatioSelect = useCallback((optionId: string) => {
-    setSelectedAspectRatio(optionId);
-  }, []);
 
   // 计算透明度百分比
   const opacityPercentage = useMemo(() => 
@@ -234,9 +206,7 @@ export const PageSettingsModal: React.FC<PageSettingsModalProps> = memo(({
       borderColor: isDark ? '#555' : '#f44336',
       marginTop: 10,
     },
-  ], [isDark]);
-
-  // 主题选项样式生成器
+  ], [isDark]);  // 主题选项样式生成器
   const getThemeOptionStyle = useCallback((theme: PageTheme) => [
     styles.themeOption,
     {
@@ -246,35 +216,11 @@ export const PageSettingsModal: React.FC<PageSettingsModalProps> = memo(({
           ? Colors[colorScheme].tint
           : 'transparent',
     },
-  ], [selectedTheme, hasBackgroundImage, colorScheme]);
-
-  // 裁切比例选项样式生成器
-  const getAspectRatioOptionStyle = useCallback((optionId: string) => [
-    styles.aspectRatioOption,
-    {
-      backgroundColor: isDark ? '#333' : '#f0f0f0',
-      borderColor: selectedAspectRatio === optionId 
-        ? Colors[colorScheme].tint 
-        : isDark ? '#444' : '#ddd',
-      borderWidth: selectedAspectRatio === optionId ? 2 : 1,
-      padding: 8,
-      borderRadius: 8,
-      margin: 4,
-      minWidth: 80,
-    },
-  ], [selectedAspectRatio, isDark, colorScheme]);
-
-  // 动态文本样式
+  ], [selectedTheme, hasBackgroundImage, colorScheme]);  // 动态文本样式
   const themeTextStyle = useCallback((theme: PageTheme) => ({
     color: theme.textColor,
     textAlign: 'center' as const,
   }), []);
-
-  const aspectRatioTextStyle = useMemo(() => ({
-    color: isDark ? '#fff' : '#333',
-    textAlign: 'center' as const,
-    fontSize: 13,
-  }), [isDark]);
   const backgroundStatusTextStyle = useMemo(() => ({
     color: isDark ? '#ccc' : '#555',
     marginBottom: 5,
@@ -293,9 +239,7 @@ export const PageSettingsModal: React.FC<PageSettingsModalProps> = memo(({
   // 文本样式
   const buttonTextStyle = useMemo(() => ({
     color: '#fff'
-  }), []);
-
-  return (
+  }), []);  return (
     <Modal
       visible={isVisible}
       transparent
@@ -356,23 +300,6 @@ export const PageSettingsModal: React.FC<PageSettingsModalProps> = memo(({
               <Text style={sectionTitleStyle}>
                 自定义背景图片
               </Text>
-              {/* 裁切比例选项 */}
-              <Text style={optionLabelStyle}>
-                裁切比例
-              </Text>
-              <View style={styles.optionGrid}>
-                {aspectRatioOptions.map((option) => (
-                  <TouchableOpacity
-                    key={option.id}
-                    style={getAspectRatioOptionStyle(option.id)}
-                    onPress={() => handleAspectRatioSelect(option.id)}
-                  >
-                    <Text style={aspectRatioTextStyle}>
-                      {option.name}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
               
               {hasBackgroundImage && (
                 <View style={centerContainerStyle}>
@@ -399,7 +326,7 @@ export const PageSettingsModal: React.FC<PageSettingsModalProps> = memo(({
                   <Text style={buttonTextStyle}>移除背景图片</Text>
                 </TouchableOpacity>
               )}
-            </View>            {/* 背景图片透明度设置 */}
+            </View>{/* 背景图片透明度设置 */}
             {hasBackgroundImage && (
               <View style={sectionContainerStyle}>
                 <Text style={sectionTitleStyle}>
@@ -441,14 +368,15 @@ export const PageSettingsModal: React.FC<PageSettingsModalProps> = memo(({
                 左右页边距 ({currentSettings.marginValue}px)
               </Text>
               <Slider
-                style={sliderStyle}
+                                style={sliderStyle}
                 minimumValue={8}
                 maximumValue={40}
                 step={1}
                 value={currentSettings.marginValue}
                 onValueChange={handleMarginChange}
                 minimumTrackTintColor={sliderTrackColors.minimum}
-                maximumTrackTintColor={sliderTrackColors.maximum}                thumbTintColor={sliderTrackColors.thumb}
+                maximumTrackTintColor={sliderTrackColors.maximum}
+                thumbTintColor={sliderTrackColors.thumb}
               />
             </View>
           </ScrollView>
@@ -461,6 +389,7 @@ export const PageSettingsModal: React.FC<PageSettingsModalProps> = memo(({
             <Text style={[styles.closeButtonText, { color: '#fff' }]}>确定</Text>
           </TouchableOpacity>
         </View>
-      </View>    </Modal>
+      </View>
+    </Modal>
   );
 });
