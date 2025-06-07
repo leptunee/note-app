@@ -217,7 +217,7 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
       // 从重做栈中移除
       setRedoStack(prev => prev.slice(0, -1));
     }
-  }, [redoStack, paths]);const handleSave = useCallback(async () => {
+  }, [redoStack, paths]);  const handleSave = useCallback(async () => {
     if (paths.length === 0) {
       onCancel();
       return;
@@ -252,14 +252,13 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
       backgroundColor: colorScheme === 'dark' ? '#2a2a2a' : '#f0f0f0',
       borderBottomColor: colorScheme === 'dark' ? '#404040' : '#e0e0e0'
     }
-  ], [colorScheme]);
-
-  const canvasStyle = useMemo(() => [
+  ], [colorScheme]);  const canvasStyle = useMemo(() => [
     styles.canvas,
     { 
       backgroundColor: '#ffffff',
       width: width,
-      height: height
+      height: height,
+      overflow: 'visible' as const, // 确保内容不被裁剪
     }
   ], [width, height]);
 

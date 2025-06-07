@@ -93,14 +93,16 @@ export function generateWebViewHTML(content: string): string {
             display: block;
             margin: 0 0 12px 0;
             clear: both;
-          }
-          img { 
+          }          img { 
             max-width: 100%; 
+            width: auto;
             height: auto; 
             display: block; 
             margin: 12px 0;
             border-radius: 4px;
             clear: both;
+            object-fit: contain;
+            box-sizing: border-box;
           }
           strong, b { font-weight: bold; }
           em, i { font-style: italic; }

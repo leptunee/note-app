@@ -294,7 +294,7 @@ export default function NoteEditScreen() {
       return;
     }try {      // 创建可删除的图片HTML结构
       // 使用简洁的图片标签，保持可通过键盘删除的功能
-      const imageHtml = `<img src="${imageData}" style="max-width: 100%; height: auto; display: inline-block; margin: 5px; border-radius: 4px;" alt="涂鸦" title="涂鸦" data-type="image" data-source="drawing" />`;
+      const imageHtml = `<img src="${imageData}" style="max-width: 100%; height: auto; display: block; margin: 10px 0; border-radius: 4px; object-fit: contain;" alt="涂鸦" title="涂鸦" data-type="image" data-source="drawing" />`;
 
       // 尝试插入涂鸦图片，参考图片插入的成功方法
       let insertSuccess = false;      // 方法1: 使用直接的 insertContent（参考图片插入的成功方法）

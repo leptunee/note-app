@@ -119,11 +119,8 @@ export const ExportView = memo(
           <Text style={dateStyle}>
             {formattedDate}
           </Text>
-        </View>
-
-        <View style={contentAreaStyle}>
-          {content && content.trim() ? (
-            <WebView
+        </View>        <View style={contentAreaStyle}>
+          {content && content.trim() ? (            <WebView
               style={webViewStyle}
               source={htmlContent}
               scrollEnabled={false}
@@ -133,6 +130,11 @@ export const ExportView = memo(
               domStorageEnabled={false}
               startInLoadingState={false}
               originWhitelist={['*']}
+              removeClippedSubviews={false}
+              scalesPageToFit={false}
+              allowsInlineMediaPlayback={true}
+              allowsFullscreenVideo={false}
+              mixedContentMode="compatibility"
               onLoadEnd={() => {
                 // WebView 加载完成
               }}

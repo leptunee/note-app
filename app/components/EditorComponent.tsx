@@ -47,7 +47,8 @@ export const EditorComponent = memo<EditorComponentProps>(({
 
   // 注意：图片点击事件现在通过 ImageClickExtension (ProseMirror 扩展) 处理
   // 不再需要通过 JavaScript 注入的方式处理
-    return (
+  
+  return (
     <KeyboardAwareScrollView 
       enableOnAndroid={true}
       keyboardShouldPersistTaps="handled"
@@ -60,12 +61,12 @@ export const EditorComponent = memo<EditorComponentProps>(({
       scrollEnabled={true}
       keyboardOpeningTime={250}
       enableResetScrollToCoords={false}
-    >
-      <View style={containerStyle}>
+    >      <View style={containerStyle}>
         <RichText 
           editor={editor}
           style={richTextStyle}
           containerStyle={richTextContainerStyle}
+          removeClippedSubviews={false}
         />
       </View>
     </KeyboardAwareScrollView>
