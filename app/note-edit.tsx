@@ -1,7 +1,8 @@
 import React, { useRef, useState, useEffect, useCallback, useMemo } from 'react';
 import { View, ImageBackground, Platform, Keyboard, KeyboardAvoidingView, Text, TextInput, StatusBar, Alert, Dimensions } from 'react-native';
 import { useEditorBridge, TenTapStarterKit, useBridgeState } from '@10play/tentap-editor';
-import { NoteHeader, RichTextContent, ExportModal, PageSettingsModal, CustomToolbar, styles, Toast, ExportView, CategorySelector, CategoryModal, DrawingCanvas, type ToastRef } from './components';
+import { NoteHeader, RichTextContent, CustomToolbar, styles, Toast, ExportView, CategorySelector, DrawingCanvas, type ToastRef } from './components';
+import { ExportModal, PageSettingsModal, CategoryModal } from './components/LazyComponents';
 import { useEditorContent } from '@/src/hooks/useEditorContent';
 import { useNoteEdit } from './useNoteEdit';
 import { themes, getBackgroundColor, getTextColor, getEditorBackgroundColor, getEditorBorderColor, getContentPadding } from '@/src/utils/noteEditUtils';

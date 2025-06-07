@@ -1,15 +1,29 @@
-import React, { useCallback, useMemo, useState, useRef } from 'react';
+import React, { useCallback, useMemo, useState, useRef, memo } from 'react';
 import { View, StyleSheet, useColorScheme, Animated, StatusBar } from 'react-native';
 import { useNotes, Category } from '@/src/hooks/useNotes';
 import { useTranslation } from 'react-i18next';
 import { useRouter, useFocusEffect } from 'expo-router';
 import Colors from '@/constants/Colors';
-import { NotesHeader, NotesList, SelectionToolbar, CategorySidebar, CategoryModal, CategorySelectorModal } from './components';
-import { BatchExportDialog } from './components/features/export/BatchExportDialog';
+import { NotesHeader, NotesList, SelectionToolbar, CategorySidebar } from './components';
+import { CategoryModal, CategorySelectorModal, BatchExportDialog } from './components/LazyComponents';
 import useSelectionMode from '@/src/hooks/useSelectionMode';
+import { usePerformanceMonitor } from '@/src/hooks/usePerformanceMonitor';
 import { v4 as uuidv4 } from 'uuid';
 
-export default function NotesScreen() {
+const NotesScreen = memo(() => {
+  // Performance monitoring
+  const { markRenderStart, markRenderEnd } = usePerformanceMonitor({
+    enableMemoryMonitoring: true,
+    enableFPSMonitoring: true,
+    enableComponentTracking: true,
+  });
+
+  // 记录渲染开始
+  React.useEffect(() => {
+    markRenderStart();
+    return markRenderEnd;
+  });
+
   const { 
     notes, 
     categories, 
@@ -60,18 +74,17 @@ export default function NotesScreen() {
     exportSelectedNotes,
     closeExportDialog,
   } = useSelectionMode({ deleteNote, deleteNotes, togglePinNote, setPinNotes });
-
-  // 侧边栏控制函数
-  const openSidebar = () => {
+  // 侧边栏控制函数 - 使用useCallback优化
+  const openSidebar = useCallback(() => {
     setSidebarVisible(true);
     Animated.timing(sidebarAnimation, {
       toValue: 1,
       duration: 300,
       useNativeDriver: false,
     }).start();
-  };
+  }, [sidebarAnimation]);
 
-  const closeSidebar = () => {
+  const closeSidebar = useCallback(() => {
     Animated.timing(sidebarAnimation, {
       toValue: 0,
       duration: 300,
@@ -79,28 +92,27 @@ export default function NotesScreen() {
     }).start(() => {
       setSidebarVisible(false);
     });
-  };
+  }, [sidebarAnimation]);
 
-  // 分类选择处理
-  const handleCategorySelect = (categoryId: string) => {
+  // 分类选择处理 - 使用useCallback优化
+  const handleCategorySelect = useCallback((categoryId: string) => {
     setSelectedCategoryId(categoryId);
     closeSidebar();
-  };
+  }, [closeSidebar]);
 
-  // 添加分类
-  const handleAddCategory = () => {
+  // 添加分类 - 使用useCallback优化
+  const handleAddCategory = useCallback(() => {
     setEditingCategory(null);
     setCategoryModalVisible(true);
-  };
+  }, []);
 
-  // 编辑分类
-  const handleEditCategory = (category: Category) => {
+  // 编辑分类 - 使用useCallback优化
+  const handleEditCategory = useCallback((category: Category) => {
     setEditingCategory(category);
     setCategoryModalVisible(true);
-  };
-
-  // 保存分类
-  const handleSaveCategory = async (categoryData: Omit<Category, 'id' | 'createdAt' | 'updatedAt'>) => {
+  }, []);
+  // 保存分类 - 使用useCallback优化
+  const handleSaveCategory = useCallback(async (categoryData: Omit<Category, 'id' | 'createdAt' | 'updatedAt'>) => {
     if (editingCategory) {
       // 编辑现有分类
       const updatedCategory: Category = {
@@ -119,20 +131,23 @@ export default function NotesScreen() {
       };
       await addCategory(newCategory);
     }
-  };
-  // 删除分类
-  const handleDeleteCategory = async (categoryId: string) => {
+  }, [editingCategory, updateCategory, addCategory]);
+
+  // 删除分类 - 使用useCallback优化
+  const handleDeleteCategory = useCallback(async (categoryId: string) => {
     await deleteCategory(categoryId);
     if (selectedCategoryId === categoryId) {
       setSelectedCategoryId('all');
     }
-  };
+  }, [deleteCategory, selectedCategoryId]);
 
-  // 打开移动选择器
-  const handleMoveSelected = () => {
+  // 打开移动选择器 - 使用useCallback优化
+  const handleMoveSelected = useCallback(() => {
     setMoveSelectorVisible(true);
-  };  // 移动选择的笔记到指定分类
-  const handleMoveNotesToCategory = async (categoryId: string) => {
+  }, []);
+
+  // 移动选择的笔记到指定分类 - 使用useCallback优化
+  const handleMoveNotesToCategory = useCallback(async (categoryId: string) => {
     const selectedNotesArray: string[] = Array.from(selectedNotes);
     
     // 使用批量更新避免竞态条件
@@ -141,21 +156,22 @@ export default function NotesScreen() {
     // 关闭移动选择器并退出选择模式
     setMoveSelectorVisible(false);
     exitSelectionMode();
-  };
-
-  // 计算每个分类的笔记数量
+  }, [selectedNotes, updateMultipleNoteCategories, exitSelectionMode]);
+  // 计算每个分类的笔记数量 - 使用useMemo优化
   const notesCounts = useMemo(() => {
     const counts: { [categoryId: string]: number } = {};
     categories.forEach(category => {
       counts[category.id] = getNotesByCategory(category.id).length;
     });
-    return counts;  }, [categories, notes, getNotesByCategory]);
-  // 根据选中的分类筛选笔记
+    return counts;
+  }, [categories, notes, getNotesByCategory]);
+
+  // 根据选中的分类筛选笔记 - 使用useMemo优化
   const filteredNotes = useMemo(() => {
     return getNotesByCategory(selectedCategoryId);
   }, [notes, selectedCategoryId, getNotesByCategory]);
 
-  // 获取当前选中的分类信息
+  // 获取当前选中的分类信息 - 使用useMemo优化
   const selectedCategory = useMemo(() => {
     if (selectedCategoryId === 'all') {
       return { name: t('allNotes', '全部笔记'), icon: 'folder', color: '#2196F3' };
@@ -171,8 +187,7 @@ export default function NotesScreen() {
     if (plainText.length <= maxLength) return plainText;
     return plainText.substring(0, maxLength) + '...';
   }, []);
-
-  // 计算的颜色值，避免重复计算
+  // 计算的颜色值，避免重复计算 - 使用useMemo优化
   const colors = useMemo(() => ({
     tint: Colors[colorScheme].tint,
     text: colorScheme === 'dark' ? '#fff' : '#000',
@@ -182,7 +197,9 @@ export default function NotesScreen() {
     toolbarText: colorScheme === 'dark' ? '#fff' : '#333',
     secondaryText: colorScheme === 'dark' ? '#ccc' : '#666',
     tertiaryText: colorScheme === 'dark' ? '#888' : '#999',
-  }), [colorScheme]);  // 处理笔记点击
+  }), [colorScheme]);
+
+  // 处理笔记点击 - 使用useCallback优化
   const handleNotePress = useCallback((noteId: string) => {
     if (isSelectionMode) {
       toggleNoteSelection(noteId);
@@ -196,15 +213,16 @@ export default function NotesScreen() {
     }
   }, [isSelectionMode, toggleNoteSelection, router]);
 
-  // 处理搜索按钮点击
+  // 处理搜索按钮点击 - 使用useCallback优化
   const handleSearchPress = useCallback(() => {
     router.push('/search');
   }, [router]);
-  // 获取选中的笔记数据 - 总是从原始notes中获取
+
+  // 获取选中的笔记数据 - 总是从原始notes中获取 - 使用useMemo优化
   const selectedNotesData = useMemo(() => {
     const selectedIds = Array.from(selectedNotes);
     return notes.filter(note => selectedIds.includes(note.id));
-  }, [notes, selectedNotes]);  return (
+  }, [notes, selectedNotes]);return (
     <View style={[styles.container, { backgroundColor: Colors[colorScheme].background }]}>
       <StatusBar 
         barStyle={colorScheme === 'dark' ? 'light-content' : 'dark-content'}
@@ -284,10 +302,14 @@ export default function NotesScreen() {
         onClose={() => setMoveSelectorVisible(false)}
         onAddCategory={handleAddCategory}
         onEditCategory={handleEditCategory}
-      />
-    </View>
+      />    </View>
   );
-}
+});
+
+// 添加 displayName 以便于调试
+NotesScreen.displayName = 'NotesScreen';
+
+export default NotesScreen;
 
 const styles = StyleSheet.create({
   container: {

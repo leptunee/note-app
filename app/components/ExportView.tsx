@@ -9,7 +9,7 @@ import {
   formatDate, 
   generateWebViewHTML, 
   webViewInjectedScript 
-} from './shared/utils/contentUtils';
+} from '@/src/utils/contentUtils';
 
 interface ExportViewProps {
   title: string;

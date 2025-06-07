@@ -14,6 +14,8 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
   const { exportAsTxt, exportAsMarkdown, exportAsImage, exportAsWord } = useExport();
   const { t } = useTranslation();
   const router = useRouter();
+  
+  // 基础状态
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [selectedCategoryId, setSelectedCategoryId] = useState('all');
@@ -39,10 +41,11 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
     backgroundImageOpacity: 0.5,
     backgroundImageBlur: 0,
   });
+  
   const colorScheme = useColorScheme() ?? 'light';
   const MAX_TITLE_LENGTH = 64;
   
-  // 使用 useMemo 缓存计算值
+  // 性能优化：使用 useMemo 缓存计算值
   const isNewNote = useMemo(() => !currentNoteId, [currentNoteId]);
   const noteViewRef = useRef(null);
 

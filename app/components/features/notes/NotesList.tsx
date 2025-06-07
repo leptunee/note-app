@@ -1,6 +1,6 @@
-// 笔记列表组件
+// 笔记列表组件 - 性能优化版本
 import React, { memo, useCallback, useMemo } from 'react';
-import { FlatList } from 'react-native';
+import { FlatList, ListRenderItem } from 'react-native';
 import { NoteItem } from './NoteItem';
 
 interface Note {
@@ -30,7 +30,7 @@ interface NotesListProps {
 }
 
 // 固定的item高度，用于性能优化
-const ITEM_HEIGHT = 100; // 根据实际组件高度调整
+const ITEM_HEIGHT = 100;
 
 export const NotesList = memo<NotesListProps>(({
   notes,
@@ -41,19 +41,19 @@ export const NotesList = memo<NotesListProps>(({
   onNoteLongPress,
   onToggleNoteSelection,
   truncateContent
-}) => {  // 对笔记进行排序：置顶的笔记在前，然后按最后编辑时间排序
+}) => {
+  // 使用 useMemo 缓存排序后的笔记列表
   const sortedNotes = useMemo(() => {
     return notes.slice().sort((a, b) => {
       // 首先按置顶状态排序
       if (a.pinned && !b.pinned) return -1;
       if (!a.pinned && b.pinned) return 1;
       // 置顶状态相同时，按最后编辑时间排序（最近编辑的在前）
-      return b.updatedAt - a.updatedAt;
-    });
+      return b.updatedAt - a.updatedAt;    });
   }, [notes]);
 
   // 使用 useCallback 缓存 renderItem 函数
-  const renderItem = useCallback(({ item }: { item: Note }) => (
+  const renderItem = useCallback<ListRenderItem<Note>>(({ item }) => (
     <NoteItem
       note={item}
       isSelectionMode={isSelectionMode}
@@ -76,24 +76,27 @@ export const NotesList = memo<NotesListProps>(({
     index,
   }), []);
 
+  // 缓存 extraData 对象以减少重新渲染
+  const extraData = useMemo(() => ({ 
+    isSelectionMode, 
+    selectedNotesSize: selectedNotes.size,
+    selectedNotesIds: Array.from(selectedNotes).sort().join(',')
+  }), [isSelectionMode, selectedNotes]);
+
   return (
     <FlatList
       data={sortedNotes}
       renderItem={renderItem}
       keyExtractor={keyExtractor}
       getItemLayout={getItemLayout}
+      extraData={extraData}
       // 性能优化属性
       removeClippedSubviews={true}
       maxToRenderPerBatch={10}
       updateCellsBatchingPeriod={50}
       initialNumToRender={10}
       windowSize={10}
-      legacyImplementation={false}      // 减少重新渲染
-      extraData={useMemo(() => ({ 
-        isSelectionMode, 
-        selectedNotesSize: selectedNotes.size,
-        selectedNotesIds: Array.from(selectedNotes).sort().join(',')
-      }), [isSelectionMode, selectedNotes])}
+      legacyImplementation={false}
       // 优化滚动性能
       disableIntervalMomentum={true}
       showsVerticalScrollIndicator={true}
