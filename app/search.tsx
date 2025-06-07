@@ -14,7 +14,7 @@ import {
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { useNotes } from '@/components/useNotes';
+import { useNotes } from '@/src/hooks/useNotes';
 import Colors from '@/constants/Colors';
 
 export default function SearchScreen() {

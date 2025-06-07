@@ -1,8 +1,8 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { useColorScheme, Keyboard, TextInput } from 'react-native';
-import { useNotes, PageSettings, Category } from '@/components/useNotes';
-import { useExport } from '@/components/useExport';
+import { useNotes, PageSettings, Category } from '@/src/hooks/useNotes';
+import { useExport } from '@/src/hooks/useExport';
 import { useTranslation } from 'react-i18next';
 import { v4 as uuidv4 } from 'uuid';
 import { type ToastRef } from './components';

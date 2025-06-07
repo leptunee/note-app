@@ -3,13 +3,13 @@ import React, { forwardRef, memo, useMemo } from 'react';
 import { View, Text } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { useTranslation } from 'react-i18next';
-import { styles } from './styles';
-import {
+import { exportStyles } from '../../shared/styles/export';
+import { 
   calculateContentHeight, 
   formatDate, 
   generateWebViewHTML, 
   webViewInjectedScript 
-} from './shared/utils/contentUtils';
+} from '@/src/utils/contentUtils';
 
 interface ExportViewProps {
   title: string;
@@ -48,7 +48,7 @@ export const ExportView = memo(
     }), []);
     
     // 缓存标题头部样式
-    const headerStyle = useMemo(() => [styles.noteHeader, { 
+    const headerStyle = useMemo(() => [exportStyles.noteHeader, { 
       backgroundColor: '#f8f8f8', 
       padding: 16,
       width: 375,
@@ -57,16 +57,15 @@ export const ExportView = memo(
     }], []);
     
     // 缓存标题样式
-    const titleStyle = useMemo(() => [styles.noteTitle, { 
+    const titleStyle = useMemo(() => [exportStyles.noteTitle, { 
       color: '#000', 
       fontSize: 20,
       fontWeight: 'bold' as const, 
       marginBottom: 4,
       flexWrap: 'wrap' as const
     }], []);
-    
-    // 缓存日期样式
-    const dateStyle = useMemo(() => [styles.noteDate, { 
+      // 缓存日期样式
+    const dateStyle = useMemo(() => [exportStyles.noteDate, { 
       color: '#666', 
       fontSize: 12 
     }], []);

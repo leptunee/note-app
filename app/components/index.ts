@@ -1,22 +1,40 @@
 // 从这个文件导出所有组件
-export { NoteHeader } from './NoteHeader';
-export { OptionsMenu } from './OptionsMenu';
-export { ExportModal } from './ExportModal';
-export { RichTextContent } from './RichTextContent';
-export { PageSettingsModal } from './PageSettingsModal';
-export { CustomToolbar } from './CustomToolbar';
-export { ExportView } from './ExportView';
-export { TitleSection } from './TitleSection';
-export { EditorComponent } from './EditorComponent';
-export { NoteItem } from './NoteItem';
-export { NotesHeader } from './NotesHeader';
-export { SelectionToolbar } from './SelectionToolbar';
-export { NotesList } from './NotesList';
-export { CategorySidebar } from './CategorySidebar';
-export { CategoryModal } from './CategoryModal';
-export { CategorySelector } from './CategorySelector';
-export { CategorySelectorModal } from './CategorySelectorModal';
-export { CategoryDisplay } from './CategoryDisplay';
-export { DrawingCanvas } from './DrawingCanvas';
+
+// Features - Notes
+export { NoteHeader } from './features/notes/NoteHeader';
+export { OptionsMenu } from './features/notes/OptionsMenu';
+export { NoteItem } from './features/notes/NoteItem';
+export { NotesList } from './features/notes/NotesList';
+
+// Features - Categories
+export { CategorySidebar } from './features/categories/CategorySidebar';
+export { CategoryModal } from './features/categories/CategoryModal';
+export { CategorySelector } from './features/categories/CategorySelector';
+export { CategorySelectorModal } from './features/categories/CategorySelectorModal';
+export { CategoryDisplay } from './features/categories/CategoryDisplay';
+
+// Features - Editor
+export { RichTextContent } from './features/editor/RichTextContent';
+export { TitleSection } from './features/editor/TitleSection';
+export { EditorComponent } from './features/editor/EditorComponent';
+export { DrawingCanvas } from './features/editor/DrawingCanvas';
+
+// Features - Export
+export { ExportModal } from './features/export/ExportModal';
+export { ExportView } from './features/export/ExportView';
+
+// Features - Settings
+export { PageSettingsModal } from './features/settings/PageSettingsModal';
+
+// Features - Selection
+export { SelectionToolbar } from './features/selection/SelectionToolbar';
+
+// Layout
+export { NotesHeader } from './layout/NotesHeader';
+
+// UI Components
+export { CustomToolbar } from './ui/Toolbar/CustomToolbar';
+export { default as Toast, type ToastRef } from './ui/Toast/Toast';
+
+// Styles
 export { styles } from './styles';
-export { default as Toast, type ToastRef } from './Toast'; // Export Toast and ToastRef

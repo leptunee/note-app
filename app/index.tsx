@@ -1,12 +1,12 @@
 import React, { useCallback, useMemo, useState, useRef } from 'react';
 import { View, StyleSheet, useColorScheme, Animated, StatusBar } from 'react-native';
-import { useNotes, Category } from '@/components/useNotes';
+import { useNotes, Category } from '@/src/hooks/useNotes';
 import { useTranslation } from 'react-i18next';
 import { useRouter, useFocusEffect } from 'expo-router';
 import Colors from '@/constants/Colors';
 import { NotesHeader, NotesList, SelectionToolbar, CategorySidebar, CategoryModal, CategorySelectorModal } from './components';
-import { BatchExportDialog } from './components/BatchExportDialog';
-import useSelectionMode from './hooks/useSelectionMode';
+import { BatchExportDialog } from './components/features/export/BatchExportDialog';
+import useSelectionMode from '@/src/hooks/useSelectionMode';
 import { v4 as uuidv4 } from 'uuid';
 
 export default function NotesScreen() {
@@ -131,10 +131,9 @@ export default function NotesScreen() {
   // 打开移动选择器
   const handleMoveSelected = () => {
     setMoveSelectorVisible(true);
-  };
-  // 移动选择的笔记到指定分类
+  };  // 移动选择的笔记到指定分类
   const handleMoveNotesToCategory = async (categoryId: string) => {
-    const selectedNotesArray = Array.from(selectedNotes);
+    const selectedNotesArray: string[] = Array.from(selectedNotes);
     
     // 使用批量更新避免竞态条件
     await updateMultipleNoteCategories(selectedNotesArray, categoryId);

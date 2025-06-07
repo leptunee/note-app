@@ -2,9 +2,9 @@ import React, { useRef, useState, useEffect, useCallback, useMemo } from 'react'
 import { View, ImageBackground, Platform, Keyboard, KeyboardAvoidingView, Text, TextInput, StatusBar, Alert, Dimensions } from 'react-native';
 import { useEditorBridge, TenTapStarterKit, useBridgeState } from '@10play/tentap-editor';
 import { NoteHeader, RichTextContent, ExportModal, PageSettingsModal, CustomToolbar, styles, Toast, ExportView, CategorySelector, CategoryModal, DrawingCanvas, type ToastRef } from './components';
-import { useEditorContent } from './components/hooks/useEditorContent';
+import { useEditorContent } from '@/src/hooks/useEditorContent';
 import { useNoteEdit } from './useNoteEdit';
-import { themes, getBackgroundColor, getTextColor, getEditorBackgroundColor, getEditorBorderColor, getContentPadding } from './noteEditUtils';
+import { themes, getBackgroundColor, getTextColor, getEditorBackgroundColor, getEditorBorderColor, getContentPadding } from '@/src/utils/noteEditUtils';
 
 export default function NoteEditScreen() {
   const toastRef = useRef<ToastRef>(null);  const titleInputRef = useRef<TextInput>(null);
