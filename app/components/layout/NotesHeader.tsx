@@ -12,7 +12,7 @@ interface NotesHeaderProps {
     text: string;
     tint: string;
   };
-  onAboutPress: () => void;
+  onAboutPress?: () => void;
   onAddPress: () => void;
   onSearchPress: () => void;
   onSidebarPress: () => void;
@@ -39,10 +39,9 @@ export const NotesHeader = memo<NotesHeaderProps>(({
     styles.header, 
     { color: colors.text }
   ], [colors.text]);
-
   // 使用 useCallback 缓存事件处理函数
   const handleAboutPress = useCallback(() => {
-    onAboutPress();
+    onAboutPress?.();
   }, [onAboutPress]);
 
   const handleAddPress = useCallback(() => {

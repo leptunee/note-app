@@ -7,24 +7,9 @@ import Colors from '@/constants/Colors';
 import { NotesHeader, NotesList, SelectionToolbar, CategorySidebar } from './components';
 import { CategoryModal, CategorySelectorModal, BatchExportDialog } from './components/LazyComponents';
 import useSelectionMode from '@/src/hooks/useSelectionMode';
-import { usePerformanceMonitor } from '@/src/hooks/usePerformanceMonitor';
 import { v4 as uuidv4 } from 'uuid';
-import StorageDebugger from './components/StorageDebugger';
 
 const NotesScreen = memo(() => {
-  // Performance monitoring
-  const { markRenderStart, markRenderEnd } = usePerformanceMonitor({
-    enableMemoryMonitoring: true,
-    enableFPSMonitoring: true,
-    enableComponentTracking: true,
-  });
-
-  // 记录渲染开始
-  React.useEffect(() => {
-    markRenderStart();
-    return markRenderEnd;
-  });
-
   const { 
     notes, 
     categories, 
@@ -55,7 +40,6 @@ const NotesScreen = memo(() => {
   const [categoryModalVisible, setCategoryModalVisible] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [moveSelectorVisible, setMoveSelectorVisible] = useState(false);
-  const [showDebugger, setShowDebugger] = useState(false);
   
   // 侧边栏动画
   const sidebarAnimation = useRef(new Animated.Value(0)).current;
@@ -212,10 +196,14 @@ const NotesScreen = memo(() => {
       });
     }
   }, [isSelectionMode, toggleNoteSelection, router]);
-
   // 处理搜索按钮点击 - 使用useCallback优化
   const handleSearchPress = useCallback(() => {
     router.push('/search');
+  }, [router]);
+
+  // 处理关于页面按钮点击 - 使用useCallback优化
+  const handleAboutPress = useCallback(() => {
+    router.push('/about');
   }, [router]);
 
   // 获取选中的笔记数据 - 总是从原始notes中获取 - 使用useMemo优化
@@ -228,16 +216,15 @@ const NotesScreen = memo(() => {
         barStyle={colorScheme === 'dark' ? 'light-content' : 'dark-content'}
         backgroundColor={Colors[colorScheme].background}
         translucent={false}
-      />
-        <NotesHeader
+      />        <NotesHeader
         title={selectedCategory.name}
         categoryIcon={selectedCategory.icon}
         categoryColor={selectedCategory.color}
         colors={colors}
-        onAboutPress={() => setShowDebugger(true)}
         onAddPress={() => router.push('/note-edit')}
         onSearchPress={handleSearchPress}
         onSidebarPress={openSidebar}
+        onAboutPress={handleAboutPress}
       />
       
       <NotesList
@@ -300,21 +287,7 @@ const NotesScreen = memo(() => {
         onCategoryChange={handleMoveNotesToCategory}
         onClose={() => setMoveSelectorVisible(false)}
         onAddCategory={handleAddCategory}
-        onEditCategory={handleEditCategory}
-      />
-
-      {/* 存储调试器 */}
-      {showDebugger && (
-        <View style={StyleSheet.absoluteFill}>
-          <StorageDebugger />
-          <TouchableOpacity 
-            style={styles.closeDebugger}
-            onPress={() => setShowDebugger(false)}
-          >
-            <Text style={styles.closeDebuggerText}>关闭</Text>
-          </TouchableOpacity>
-        </View>
-      )}
+        onEditCategory={handleEditCategory}      />
     </View>
   );
 });
@@ -330,19 +303,6 @@ const styles = StyleSheet.create({
     padding: 16,
     paddingTop: 60,
     paddingBottom: 0,
-  },
-  closeDebugger: {
-    position: 'absolute',
-    top: 40,
-    right: 20,
-    backgroundColor: '#f44336',
-    padding: 10,
-    borderRadius: 20,
-    zIndex: 1000,
-  },
-  closeDebuggerText: {
-    color: 'white',
-    fontWeight: 'bold',
   },
 });
 
