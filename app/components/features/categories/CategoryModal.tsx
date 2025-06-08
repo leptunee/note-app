@@ -364,7 +364,7 @@ const localStyles = StyleSheet.create({
     borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 3,
+    borderWidth: 0,
   },
   preview: {
     flexDirection: 'row',

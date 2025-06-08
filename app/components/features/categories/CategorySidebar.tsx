@@ -1,5 +1,5 @@
 // 分类目录侧边栏组件 - Performance Optimized
-import React, { useEffect, memo, useMemo, useCallback } from 'react';
+import React, { useEffect, memo, useMemo, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -26,7 +26,6 @@ interface CategorySidebarProps {
   onClose: () => void;
   onAddCategory: () => void;
   onEditCategory: (category: Category) => void;
-  slideAnimation: Animated.Value;
   notesCounts: { [categoryId: string]: number };
 }
 
@@ -42,11 +41,13 @@ export const CategorySidebar = memo<CategorySidebarProps>(({
   onClose,
   onAddCategory,
   onEditCategory,
-  slideAnimation,
   notesCounts,
 }) => {
   const { t } = useTranslation();
   const colorScheme = useColorScheme() ?? 'light';
+  
+  // 内部动画控制
+  const slideAnimation = useRef(new Animated.Value(0)).current;
   
   // 缓存颜色配置
   const colors = useMemo(() => {
@@ -62,14 +63,42 @@ export const CategorySidebar = memo<CategorySidebarProps>(({
     };
   }, [colorScheme]);
 
+  // 处理关闭动画
+  const handleClose = useCallback(() => {
+    Animated.timing(slideAnimation, {
+      toValue: 0,
+      duration: 300,
+      useNativeDriver: false,
+    }).start(() => {
+      onClose();
+    });
+  }, [slideAnimation, onClose]);
+
+  // 处理进入动画 - 立即启动，不等待渲染完成
+  useEffect(() => {
+    if (isVisible) {
+      // 立即设置初始值并开始动画，避免延迟
+      slideAnimation.setValue(0);
+      // 使用setImmediate确保在下一个事件循环中立即开始动画
+      const animationTimer = setImmediate(() => {
+        Animated.timing(slideAnimation, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: false,
+        }).start();
+      });
+      
+      return () => clearImmediate(animationTimer);
+    }
+  }, [isVisible, slideAnimation]);
+
   // 缓存系统分类ID
   const systemCategoryIds = useMemo(() => ['all', 'uncategorized'], []);
-
   // 缓存事件处理函数
   const handleCategoryPress = useCallback((categoryId: string) => {
     onCategorySelect(categoryId);
-    onClose();
-  }, [onCategorySelect, onClose]);
+    handleClose();
+  }, [onCategorySelect, handleClose]);
 
   const handleCategoryLongPress = useCallback((category: Category) => {
     if (!systemCategoryIds.includes(category.id)) {
@@ -95,15 +124,14 @@ export const CategorySidebar = memo<CategorySidebarProps>(({
         onPress={() => handleCategoryPress(category.id)}
         onLongPress={() => handleCategoryLongPress(category)}
         delayLongPress={500}
-      >
-        <View style={styles.categoryContent}>
-          <View style={styles.categoryLeft}>
-            <FontAwesome
-              name={category.icon as any}
-              size={18}
-              color={isSelected ? colors.activeText : category.color}
-              style={styles.categoryIcon}
-            />
+      >        <View style={styles.categoryContent}>
+          <View style={styles.categoryLeft}>            <View style={styles.categoryIconContainer}>
+              <FontAwesome
+                name={category.icon as any}
+                size={16}
+                color={isSelected ? colors.activeText : category.color}
+              />
+            </View>
             <Text
               style={[
                 styles.categoryName,
@@ -147,9 +175,7 @@ export const CategorySidebar = memo<CategorySidebarProps>(({
     length: CATEGORY_ITEM_HEIGHT,
     offset: CATEGORY_ITEM_HEIGHT * index,
     index,
-  }), []);
-
-  // 创建平移响应器
+  }), []);  // 创建平移响应器
   const panResponder = useMemo(() => PanResponder.create({
     onMoveShouldSetPanResponder: (_, gestureState) => {
       return Math.abs(gestureState.dx) > 20 && Math.abs(gestureState.dy) < 100;
@@ -160,40 +186,45 @@ export const CategorySidebar = memo<CategorySidebarProps>(({
       }
     },
     onPanResponderRelease: (_, gestureState) => {
-      if (gestureState.dx < -SIDEBAR_WIDTH * 0.3) {
-        onClose();
+      // 计算滑动速度 (像素/毫秒)
+      const velocity = Math.abs(gestureState.vx);
+      // 计算滑动距离占侧边栏宽度的比例
+      const swipeRatio = Math.abs(gestureState.dx) / SIDEBAR_WIDTH;
+      
+      // 关闭条件：滑动距离超过25%或者滑动速度大于0.5且滑动距离超过10%
+      const shouldClose = swipeRatio > 0.25 || (velocity > 0.5 && swipeRatio > 0.1);
+      
+      if (gestureState.dx < 0 && shouldClose) {
+        handleClose();
       } else {
-        Animated.spring(slideAnimation, {
+        // 移除bounce效果，使用timing动画代替spring
+        Animated.timing(slideAnimation, {
           toValue: 1,
+          duration: 200,
           useNativeDriver: false,
-          tension: 120,
-          friction: 7,
         }).start();
       }
     },
-  }), [slideAnimation, onClose]);
-
-  // 处理硬件返回键
+  }), [slideAnimation, handleClose]);// 处理硬件返回键
   useEffect(() => {
     if (!isVisible) return;
 
     const backAction = () => {
-      onClose();
+      handleClose();
       return true;
     };
 
     const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
     return () => backHandler.remove();
-  }, [isVisible, onClose]);
+  }, [isVisible, handleClose]);
 
-  if (!isVisible) return null;
-
+  // 为了消除延迟，即使不可见也要渲染，只是通过动画控制位置
   return (
-    <View style={styles.overlay}>
+    <View style={[styles.overlay, { opacity: isVisible ? 1 : 0, pointerEvents: isVisible ? 'auto' : 'none' }]}>
       <TouchableOpacity
         style={styles.backdrop}
         activeOpacity={1}
-        onPress={onClose}
+        onPress={handleClose}
       />
       
       <Animated.View
@@ -291,15 +322,21 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-  },
-  categoryLeft: {
+  },  categoryLeft: {
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
+  },  categoryIconContainer: {
+    width: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
   },
   categoryIcon: {
     marginRight: 12,
     width: 18,
+    textAlign: 'center',
   },
   categoryName: {
     fontSize: 16,

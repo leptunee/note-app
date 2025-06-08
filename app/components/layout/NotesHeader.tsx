@@ -67,16 +67,15 @@ export const NotesHeader = memo<NotesHeaderProps>(({
           />
         </TouchableOpacity>
         
-        <View style={styles.titleSection}>
-          {categoryIcon && (
+        <View style={styles.titleSection}>          {categoryIcon && (
             <View style={categoryIconContainerStyle}>
               <FontAwesome 
                 name={categoryIcon as any} 
-                size={16} 
+                size={14} 
                 color="#ffffff" 
               />
             </View>
-          )}          <Text 
+          )}<Text 
             style={titleStyle}
             numberOfLines={1}
             ellipsizeMode="tail"

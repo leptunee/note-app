@@ -9,7 +9,8 @@ import {
   TouchableOpacity,
   ScrollView,
   Pressable,
-  StatusBar
+  StatusBar,
+  FlatList
 } from 'react-native';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { useRouter } from 'expo-router';
@@ -20,11 +21,12 @@ import Colors from '@/constants/Colors';
 export default function SearchScreen() {
   const router = useRouter();
   const { t, i18n } = useTranslation();
-  const { notes } = useNotes();
+  const { notes, categories } = useNotes();
   const colorScheme = useColorScheme() ?? 'light';
   const searchInputRef = useRef<TextInput>(null);
   
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategoryId, setSelectedCategoryId] = useState('all');
 
   // 页面加载时自动聚焦搜索框
   useEffect(() => {
@@ -40,7 +42,7 @@ export default function SearchScreen() {
     tint: Colors[colorScheme].tint,
     text: colorScheme === 'dark' ? '#fff' : '#000',
     background: colorScheme === 'dark' ? '#000' : '#fff',
-    cardBackground: colorScheme === 'dark' ? '#222' : '#f9f9f9',
+    cardBackground: colorScheme === 'dark' ? '#222' : '#f6f6f6',
     secondaryText: colorScheme === 'dark' ? '#ccc' : '#666',
     tertiaryText: colorScheme === 'dark' ? '#888' : '#999',
     searchHighlight: colorScheme === 'dark' ? '#ff6b35' : '#ff3300',
@@ -86,13 +88,29 @@ export default function SearchScreen() {
       </Text>
     );
   }, [colors.searchHighlight]);
-
   // 过滤和搜索笔记
   const searchResults = useMemo(() => {
-    if (!searchQuery.trim()) return [];
+    // 首先按分类筛选
+    let filteredNotes = notes;
+    if (selectedCategoryId !== 'all') {
+      if (selectedCategoryId === 'uncategorized') {
+        filteredNotes = notes.filter(note => !note.categoryId || note.categoryId === 'uncategorized');
+      } else {
+        filteredNotes = notes.filter(note => note.categoryId === selectedCategoryId);
+      }
+    }
+
+    // 然后按搜索词筛选
+    if (!searchQuery.trim()) {
+      return filteredNotes.map(note => ({
+        ...note,
+        highlightedTitle: note.title,
+        highlightedContent: truncateContent(note.content),
+      }));
+    }
     
     const query = searchQuery.toLowerCase();
-    return notes.filter(note => 
+    return filteredNotes.filter(note => 
       note.title.toLowerCase().includes(query) ||
       note.content.toLowerCase().includes(query)
     ).map(note => ({
@@ -101,7 +119,7 @@ export default function SearchScreen() {
       highlightedTitle: note.title,
       highlightedContent: truncateContent(note.content),
     }));
-  }, [notes, searchQuery, truncateContent]);  // 格式化时间 - 使用和主页面相同的逻辑
+  }, [notes, searchQuery, selectedCategoryId, truncateContent]);// 格式化时间 - 使用和主页面相同的逻辑
   const formatTime = useCallback((timestamp: number) => {
     const date = new Date(timestamp);
     const today = new Date();
@@ -140,12 +158,25 @@ export default function SearchScreen() {
   const handleBackPress = useCallback(() => {
     router.back();
   }, [router]);
-
   // 清空搜索
   const handleClearSearch = useCallback(() => {
     setSearchQuery('');
     searchInputRef.current?.focus();
   }, []);
+
+  // 处理分类选择
+  const handleCategorySelect = useCallback((categoryId: string) => {
+    setSelectedCategoryId(categoryId);
+  }, []);
+
+  // 获取当前选中分类的信息
+  const selectedCategory = useMemo(() => {
+    if (selectedCategoryId === 'all') {
+      return { name: '全部笔记', icon: 'file-text', color: '#2196F3' };
+    }
+    return categories.find(cat => cat.id === selectedCategoryId) || 
+           { name: '未分类', icon: 'folder', color: '#9E9E9E' };
+  }, [selectedCategoryId, categories]);
 
   return (
     <View style={[styles.container, { backgroundColor: Colors[colorScheme].background }]}>
@@ -154,8 +185,7 @@ export default function SearchScreen() {
         backgroundColor={Colors[colorScheme].background}
         translucent={false}
       />
-      
-      {/* 头部搜索栏 */}
+        {/* 头部搜索栏 */}
       <View style={[styles.header, { backgroundColor: colors.background }]}>
         <TouchableOpacity
           style={styles.backButton}
@@ -188,9 +218,45 @@ export default function SearchScreen() {
         </View>
       </View>
 
-      {/* 搜索结果 */}
+      {/* 分类选择器 */}
+      <View style={[styles.categoryContainer, { backgroundColor: colors.background }]}>
+        <FlatList
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          data={[{ id: 'all', name: '全部笔记', icon: 'file-text', color: '#2196F3' }, ...categories.filter(cat => cat.id !== 'all')]}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.categoryList}
+          renderItem={({ item }) => (
+            <TouchableOpacity              style={[
+                styles.categoryItem,
+                {
+                  backgroundColor: selectedCategoryId === item.id ? colors.tint : colors.cardBackground,
+                }
+              ]}
+              onPress={() => handleCategorySelect(item.id)}
+            >
+              <View style={[styles.categoryIcon, { backgroundColor: item.color }]}>
+                <FontAwesome 
+                  name={item.icon as any} 
+                  size={10} 
+                  color="#fff" 
+                />
+              </View>
+              <Text style={[
+                styles.categoryName, 
+                { 
+                  color: selectedCategoryId === item.id ? '#fff' : colors.text,
+                  fontWeight: selectedCategoryId === item.id ? '600' : '400'
+                }
+              ]}>
+                {item.name}
+              </Text>
+            </TouchableOpacity>
+          )}
+        />
+      </View>      {/* 搜索结果 */}
       <ScrollView style={styles.resultsContainer} showsVerticalScrollIndicator={false}>
-        {!searchQuery.trim() ? (
+        {!searchQuery.trim() && selectedCategoryId === 'all' ? (
           <View style={styles.emptyContainer}>
             <FontAwesome name="search" size={48} color={colors.tertiaryText} />
             <Text style={[styles.emptyText, { color: colors.secondaryText }]}>
@@ -201,16 +267,19 @@ export default function SearchScreen() {
           <View style={styles.emptyContainer}>
             <FontAwesome name="file-o" size={48} color={colors.tertiaryText} />
             <Text style={[styles.emptyText, { color: colors.secondaryText }]}>
-              {t('noSearchResults')}
+              {searchQuery.trim() ? t('noSearchResults') : t('noCategoryNotes')}
             </Text>
             <Text style={[styles.emptySubText, { color: colors.tertiaryText }]}>
-              {t('tryDifferentKeywords')}
+              {searchQuery.trim() ? t('tryDifferentKeywords') : t('selectDifferentCategory')}
             </Text>
           </View>
         ) : (
           <>
             <Text style={[styles.resultsCount, { color: colors.secondaryText }]}>
-              {t('foundResults', { count: searchResults.length })}
+              {searchQuery.trim() 
+                ? t('foundResults', { count: searchResults.length })
+                : `${selectedCategory.name}: ${searchResults.length} 条笔记`
+              }
             </Text>
             {searchResults.map((note) => (
               <Pressable
@@ -279,15 +348,43 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 12,
-    paddingVertical: 12,
+    paddingVertical: 8,
     borderRadius: 8,
     borderWidth: 0,
     gap: 8,
-  },  searchInput: {
+  },searchInput: {
     flex: 1,
     fontSize: 16,
-    height: 40,
-    lineHeight: 40,
+    minHeight: 32,
+    paddingVertical: 0,
+    textAlignVertical: 'center',
+  },
+  categoryContainer: {
+    backgroundColor: 'transparent',
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0,0,0,0.1)',
+  },
+  categoryList: {
+    paddingHorizontal: 16,
+  },  categoryItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    marginRight: 8,
+    borderRadius: 16,
+    borderWidth: 0,
+  },categoryIcon: {
+    width: 16,
+    height: 16,
+    borderRadius: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 6,
+  },
+  categoryName: {
+    fontSize: 12,
   },
   resultsContainer: {
     flex: 1,

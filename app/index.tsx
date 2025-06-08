@@ -40,9 +40,6 @@ const NotesScreen = memo(() => {
   const [categoryModalVisible, setCategoryModalVisible] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [moveSelectorVisible, setMoveSelectorVisible] = useState(false);
-  
-  // 侧边栏动画
-  const sidebarAnimation = useRef(new Animated.Value(0)).current;
   // 使用选择模式Hook
   const {
     isSelectionMode,
@@ -58,26 +55,14 @@ const NotesScreen = memo(() => {
     unpinSelectedNotes,
     exportSelectedNotes,
     closeExportDialog,
-  } = useSelectionMode({ deleteNote, deleteNotes, togglePinNote, setPinNotes });
-  // 侧边栏控制函数 - 使用useCallback优化
+  } = useSelectionMode({ deleteNote, deleteNotes, togglePinNote, setPinNotes });  // 侧边栏控制函数 - 使用useCallback优化
   const openSidebar = useCallback(() => {
     setSidebarVisible(true);
-    Animated.timing(sidebarAnimation, {
-      toValue: 1,
-      duration: 300,
-      useNativeDriver: false,
-    }).start();
-  }, [sidebarAnimation]);
+  }, []);
 
   const closeSidebar = useCallback(() => {
-    Animated.timing(sidebarAnimation, {
-      toValue: 0,
-      duration: 300,
-      useNativeDriver: false,
-    }).start(() => {
-      setSidebarVisible(false);
-    });
-  }, [sidebarAnimation]);
+    setSidebarVisible(false);
+  }, []);
 
   // 分类选择处理 - 使用useCallback优化
   const handleCategorySelect = useCallback((categoryId: string) => {
@@ -154,11 +139,10 @@ const NotesScreen = memo(() => {
   // 根据选中的分类筛选笔记 - 使用useMemo优化
   const filteredNotes = useMemo(() => {
     return getNotesByCategory(selectedCategoryId);
-  }, [notes, selectedCategoryId, getNotesByCategory]);
-  // 获取当前选中的分类信息 - 使用useMemo优化
+  }, [notes, selectedCategoryId, getNotesByCategory]);  // 获取当前选中的分类信息 - 使用useMemo优化
   const selectedCategory = useMemo(() => {
     if (selectedCategoryId === 'all') {
-      return { name: String(t('allNotes', '全部笔记')), icon: 'folder', color: '#2196F3' };
+      return { name: String(t('allNotes', '全部笔记')), icon: 'file-text', color: '#2196F3' };
     }
     return categories.find(cat => cat.id === selectedCategoryId) || 
       { name: String(t('uncategorized', '未分类')), icon: 'folder', color: '#999999' };
@@ -259,20 +243,17 @@ const NotesScreen = memo(() => {
         onClose={closeExportDialog}
         notes={selectedNotesData}
         selectedCount={selectedNotes.size}
-      />      {/* 分类侧边栏 */}
-      {sidebarVisible && (
-        <CategorySidebar
-          isVisible={sidebarVisible}
-          slideAnimation={sidebarAnimation}
-          categories={categories}
-          selectedCategoryId={selectedCategoryId}
-          notesCounts={notesCounts}
-          onClose={closeSidebar}
-          onCategorySelect={handleCategorySelect}
-          onAddCategory={handleAddCategory}
-          onEditCategory={handleEditCategory}
-        />
-      )}      {/* 分类管理模态框 */}
+      />      {/* 分类侧边栏 - 始终渲染以消除延迟 */}
+      <CategorySidebar
+        isVisible={sidebarVisible}
+        categories={categories}
+        selectedCategoryId={selectedCategoryId}
+        notesCounts={notesCounts}
+        onClose={closeSidebar}
+        onCategorySelect={handleCategorySelect}
+        onAddCategory={handleAddCategory}
+        onEditCategory={handleEditCategory}
+      />{/* 分类管理模态框 */}
       <CategoryModal
         isVisible={categoryModalVisible}
         category={editingCategory}
