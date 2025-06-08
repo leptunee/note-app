@@ -112,8 +112,7 @@ export const CategorySidebar = memo<CategorySidebarProps>(({
                   fontWeight: isSelected ? '600' : '400',
                 }
               ]}
-              numberOfLines={1}
-            >
+              numberOfLines={1}            >
               {String(t(`category.${category.id}`, category.name))}
             </Text>
           </View>
@@ -125,7 +124,7 @@ export const CategorySidebar = memo<CategorySidebarProps>(({
               }
             ]}
           >
-            {notesCount}
+            {String(notesCount)}
           </Text>
         </View>
       </TouchableOpacity>

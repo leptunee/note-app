@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState, useRef, memo } from 'react';
-import { View, StyleSheet, useColorScheme, Animated, StatusBar } from 'react-native';
+import { View, StyleSheet, useColorScheme, Animated, StatusBar, TouchableOpacity, Text } from 'react-native';
 import { useNotes, Category } from '@/src/hooks/useNotes';
 import { useTranslation } from 'react-i18next';
 import { useRouter, useFocusEffect } from 'expo-router';
@@ -9,6 +9,7 @@ import { CategoryModal, CategorySelectorModal, BatchExportDialog } from './compo
 import useSelectionMode from '@/src/hooks/useSelectionMode';
 import { usePerformanceMonitor } from '@/src/hooks/usePerformanceMonitor';
 import { v4 as uuidv4 } from 'uuid';
+import StorageDebugger from './components/StorageDebugger';
 
 const NotesScreen = memo(() => {
   // Performance monitoring
@@ -48,13 +49,13 @@ const NotesScreen = memo(() => {
     useCallback(() => {
       refreshNotes();
     }, [refreshNotes])
-  );
-  // 分类相关状态
+  );  // 分类相关状态
   const [selectedCategoryId, setSelectedCategoryId] = useState('all');
   const [sidebarVisible, setSidebarVisible] = useState(false);
   const [categoryModalVisible, setCategoryModalVisible] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [moveSelectorVisible, setMoveSelectorVisible] = useState(false);
+  const [showDebugger, setShowDebugger] = useState(false);
   
   // 侧边栏动画
   const sidebarAnimation = useRef(new Animated.Value(0)).current;
@@ -170,14 +171,13 @@ const NotesScreen = memo(() => {
   const filteredNotes = useMemo(() => {
     return getNotesByCategory(selectedCategoryId);
   }, [notes, selectedCategoryId, getNotesByCategory]);
-
   // 获取当前选中的分类信息 - 使用useMemo优化
   const selectedCategory = useMemo(() => {
     if (selectedCategoryId === 'all') {
-      return { name: t('allNotes', '全部笔记'), icon: 'folder', color: '#2196F3' };
+      return { name: String(t('allNotes', '全部笔记')), icon: 'folder', color: '#2196F3' };
     }
     return categories.find(cat => cat.id === selectedCategoryId) || 
-      { name: t('uncategorized', '未分类'), icon: 'folder', color: '#999999' };
+      { name: String(t('uncategorized', '未分类')), icon: 'folder', color: '#999999' };
   }, [selectedCategoryId, categories, t]);
 
   // 截断长内容，只显示前若干个字符
@@ -229,13 +229,12 @@ const NotesScreen = memo(() => {
         backgroundColor={Colors[colorScheme].background}
         translucent={false}
       />
-      
-      <NotesHeader
+        <NotesHeader
         title={selectedCategory.name}
         categoryIcon={selectedCategory.icon}
         categoryColor={selectedCategory.color}
         colors={colors}
-        onAboutPress={() => router.push('/about')}
+        onAboutPress={() => setShowDebugger(true)}
         onAddPress={() => router.push('/note-edit')}
         onSearchPress={handleSearchPress}
         onSidebarPress={openSidebar}
@@ -302,7 +301,21 @@ const NotesScreen = memo(() => {
         onClose={() => setMoveSelectorVisible(false)}
         onAddCategory={handleAddCategory}
         onEditCategory={handleEditCategory}
-      />    </View>
+      />
+
+      {/* 存储调试器 */}
+      {showDebugger && (
+        <View style={StyleSheet.absoluteFill}>
+          <StorageDebugger />
+          <TouchableOpacity 
+            style={styles.closeDebugger}
+            onPress={() => setShowDebugger(false)}
+          >
+            <Text style={styles.closeDebuggerText}>关闭</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+    </View>
   );
 });
 
@@ -317,6 +330,19 @@ const styles = StyleSheet.create({
     padding: 16,
     paddingTop: 60,
     paddingBottom: 0,
+  },
+  closeDebugger: {
+    position: 'absolute',
+    top: 40,
+    right: 20,
+    backgroundColor: '#f44336',
+    padding: 10,
+    borderRadius: 20,
+    zIndex: 1000,
+  },
+  closeDebuggerText: {
+    color: 'white',
+    fontWeight: 'bold',
   },
 });
 

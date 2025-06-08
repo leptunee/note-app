@@ -77,13 +77,12 @@ export const NotesHeader = memo<NotesHeaderProps>(({
                 color="#ffffff" 
               />
             </View>
-          )}
-          <Text 
+          )}          <Text 
             style={titleStyle}
             numberOfLines={1}
             ellipsizeMode="tail"
           >
-            {title}
+            {String(title)}
           </Text>
         </View>
       </View>

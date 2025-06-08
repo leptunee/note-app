@@ -187,9 +187,8 @@ export const CategoryModal = memo<CategoryModalProps>(({
                   <View style={localStyles.sectionTitleRow}>
                     <Text style={[localStyles.sectionTitle, { color: colors.text }]}>
                       {t('categoryName', '分类名称')}
-                    </Text>
-                    <Text style={[localStyles.charCount, { color: colors.secondaryText }]}>
-                      {name.length}/20
+                    </Text>                    <Text style={[localStyles.charCount, { color: colors.secondaryText }]}>
+                      {String(name.length)}/20
                     </Text>
                   </View>
                   <TextInput

@@ -1,6 +1,6 @@
 // 懒加载组件定义
 import React, { lazy, Suspense } from 'react';
-import { View, ActivityIndicator } from 'react-native';
+import { View, ActivityIndicator, useColorScheme } from 'react-native';
 import Colors from '@/constants/Colors';
 
 // 创建统一的加载指示器组件
@@ -11,7 +11,7 @@ const LoadingFallback = ({ colorScheme = 'light' }: { colorScheme?: 'light' | 'd
     alignItems: 'center',
     backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#ffffff'
   }}>
-    <ActivityIndicator size="large" color={Colors[colorScheme].tint} />
+    <ActivityIndicator size="large" color={Colors[colorScheme || 'light'].tint} />
   </View>
 );
 
@@ -37,32 +37,47 @@ const LazyExportModal = lazy(() =>
 );
 
 // 带 Suspense 的包装器组件
-export const CategoryModal = (props: any) => (
-  <Suspense fallback={<LoadingFallback />}>
-    <LazyCategoryModal {...props} />
-  </Suspense>
-);
+export const CategoryModal = (props: any) => {
+  const colorScheme = useColorScheme() ?? 'light';
+  return (
+    <Suspense fallback={<LoadingFallback colorScheme={colorScheme} />}>
+      <LazyCategoryModal {...props} />
+    </Suspense>
+  );
+};
 
-export const CategorySelectorModal = (props: any) => (
-  <Suspense fallback={<LoadingFallback />}>
-    <LazyCategorySelectorModal {...props} />
-  </Suspense>
-);
+export const CategorySelectorModal = (props: any) => {
+  const colorScheme = useColorScheme() ?? 'light';
+  return (
+    <Suspense fallback={<LoadingFallback colorScheme={colorScheme} />}>
+      <LazyCategorySelectorModal {...props} />
+    </Suspense>
+  );
+};
 
-export const BatchExportDialog = (props: any) => (
-  <Suspense fallback={<LoadingFallback />}>
-    <LazyBatchExportDialog {...props} />
-  </Suspense>
-);
+export const BatchExportDialog = (props: any) => {
+  const colorScheme = useColorScheme() ?? 'light';
+  return (
+    <Suspense fallback={<LoadingFallback colorScheme={colorScheme} />}>
+      <LazyBatchExportDialog {...props} />
+    </Suspense>
+  );
+};
 
-export const PageSettingsModal = (props: any) => (
-  <Suspense fallback={<LoadingFallback />}>
-    <LazyPageSettingsModal {...props} />
-  </Suspense>
-);
+export const PageSettingsModal = (props: any) => {
+  const colorScheme = useColorScheme() ?? 'light';
+  return (
+    <Suspense fallback={<LoadingFallback colorScheme={colorScheme} />}>
+      <LazyPageSettingsModal {...props} />
+    </Suspense>
+  );
+};
 
-export const ExportModal = (props: any) => (
-  <Suspense fallback={<LoadingFallback />}>
-    <LazyExportModal {...props} />
-  </Suspense>
-);
+export const ExportModal = (props: any) => {
+  const colorScheme = useColorScheme() ?? 'light';
+  return (
+    <Suspense fallback={<LoadingFallback colorScheme={colorScheme} />}>
+      <LazyExportModal {...props} />
+    </Suspense>
+  );
+};

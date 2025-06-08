@@ -1,5 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { ChunkedStorage, DataRecovery } from '../utils/storageUtils';
+import { EmergencyDataCleanup } from '../utils/emergencyCleanup';
 
 export type Note = {
   id: string;
@@ -34,6 +36,9 @@ export interface PageSettings {
 
 const NOTES_KEY = 'NOTES';
 const CATEGORIES_KEY = 'CATEGORIES';
+
+// 数据恢复实例
+const dataRecovery = new DataRecovery();
 
 // 默认分类
 const DEFAULT_CATEGORIES: Category[] = [
@@ -100,13 +105,41 @@ export function useNotes() {
     
     setLastRefreshTime(now);
     setRefreshTrigger(prev => prev + 1);
-  }, [lastRefreshTime]);useEffect(() => {
+  }, [lastRefreshTime]);  useEffect(() => {
     const loadData = async () => {
       try {
-        // 加载笔记
-        const notesData = await AsyncStorage.getItem(NOTES_KEY);
+        console.log('🔍 开始加载数据...');
+        
+        // 首先检查数据完整性
+        const isDataIntact = await EmergencyDataCleanup.checkDataIntegrity();
+        if (!isDataIntact) {
+          console.log('⚠️ 检测到数据损坏，执行紧急清理...');
+          await EmergencyDataCleanup.performCompleteReset();
+        }
+        
+        // 使用新的存储系统加载笔记
+        let notesData: string | null = null;
+        try {
+          notesData = await ChunkedStorage.getItem(NOTES_KEY);        } catch (error: any) {
+          console.log('⚠️ 使用分块存储加载失败，尝试恢复数据:', error);
+          
+          // 如果是"Row too big"错误，执行紧急清理
+          if (error?.message && error.message.includes('Row too big')) {
+            console.log('🚨 检测到"Row too big"错误，执行紧急清理...');
+            await EmergencyDataCleanup.performCompleteReset();
+            notesData = null; // 清理后数据为空
+          } else {
+            // 尝试其他恢复方法
+            const recoveredNotes = await DataRecovery.attemptRecovery(NOTES_KEY);
+            if (recoveredNotes) {
+              notesData = JSON.stringify(recoveredNotes);
+            }
+          }
+        }
+        
         if (notesData) {
           const parsedNotes = JSON.parse(notesData);
+          console.log(`✅ 成功加载 ${parsedNotes.length} 条笔记`);
           
           // 迁移所有笔记到"未分类"分类
           const migratedNotes = parsedNotes.map((note: Note) => ({
@@ -118,23 +151,47 @@ export function useNotes() {
           const hasChanges = migratedNotes.some((note: Note, index: number) => 
             note.categoryId !== parsedNotes[index].categoryId
           );
-            if (hasChanges) {
-            await AsyncStorage.setItem(NOTES_KEY, JSON.stringify(migratedNotes));
+          if (hasChanges) {
+            console.log('🔄 迁移笔记分类并保存...');
+            await ChunkedStorage.setItem(NOTES_KEY, migratedNotes);
           }
           
           setNotes(migratedNotes);
-        }        // 加载分类
-        const categoriesData = await AsyncStorage.getItem(CATEGORIES_KEY);
+        } else {
+          console.log('📝 没有找到笔记数据，使用空数组');
+          setNotes([]);
+        }
+
+        // 使用新的存储系统加载分类
+        let categoriesData: string | null = null;
+        try {
+          categoriesData = await ChunkedStorage.getItem(CATEGORIES_KEY);
+        } catch (error) {
+          console.log('⚠️ 使用分块存储加载分类失败，尝试恢复数据:', error);
+          const recoveredCategories = await DataRecovery.attemptRecovery(CATEGORIES_KEY);
+          if (recoveredCategories) {
+            categoriesData = JSON.stringify(recoveredCategories);
+          }
+        }
+        
         if (categoriesData) {
           const parsedCategories = JSON.parse(categoriesData);
-          // 确保默认分类始终存在，并合并用户自定义分类
-          const defaultCategoryIds = DEFAULT_CATEGORIES.map(cat => cat.id);          const customCategories = parsedCategories.filter((cat: Category) => !defaultCategoryIds.includes(cat.id));
+          console.log(`✅ 成功加载 ${parsedCategories.length} 个自定义分类`);
+            // 确保默认分类始终存在，并合并用户自定义分类
+          const defaultCategoryIds = DEFAULT_CATEGORIES.map(cat => cat.id);
+          const customCategories = parsedCategories.filter((cat: Category) => !defaultCategoryIds.includes(cat.id));
           const mergedCategories = [...DEFAULT_CATEGORIES, ...customCategories];
           setCategories(mergedCategories);
-        } else {          // 如果没有保存的分类，设置并保存默认分类
+        } else {
+          // 如果没有保存的分类，设置并保存默认分类
+          console.log('📁 没有找到分类数据，使用默认分类');
           setCategories(DEFAULT_CATEGORIES);
-          await AsyncStorage.setItem(CATEGORIES_KEY, JSON.stringify(DEFAULT_CATEGORIES));
-        }      } catch (error) {
+          await ChunkedStorage.setItem(CATEGORIES_KEY, DEFAULT_CATEGORIES);
+        }
+
+        console.log('✅ 数据加载完成');
+      } catch (error) {
+        console.error('❌ 加载数据时发生错误:', error);
         // 如果加载失败，尝试重新加载一次
         setTimeout(async () => {
           try {
@@ -161,12 +218,19 @@ export function useNotes() {
         setLoading(false);
       }
     };    loadData();
-  }, [refreshTrigger]);
-  // 使用 useCallback 缓存保存函数
+  }, [refreshTrigger]);  // 使用 useCallback 缓存保存函数
   const saveNotes = useCallback(async (newNotes: Note[]) => {
+    console.log('💾 保存笔记:', newNotes.length);
+    
+    // 先创建备份
+    if (notes.length > 0) {
+      await DataRecovery.createBackup(NOTES_KEY, notes);
+    }
+    
     setNotes(newNotes);
-    await AsyncStorage.setItem(NOTES_KEY, JSON.stringify(newNotes));
-  }, []);
+    await ChunkedStorage.setItem(NOTES_KEY, newNotes);
+    console.log('✅ 笔记保存完成');
+  }, [notes]);
 
   // 使用 useMemo 缓存默认页面设置
   const defaultPageSettings = useMemo((): PageSettings => ({
@@ -178,6 +242,7 @@ export function useNotes() {
   }), []);
 
   const addNote = useCallback(async (note: Note) => {
+    console.log('➕ 添加新笔记:', note.title);
     const noteWithDefaults = {
       ...note,
       pageSettings: note.pageSettings || defaultPageSettings,
@@ -218,16 +283,25 @@ export function useNotes() {
     );
     await saveNotes(newNotes);
   }, [notes, saveNotes]);
-
   // 分类管理函数 - 使用 useCallback 优化
   const saveCategories = useCallback(async (newCategories: Category[]) => {
+    console.log('💾 保存分类:', newCategories.length);
+    
+    // 先创建备份
+    if (categories.length > 0) {
+      await DataRecovery.createBackup(CATEGORIES_KEY, categories);
+    }
+    
     setCategories(newCategories);
     // 只保存自定义分类到存储，默认分类不需要保存
     const customCategories = newCategories.filter(cat => !defaultCategoryIds.has(cat.id));
-    await AsyncStorage.setItem(CATEGORIES_KEY, JSON.stringify(customCategories));
-  }, [defaultCategoryIds]);
+    console.log('💾 保存自定义分类数量:', customCategories.length);
+    await ChunkedStorage.setItem(CATEGORIES_KEY, customCategories);
+    console.log('✅ 分类保存完成');
+  }, [defaultCategoryIds, categories]);
 
   const addCategory = useCallback(async (category: Category) => {
+    console.log('➕ 添加新分类:', category.name);
     const newCategories = [...categories, category];
     await saveCategories(newCategories);
   }, [categories, saveCategories]);

@@ -96,10 +96,9 @@ export const BatchExportDialog = memo<BatchExportDialogProps>(({
       >
         <TouchableWithoutFeedback onPress={onClose}>
           <View style={styles.modalOverlay}>            <TouchableWithoutFeedback>
-              <View style={modalContainerStyle}>
-                <View style={styles.modalHeader}>
+              <View style={modalContainerStyle}>                <View style={styles.modalHeader}>
                   <Text style={titleStyle}>
-                    批量导出 ({selectedCount} 篇笔记)
+                    批量导出 ({String(selectedCount)} 篇笔记)
                   </Text>
                   <TouchableOpacity 
                     style={styles.modalCloseBtn}

@@ -217,10 +217,9 @@ export const PerformanceReport: React.FC<PerformanceReportProps> = ({
                   <Text style={[styles.metricLabel, { color: colors.secondaryText }]}>
                     帧率
                   </Text>
-                </View>
-                <View style={styles.metricItem}>
+                </View>                <View style={styles.metricItem}>
                   <Text style={[styles.metricValue, { color: colors.text }]}>
-                    {metrics.componentCount}
+                    {String(metrics.componentCount)}
                   </Text>
                   <Text style={[styles.metricLabel, { color: colors.secondaryText }]}>
                     组件数量
@@ -232,9 +231,8 @@ export const PerformanceReport: React.FC<PerformanceReportProps> = ({
 
           {/* 性能警告 */}
           {alerts.length > 0 && (
-            <View style={[styles.card, { backgroundColor: colors.cardBackground }]}>
-              <Text style={[styles.cardTitle, { color: colors.text }]}>
-                性能警告 ({alerts.length})
+            <View style={[styles.card, { backgroundColor: colors.cardBackground }]}>              <Text style={[styles.cardTitle, { color: colors.text }]}>
+                性能警告 ({String(alerts.length)})
               </Text>
               {alerts.map((alert, index) => (
                 <View key={index} style={styles.alertItem}>
