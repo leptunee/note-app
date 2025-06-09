@@ -63,18 +63,16 @@ export default function NoteEditScreen() {
   } = useNoteEdit(themes, toastRef, titleInputRef);  // 简化状态管理
   const [forceShowEditor, setForceShowEditor] = useState(false);
   const contentSetRef = useRef<string>(''); // 跟踪已设置的内容
-  
-  useEffect(() => {
+    useEffect(() => {
     // 如果3秒后编辑器还有问题，强制显示
     const forceTimer = setTimeout(() => {
-      console.log('⚠️ 强制显示编辑器');
       setForceShowEditor(true);
     }, 3000);
     
     return () => {
       clearTimeout(forceTimer);
     };
-  }, []);  // 创建编辑器实例 - 直接创建，使用空的初始内容
+  }, []);// 创建编辑器实例 - 直接创建，使用空的初始内容
   const editor = useEditorBridge({
     autofocus: false,
     avoidIosKeyboard: false,
@@ -83,15 +81,7 @@ export default function NoteEditScreen() {
     initialContent: '', // 使用空内容避免初始化问题
   });// 使用useBridgeState监听编辑器状态并获取isReady状态
   const editorState = useBridgeState(editor);
-  const isReady = editorState?.isReady || false;  // 编辑器状态调试信息（生产环境移除以提高性能）
-  // useEffect(() => {
-  //   console.log('编辑器状态更新:', {
-  //     hasEditor: !!editor,
-  //     isReady: isReady,
-  //     hasContent: !!content,
-  //     contentLength: content?.length || 0
-  //   });
-  // }, [editor, isReady]);
+  const isReady = editorState?.isReady || false;
 
 
   // 使用TenTap的原生undo/redo方法
@@ -179,7 +169,6 @@ export default function NoteEditScreen() {
   }, [editorState]);  // 智能的编辑器内容设置 - 避免重复和闪烁，修复内容不显示问题
   useEffect(() => {
     if (!editor) {
-      console.log('❌ 编辑器实例不存在');
       return;
     }
 
@@ -188,58 +177,46 @@ export default function NoteEditScreen() {
     
     if (currentContentRef === content && isEditorReady) {
       // 内容没有变化且编辑器已准备好，不需要重新设置
-      console.log('✅ 编辑器准备好，内容已是最新，跳过设置');
       return;
     }
-
-    console.log('📝 需要设置编辑器内容，当前内容引用:', currentContentRef.substring(0, 50), '目标内容:', content.substring(0, 50));
     
     const setContentSafely = async () => {
       try {
         // 等待编辑器完全准备好
         let retryCount = 0;
         const maxRetries = 3; // 减少重试次数
-        
-        while (retryCount < maxRetries) {
+          while (retryCount < maxRetries) {
           try {
             // 尝试获取编辑器状态来确认它已准备好
             await editor.getHTML();
             break;
           } catch (error) {
             retryCount++;
-            console.log(`⏳ 编辑器未准备好，重试 ${retryCount}/${maxRetries}`);
             await new Promise(resolve => setTimeout(resolve, 100)); // 减少等待时间
           }
         }
-        
-        if (content && content.trim() !== '') {
-          console.log('📝 设置编辑器内容:', content.substring(0, 50) + '...');
-          
+          if (content && content.trim() !== '') {
           // 优先使用最简单可靠的方法
           try {
             await editor.setContent(content);
             contentSetRef.current = content;
-            console.log('✅ 内容设置成功');
           } catch (error) {
-            console.log('⚠️ 内容设置失败:', error);
+            // 静默处理错误
           }
         } else {
           // 清空编辑器
           try {
             await editor.setContent('');
             contentSetRef.current = '';
-            console.log('📄 编辑器内容已清空');
           } catch (error) {
-            console.log('⚠️ 清空编辑器失败:', error);
+            // 静默处理错误
           }
         }
-        
-        // 只在内容真的发生变化时才更新状态
+          // 只在内容真的发生变化时才更新状态
         if (!isEditorReady) {
           setIsEditorReady(true);
         }
       } catch (error) {
-        console.log('⚠️ 内容设置失败，但继续使用编辑器:', error);
         if (!isEditorReady) {
           setIsEditorReady(true);
         }

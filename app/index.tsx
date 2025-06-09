@@ -1,5 +1,5 @@
-import React, { useCallback, useMemo, useState, useRef, memo } from 'react';
-import { View, StyleSheet, useColorScheme, Animated, StatusBar, TouchableOpacity, Text } from 'react-native';
+import React, { useCallback, useMemo, useState, memo } from 'react';
+import { View, StyleSheet, useColorScheme, StatusBar } from 'react-native';
 import { useNotes, Category } from '@/src/hooks/useNotes';
 import { useTranslation } from 'react-i18next';
 import { useRouter, useFocusEffect } from 'expo-router';

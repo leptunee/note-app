@@ -2,7 +2,7 @@
 import React, { useState, useRef, useCallback, useMemo, useEffect } from 'react';
 import { View, PanResponder, Dimensions, StyleSheet, TouchableOpacity, Text, Modal, useColorScheme } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
-import Svg, { Path, Defs, Mask } from 'react-native-svg';
+import Svg, { Path } from 'react-native-svg';
 import { captureRef } from 'react-native-view-shot';
 
 interface Point {

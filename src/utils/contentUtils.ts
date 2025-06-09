@@ -298,18 +298,14 @@ export const webViewInjectedScript = `
       if (img.complete && img.naturalHeight > 0) {
         onImageLoaded();
       } else {
-        img.onload = onImageLoaded;
-        img.onerror = () => {
-          console.log('Image failed to load:', img.src);
+        img.onload = onImageLoaded;        img.onerror = () => {
           onImageLoaded(); // 即使加载失败也要继续
         };
       }
     });
-    
-    // 设置超时保护，防止长时间等待
+      // 设置超时保护，防止长时间等待
     setTimeout(() => {
       if (!isReady) {
-        console.log('Timeout: forcing content ready check');
         checkContentReady();
       }
     }, 8000);

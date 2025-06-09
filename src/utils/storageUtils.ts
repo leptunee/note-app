@@ -1,30 +1,30 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// 存储工具类 - 解决数据过大的问题
+// 存储工具�?- 解决数据过大的问�?
 export class ChunkedStorage {
-  private static readonly CHUNK_SIZE = 1.5 * 1024 * 1024; // 1.5MB 每块，留出安全边距
+  private static readonly CHUNK_SIZE = 1.5 * 1024 * 1024; // 1.5MB 每块，留出安全边�?
   private static readonly MAX_RETRIES = 3;
 
   /**
-   * 分块存储大数据
+   * 分块存储大数�?
    */
   static async setItem(key: string, data: any): Promise<void> {
     try {
       const serializedData = JSON.stringify(data);
       const dataSize = new Blob([serializedData]).size;
       
-      console.log(`📦 存储数据: ${key}, 大小: ${(dataSize / 1024).toFixed(2)}KB`);
+
       
-      // 如果数据小于限制，直接存储
+      // 如果数据小于限制，直接存�?
       if (dataSize < this.CHUNK_SIZE) {
         await AsyncStorage.setItem(key, serializedData);
-        // 清理可能存在的分块数据
+        // 清理可能存在的分块数�?
         await this.clearChunks(key);
         return;
       }
 
-      // 数据过大，需要分块存储
-      console.log(`⚠️ 数据过大，使用分块存储: ${key}`);
+      // 数据过大，需要分块存�?
+
       
       const chunks: string[] = [];
       let startIndex = 0;
@@ -42,7 +42,7 @@ export class ChunkedStorage {
       
       await Promise.all(promises);
       
-      // 存储元数据
+      // 存储元数�?
       await AsyncStorage.setItem(`${key}_meta`, JSON.stringify({
         chunked: true,
         totalChunks: chunks.length,
@@ -52,10 +52,10 @@ export class ChunkedStorage {
       // 删除原始key（如果存在）
       await AsyncStorage.removeItem(key);
       
-      console.log(`✅ 分块存储完成: ${key}, 共${chunks.length}块`);
+
       
     } catch (error) {
-      console.error(`❌ 存储失败: ${key}`, error);
+
       throw error;
     }
   }
@@ -82,29 +82,29 @@ export class ChunkedStorage {
         return null;
       }
 
-      console.log(`📦 读取分块数据: ${key}, 共${meta.totalChunks}块`);
 
-      // 读取所有分块
+
+      // 读取所有分�?
       const chunkPromises = Array.from({ length: meta.totalChunks }, (_, index) =>
         AsyncStorage.getItem(`${key}_chunk_${index}`)
       );
 
       const chunks = await Promise.all(chunkPromises);
       
-      // 检查是否有丢失的分块
+      // 检查是否有丢失的分�?
       const missingChunks = chunks.findIndex(chunk => chunk === null);
       if (missingChunks !== -1) {
-        console.error(`❌ 分块数据不完整: ${key}, 缺失分块${missingChunks}`);
+
         return null;
       }
 
       const reconstructedData = chunks.join('');
-      console.log(`✅ 分块数据重建完成: ${key}`);
+
       
       return reconstructedData;
       
     } catch (error) {
-      console.error(`❌ 读取失败: ${key}`, error);
+
       return null;
     }
   }
@@ -114,7 +114,7 @@ export class ChunkedStorage {
    */
   static async removeItem(key: string): Promise<void> {
     try {
-      // 删除直接存储的数据
+      // 删除直接存储的数�?
       await AsyncStorage.removeItem(key);
       
       // 检查并删除分块数据
@@ -131,13 +131,13 @@ export class ChunkedStorage {
       }
       
     } catch (error) {
-      console.error(`❌ 删除失败: ${key}`, error);
+
       throw error;
     }
   }
 
   /**
-   * 清理指定key的所有分块
+   * 清理指定key的所有分�?
    */
   private static async clearChunks(key: string): Promise<void> {
     try {
@@ -154,55 +154,10 @@ export class ChunkedStorage {
       }
     } catch (error) {
       // 忽略清理错误
-      console.warn(`⚠️ 清理分块数据时出错: ${key}`, error);
+
     }
   }
 
-  /**
-   * 获取存储统计信息
-   */
-  static async getStorageStats(): Promise<{
-    totalKeys: number;
-    chunkedKeys: string[];
-    totalSize: number;
-  }> {
-    try {
-      const allKeys = await AsyncStorage.getAllKeys();
-      const chunkedKeys: string[] = [];
-      let totalSize = 0;
-
-      for (const key of allKeys) {
-        if (key.endsWith('_meta')) {
-          const baseKey = key.replace('_meta', '');
-          chunkedKeys.push(baseKey);
-        } else if (!key.includes('_chunk_')) {
-          const data = await AsyncStorage.getItem(key);
-          if (data) {
-            totalSize += new Blob([data]).size;
-          }
-        }
-      }
-
-      return {
-        totalKeys: allKeys.length,
-        chunkedKeys,
-        totalSize
-      };
-      
-    } catch (error) {
-      console.error('❌ 获取存储统计失败', error);
-      return { totalKeys: 0, chunkedKeys: [], totalSize: 0 };
-    }
-  }
-
-  /**
-   * 数据压缩存储（可选功能）
-   */
-  static async setItemCompressed(key: string, data: any): Promise<void> {
-    // 这里可以添加数据压缩逻辑
-    // 目前先使用分块存储
-    return this.setItem(key, data);
-  }
 }
 
 /**
@@ -210,11 +165,11 @@ export class ChunkedStorage {
  */
 export class DataRecovery {
   /**
-   * 尝试恢复损坏的数据
+   * 尝试恢复损坏的数�?
    */
   static async attemptRecovery(key: string): Promise<any> {
     try {
-      console.log(`🔧 尝试恢复数据: ${key}`);
+
       
       // 1. 尝试直接读取
       const directData = await AsyncStorage.getItem(key);
@@ -222,7 +177,7 @@ export class DataRecovery {
         try {
           return JSON.parse(directData);
         } catch (parseError) {
-          console.log(`📝 直接数据损坏，尝试其他方法: ${key}`);
+
         }
       }
 
@@ -232,7 +187,7 @@ export class DataRecovery {
         try {
           return JSON.parse(recoveredData);
         } catch (parseError) {
-          console.log(`📝 分块数据损坏: ${key}`);
+
         }
       }
 
@@ -242,15 +197,15 @@ export class DataRecovery {
         try {
           return JSON.parse(backupData);
         } catch (parseError) {
-          console.log(`📝 备份数据损坏: ${key}`);
+
         }
       }
 
-      console.log(`❌ 无法恢复数据: ${key}`);
+
       return null;
       
     } catch (error) {
-      console.error(`❌ 数据恢复失败: ${key}`, error);
+
       return null;
     }
   }
@@ -262,9 +217,9 @@ export class DataRecovery {
     try {
       const backupKey = `${key}_backup`;
       await ChunkedStorage.setItem(backupKey, data);
-      console.log(`💾 创建备份: ${backupKey}`);
+
     } catch (error) {
-      console.warn(`⚠️ 创建备份失败: ${key}`, error);
+
     }
   }
 }

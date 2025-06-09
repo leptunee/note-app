@@ -373,15 +373,8 @@ export function useExport() {
           const remainingImages = Math.max(0, imageCount - 3);
           waitTime += firstThreeImages * 1000 + remainingImages * 500;
           waitTime = Math.min(waitTime, 10000); // 总等待时间不超过10秒
-        }
-        if (isLongContent) waitTime += 1000; // 长内容额外等1秒
+        }        if (isLongContent) waitTime += 1000; // 长内容额外等1秒
         if (isVeryLongContent) waitTime += 2000; // 超长内容额外等2秒
-        
-        console.log('Waiting for content to load:', {
-          imageCount,
-          contentLength: note.content.length,
-          waitTime
-        });
         
         await new Promise(resolve => setTimeout(resolve, waitTime));
       } catch (error) {

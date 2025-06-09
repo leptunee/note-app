@@ -37,18 +37,12 @@ export const ExportView = memo(
     const handleWebViewMessage = useCallback((event: any) => {
       try {
         const data = JSON.parse(event.nativeEvent.data);
-        if (data.type === 'ready' && data.contentHeight) {
-          // 使用实际测量的高度，并添加安全边距
+        if (data.type === 'ready' && data.contentHeight) {        // 使用实际测量的高度，并添加安全边界
           const newHeight = Math.max(data.contentHeight + 50, initialWebViewHeight);
-          console.log('Updating WebView height:', {
-            measuredHeight: data.contentHeight,
-            newHeight,
-            initialHeight: initialWebViewHeight
-          });
           setActualWebViewHeight(newHeight);
         }
       } catch (error) {
-        console.log('WebView message parsing error:', error);
+        // 忽略消息处理错误
       }
     }, [initialWebViewHeight]);
     
@@ -95,7 +89,7 @@ export const ExportView = memo(
       fontSize: 12 
     }], []);
     
-    // 缓存内容区域样式 - 使用动态高度
+    // 缓存内容区域样式 - 使用动态高�?
     const contentAreaStyle = useMemo(() => ({ 
       padding: 16, 
       backgroundColor: 'white', 
@@ -107,7 +101,7 @@ export const ExportView = memo(
       overflow: 'hidden' as const
     }), [actualWebViewHeight]);
     
-    // 缓存 WebView 样式 - 使用动态高度
+    // 缓存 WebView 样式 - 使用动态高�?
     const webViewStyle = useMemo(() => ({ 
       height: actualWebViewHeight,
       width: 343,
@@ -115,7 +109,7 @@ export const ExportView = memo(
       flex: 0
     }), [actualWebViewHeight]);
     
-    // 缓存无内容文本样式
+    // 缓存无内容文本样�?
     const noContentStyle = useMemo(() => ({ 
       color: '#888', 
       fontSize: 16, 

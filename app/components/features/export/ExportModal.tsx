@@ -1,4 +1,4 @@
-import React, { useState, useRef, memo, useCallback } from 'react'; // Added useRef, memo, useCallback
+import React, { useRef, memo, useCallback } from 'react';
 import { Modal, View, Text, TouchableOpacity, useColorScheme, TouchableWithoutFeedback } from 'react-native'; // Added TouchableWithoutFeedback
 import { styles } from '../../styles';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
