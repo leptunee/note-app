@@ -1,7 +1,7 @@
 // 编辑器组件 - 富文本编辑器封装
 import React, { memo, useMemo, useEffect } from 'react';
-import { View, useColorScheme } from 'react-native';
-import { RichText } from '@10play/tentap-editor';
+import { View, useColorScheme, Text } from 'react-native';
+import { RichText, useBridgeState } from '@10play/tentap-editor';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 
 interface EditorComponentProps {
@@ -16,7 +16,12 @@ export const EditorComponent = memo<EditorComponentProps>(({
   content = '',
   isToolbarVisible = false,
   isKeyboardVisible = false
-}) => {const colorScheme = useColorScheme() ?? 'light';
+}) => {
+  const colorScheme = useColorScheme() ?? 'light';
+  
+  // 获取编辑器状态
+  const editorState = useBridgeState(editor);
+  const isReady = editorState?.isReady || false;
 
   // 缓存样式计算
   const containerStyle = useMemo(() => ({ 
@@ -43,9 +48,25 @@ export const EditorComponent = memo<EditorComponentProps>(({
   }), []);  const scrollViewContentContainerStyle = useMemo(() => ({ 
     flexGrow: 1, 
     paddingBottom: 0 // 移除固定的底部内边距
-  }), []);if (!editor) {
-    return <View style={{ flex: 1, minHeight: 200 }} />;
+  }), []);  if (!editor) {
+    return (
+      <View style={{ flex: 1, minHeight: 200, justifyContent: 'center', alignItems: 'center' }}>
+        <Text style={{ color: colorScheme === 'dark' ? '#ffffff' : '#000000', opacity: 0.6 }}>
+          正在初始化编辑器...
+        </Text>
+      </View>
+    );
   }
+  // 如果编辑器还没准备好，仍然显示编辑器但添加一个标识
+  // if (!isReady) {
+  //   return (
+  //     <View style={{ flex: 1, minHeight: 200, justifyContent: 'center', alignItems: 'center' }}>
+  //       <Text style={{ color: colorScheme === 'dark' ? '#ffffff' : '#000000', opacity: 0.6 }}>
+  //         正在加载编辑器...
+  //       </Text>
+  //     </View>
+  //   );
+  // }
 
   // 注意：图片点击事件现在通过 ImageClickExtension (ProseMirror 扩展) 处理
   // 不再需要通过 JavaScript 注入的方式处理

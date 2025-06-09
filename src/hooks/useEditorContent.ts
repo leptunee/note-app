@@ -28,56 +28,53 @@ export function useEditorContent({
       lastContentRef.current = initialContent;    } catch (error) {
       // 静默处理错误
     }
-  }, [editor, initialContent]);
-  // 简化的初始化逻辑 - 直接设置内容，不等待
+  }, [editor, initialContent]);  // 当initialContent变化时重置初始化状态（用于新笔记或切换笔记）
+  useEffect(() => {
+    isInitializedRef.current = false;
+  }, [initialContent]);
+
+  // 简化的初始化逻辑 - 确保初始内容能被正确设置
   useEffect(() => {
     if (!editor || isInitializedRef.current) return;
     
+    let retryCount = 0;
+    const maxRetries = 10;
+    
     const initializeContent = async () => {
       try {
-        // 如果有初始内容，立即设置，不做任何检查
+        // 检查编辑器是否可用
+        await editor.getHTML();
+        
+        // 设置初始内容（如果有）
         if (initialContent && initialContent.trim() !== '') {
-          await editor.setContent(initialContent);
-          lastContentRef.current = initialContent;          // 延迟一点时间后，通过commands重新设置内容以确保创建历史记录点
-          setTimeout(async () => {
-            try {
-              if (editor.commands && typeof editor.commands.setContent === 'function') {
-                editor.commands.setContent(initialContent);
-              }
-            } catch (error) {
-              // 静默处理错误
+          try {
+            await editor.setContent(initialContent);
+            lastContentRef.current = initialContent;
+          } catch (setError) {
+            // 如果设置失败，可能是编辑器还没完全准备好
+            if (retryCount < maxRetries) {
+              retryCount++;
+              setTimeout(initializeContent, 500);
+              return;
             }
-          }, 200);
+          }
         }
         
         isInitializedRef.current = true;
       } catch (error) {
-        // 如果设置失败，等待一下再试一次
-        setTimeout(async () => {
-          try {
-            if (initialContent && initialContent.trim() !== '') {
-              await editor.setContent(initialContent);
-              lastContentRef.current = initialContent;              // 确保创建历史记录点
-              setTimeout(async () => {
-                try {
-                  if (editor.commands && typeof editor.commands.setContent === 'function') {
-                    editor.commands.setContent(initialContent);
-                  }
-                } catch (error) {
-                  // 静默处理错误
-                }
-              }, 200);
-            }
-            isInitializedRef.current = true;          } catch (retryError) {
-            isInitializedRef.current = true;
-          }
-        }, 100);
+        // 编辑器还未准备好，延迟重试
+        if (retryCount < maxRetries) {
+          retryCount++;
+          setTimeout(initializeContent, 500);
+        } else {
+          isInitializedRef.current = true; // 防止无限重试
+        }
       }
     };
     
-    // 立即初始化，不延迟
-    initializeContent();
-  }, [editor, initialContent]);
+    // 延迟初始化，给编辑器准备时间
+    setTimeout(initializeContent, 300);
+  }, [editor, initialContent]); // 添加回initialContent依赖，但增加重试逻辑防止问题
 
   // 监听编辑器内容变化，使用防抖
   useEffect(() => {

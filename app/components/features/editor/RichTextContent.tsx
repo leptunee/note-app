@@ -57,17 +57,17 @@ export const RichTextContent = memo<RichTextContentProps>(({
   const colorScheme = useColorScheme();
 
   const [showCategorySelector, setShowCategorySelector] = useState(false);
-  
-  // 创建内部引用，如果没有传入外部引用的话
+    // 创建内部引用，如果没有传入外部引用的话
   const internalTitleRef = useRef<TextInput | null>(null);
   const finalTitleRef = titleInputRef || internalTitleRef;
-  // 使用自定义 Hook 管理编辑器内容
-  const { getCurrentContent, forceReloadContent } = useEditorContent({
-    editor,
-    initialContent: content,
-    onContentChange: onChangeContent,
-    debounceMs: 500
-  });
+  
+  // 移除重复的useEditorContent调用，避免与父组件的内容管理冲突
+  // const { getCurrentContent, forceReloadContent } = useEditorContent({
+  //   editor,
+  //   initialContent: content,
+  //   onContentChange: onChangeContent,
+  //   debounceMs: 500
+  // });
 
   // 缓存当前选中的分类
   const selectedCategory = useMemo(() => 

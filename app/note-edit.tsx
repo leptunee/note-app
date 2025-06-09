@@ -3,7 +3,6 @@ import { View, ImageBackground, Platform, Keyboard, KeyboardAvoidingView, Text, 
 import { useEditorBridge, TenTapStarterKit, useBridgeState } from '@10play/tentap-editor';
 import { NoteHeader, RichTextContent, CustomToolbar, styles, Toast, ExportView, CategorySelector, DrawingCanvas, type ToastRef } from './components';
 import { ExportModal, PageSettingsModal, CategoryModal } from './components/LazyComponents';
-import { useEditorContent } from '@/src/hooks/useEditorContent';
 import { useNoteEdit } from './useNoteEdit';
 import { themes, getBackgroundColor, getTextColor, getEditorBackgroundColor, getEditorBorderColor, getContentPadding } from '@/src/utils/noteEditUtils';
 
@@ -61,14 +60,38 @@ export default function NoteEditScreen() {
     handleDeleteCategory,
     MAX_TITLE_LENGTH,
     colorScheme,
-  } = useNoteEdit(themes, toastRef, titleInputRef);
-  // 创建编辑器实例
+  } = useNoteEdit(themes, toastRef, titleInputRef);  // 简化状态管理
+  const [forceShowEditor, setForceShowEditor] = useState(false);
+  const contentSetRef = useRef<string>(''); // 跟踪已设置的内容
+  
+  useEffect(() => {
+    // 如果3秒后编辑器还有问题，强制显示
+    const forceTimer = setTimeout(() => {
+      console.log('⚠️ 强制显示编辑器');
+      setForceShowEditor(true);
+    }, 3000);
+    
+    return () => {
+      clearTimeout(forceTimer);
+    };
+  }, []);  // 创建编辑器实例 - 直接创建，使用空的初始内容
   const editor = useEditorBridge({
     autofocus: false,
     avoidIosKeyboard: false,
-    initialContent: content || '',
     bridgeExtensions: TenTapStarterKit,
-  });
+    editable: true,
+    initialContent: '', // 使用空内容避免初始化问题
+  });// 使用useBridgeState监听编辑器状态并获取isReady状态
+  const editorState = useBridgeState(editor);
+  const isReady = editorState?.isReady || false;  // 编辑器状态调试信息（生产环境移除以提高性能）
+  // useEffect(() => {
+  //   console.log('编辑器状态更新:', {
+  //     hasEditor: !!editor,
+  //     isReady: isReady,
+  //     hasContent: !!content,
+  //     contentLength: content?.length || 0
+  //   });
+  // }, [editor, isReady]);
 
 
   // 使用TenTap的原生undo/redo方法
@@ -83,9 +106,6 @@ export default function NoteEditScreen() {
       editor.redo();
     }
   }, [editor]);
-
-  // 使用useBridgeState监听编辑器状态
-  const editorState = useBridgeState(editor);
   // 监听编辑器状态变化，更新undo/redo状态
   useEffect(() => {
     if (editor && editorState) {
@@ -156,51 +176,114 @@ export default function NoteEditScreen() {
       isBulletList: editorState.isBulletListActive || false,
       isOrderedList: editorState.isOrderedListActive || false
     };
-  }, [editorState]);
-
-  // 检查编辑器是否准备就绪
+  }, [editorState]);  // 智能的编辑器内容设置 - 避免重复和闪烁，修复内容不显示问题
   useEffect(() => {
-    if (!editor) return;
+    if (!editor) {
+      console.log('❌ 编辑器实例不存在');
+      return;
+    }
+
+    // 检查是否需要设置内容
+    const currentContentRef = contentSetRef.current;
     
-    let timeoutId: any;
-    let checkCount = 0;
-    const maxChecks = 30;
+    if (currentContentRef === content && isEditorReady) {
+      // 内容没有变化且编辑器已准备好，不需要重新设置
+      console.log('✅ 编辑器准备好，内容已是最新，跳过设置');
+      return;
+    }
+
+    console.log('📝 需要设置编辑器内容，当前内容引用:', currentContentRef.substring(0, 50), '目标内容:', content.substring(0, 50));
     
-    const checkEditorReady = () => {
-      if (editor && typeof editor.getHTML === 'function') {
-        try {
-          editor.getHTML();
+    const setContentSafely = async () => {
+      try {
+        // 等待编辑器完全准备好
+        let retryCount = 0;
+        const maxRetries = 3; // 减少重试次数
+        
+        while (retryCount < maxRetries) {
+          try {
+            // 尝试获取编辑器状态来确认它已准备好
+            await editor.getHTML();
+            break;
+          } catch (error) {
+            retryCount++;
+            console.log(`⏳ 编辑器未准备好，重试 ${retryCount}/${maxRetries}`);
+            await new Promise(resolve => setTimeout(resolve, 100)); // 减少等待时间
+          }
+        }
+        
+        if (content && content.trim() !== '') {
+          console.log('📝 设置编辑器内容:', content.substring(0, 50) + '...');
+          
+          // 优先使用最简单可靠的方法
+          try {
+            await editor.setContent(content);
+            contentSetRef.current = content;
+            console.log('✅ 内容设置成功');
+          } catch (error) {
+            console.log('⚠️ 内容设置失败:', error);
+          }
+        } else {
+          // 清空编辑器
+          try {
+            await editor.setContent('');
+            contentSetRef.current = '';
+            console.log('📄 编辑器内容已清空');
+          } catch (error) {
+            console.log('⚠️ 清空编辑器失败:', error);
+          }
+        }
+        
+        // 只在内容真的发生变化时才更新状态
+        if (!isEditorReady) {
           setIsEditorReady(true);
-          return;
-        } catch (error) {
-          // 编辑器还未准备就绪
+        }
+      } catch (error) {
+        console.log('⚠️ 内容设置失败，但继续使用编辑器:', error);
+        if (!isEditorReady) {
+          setIsEditorReady(true);
         }
       }
-      
-      checkCount++;
-      if (checkCount < maxChecks) {
-        timeoutId = setTimeout(checkEditorReady, 100);
-      } else {
-        setIsEditorReady(true); // 强制设为准备就绪，避免永久加载
+    };
+    
+    setContentSafely();
+  }, [editor, content]); // 移除 isEditorReady 依赖，避免循环  // 监听编辑器内容变化（优化版本 - 防止循环触发）
+  useEffect(() => {
+    if (!editor?.on || !isEditorReady) return;
+    
+    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+    
+    const handleContentUpdate = () => {
+      // 清除之前的定时器
+      if (debounceTimer) {
+        clearTimeout(debounceTimer);
       }
+      
+      // 使用防抖延迟处理内容变化
+      debounceTimer = setTimeout(async () => {
+        try {
+          const currentHTML = await editor.getHTML();
+          // 只有当内容真的发生变化时才更新
+          if (currentHTML !== contentSetRef.current) {
+            handleContentChange(currentHTML);
+            contentSetRef.current = currentHTML; // 更新引用
+          }
+        } catch (error) {
+          // 静默处理错误
+        }
+      }, 500);
     };
 
-    checkEditorReady();
+    // 监听编辑器的更新事件
+    editor.on('update', handleContentUpdate);
     
     return () => {
-      if (timeoutId) {
-        clearTimeout(timeoutId);
+      if (debounceTimer) {
+        clearTimeout(debounceTimer);
       }
+      editor.off?.('update', handleContentUpdate);
     };
-  }, [editor]);
-  
-  // 使用 useEditorContent hook 管理内容同步
-  useEditorContent({
-    editor,
-    initialContent: content,
-    onContentChange: handleContentChange,
-    debounceMs: 500
-  });
+  }, [editor, isEditorReady, handleContentChange]);
 
   // 在保存前同步编辑器内容的函数
   const handleSaveWithSync = async () => {
@@ -430,9 +513,7 @@ export default function NoteEditScreen() {
             flex: 1, 
             paddingHorizontal: contentPadding,
             paddingTop: 0,
-            paddingBottom: 0
-          }}>
-              {editor && isEditorReady ? (              <RichTextContent
+            paddingBottom: 0          }}>              {editor || forceShowEditor ? (              <RichTextContent
                 title={title}
                 content={content}
                 onChangeContent={handleContentChange}
@@ -466,13 +547,13 @@ export default function NoteEditScreen() {
                   fontSize: 16,
                   opacity: 0.6 
                 }}>
-                  正在加载编辑器...
+                  正在初始化编辑器...
                 </Text>
               </View>
             )}
           </View>
         </KeyboardAvoidingView>        {/* 自定义工具栏：基于键盘显示状态、编辑器焦点状态或标题焦点状态显示 */}
-        {editor && isEditorReady && (isKeyboardVisible || isEditorFocused || isTitleFocused) && (
+        {editor && (isKeyboardVisible || isEditorFocused || isTitleFocused) && (
           <View style={{
             position: 'absolute',
             bottom: keyboardHeight,
