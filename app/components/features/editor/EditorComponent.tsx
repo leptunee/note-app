@@ -71,7 +71,7 @@ export const EditorComponent = memo<EditorComponentProps>(({
         />
         {/* 工具栏占位符，仅在工具栏可见但键盘不可见时显示 */}
         {isToolbarVisible && !isKeyboardVisible && (
-          <View style={{ height: 48, backgroundColor: 'transparent' }} />
+          <View style={{ height: 48, backgroundColor: 'transparent' }} /> // 测试得到48px最佳
         )}
       </View>
     </KeyboardAwareScrollView>
