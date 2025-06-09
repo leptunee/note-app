@@ -28,10 +28,11 @@ interface RichTextContentProps {
   categories: Category[];
   selectedCategoryId: string;  onCategoryChange: (categoryId: string) => void;
   onAddCategory?: () => void;
-  onEditCategory?: (category: Category) => void;
-  // 标题焦点处理
+  onEditCategory?: (category: Category) => void;  // 标题焦点处理
   onTitleFocus?: () => void;
-  onTitleBlur?: () => void;
+  onTitleBlur?: () => void;  // 工具栏状态
+  isToolbarVisible?: boolean;
+  isKeyboardVisible?: boolean;
 }
 
 export const RichTextContent = memo<RichTextContentProps>(({
@@ -46,11 +47,11 @@ export const RichTextContent = memo<RichTextContentProps>(({
   editor,
   titleInputRef,
   categories,
-  selectedCategoryId,  onCategoryChange,
-  onAddCategory,
+  selectedCategoryId,  onCategoryChange,  onAddCategory,
   onEditCategory,
-  onTitleFocus,
-  onTitleBlur
+  onTitleFocus,  onTitleBlur,
+  isToolbarVisible = false,
+  isKeyboardVisible = false,
 }) => {
   const { t } = useTranslation();
   const colorScheme = useColorScheme();
@@ -102,10 +103,12 @@ export const RichTextContent = memo<RichTextContentProps>(({
         onCategoryPress={handleCategoryPress}
         onFocus={onTitleFocus}
         onBlur={onTitleBlur}
-      />{/* 富文本编辑器 */}
+      />      {/* 富文本编辑器 */}
       <EditorComponent
         editor={editor}
         content={content}
+        isToolbarVisible={isToolbarVisible}
+        isKeyboardVisible={isKeyboardVisible}
       />{/* 分类选择器模态框 - 只在需要时显示 */}
       <CategorySelectorModal
         visible={showCategorySelector}

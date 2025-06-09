@@ -432,8 +432,7 @@ export default function NoteEditScreen() {
             paddingTop: 0,
             paddingBottom: 0
           }}>
-              {editor && isEditorReady ? (
-              <RichTextContent
+              {editor && isEditorReady ? (              <RichTextContent
                 title={title}
                 content={content}
                 onChangeContent={handleContentChange}
@@ -450,9 +449,10 @@ export default function NoteEditScreen() {
                 selectedCategoryId={selectedCategoryId}
                 onCategoryChange={handleCategoryChange}
                 onAddCategory={handleAddCategory}
-                onEditCategory={handleEditCategory}
-                onTitleFocus={handleTitleFocus}
+                onEditCategory={handleEditCategory}                onTitleFocus={handleTitleFocus}
                 onTitleBlur={handleTitleBlur}
+                isToolbarVisible={isKeyboardVisible || isEditorFocused || isTitleFocused}
+                isKeyboardVisible={isKeyboardVisible}
               />
             ) : (
               <View style={{

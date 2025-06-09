@@ -23,8 +23,7 @@ interface NotesListProps {
     secondaryText: string;
     tertiaryText: string;
   };
-  onNotePress: (noteId: string) => void;
-  onNoteLongPress: (noteId: string) => void;
+  onNotePress: (noteId: string) => void;  onNoteLongPress: (noteId: string) => void;
   onToggleNoteSelection: (noteId: string) => void;
   truncateContent: (text: string, maxLength?: number) => string;
 }
@@ -75,7 +74,6 @@ export const NotesList = memo<NotesListProps>(({
     offset: ITEM_HEIGHT * index,
     index,
   }), []);
-
   // 缓存 extraData 对象以减少重新渲染
   const extraData = useMemo(() => ({ 
     isSelectionMode, 
@@ -83,6 +81,10 @@ export const NotesList = memo<NotesListProps>(({
     selectedNotesIds: Array.from(selectedNotes).sort().join(',')
   }), [isSelectionMode, selectedNotes]);
 
+  // 计算内容样式，在多选模式下添加底部内边距避免工具栏遮挡
+  const contentContainerStyle = useMemo(() => ({
+    paddingBottom: isSelectionMode ? 100 : 16, // 多选模式下预留工具栏空间
+  }), [isSelectionMode]);
   return (
     <FlatList
       data={sortedNotes}
@@ -90,16 +92,16 @@ export const NotesList = memo<NotesListProps>(({
       keyExtractor={keyExtractor}
       getItemLayout={getItemLayout}
       extraData={extraData}
+      contentContainerStyle={contentContainerStyle}
       // 性能优化属性
       removeClippedSubviews={true}
       maxToRenderPerBatch={10}
       updateCellsBatchingPeriod={50}
       initialNumToRender={10}
-      windowSize={10}
-      legacyImplementation={false}
+      windowSize={10}      legacyImplementation={false}
       // 优化滚动性能
       disableIntervalMomentum={true}
-      showsVerticalScrollIndicator={true}
+      showsVerticalScrollIndicator={false}
     />
   );
 });
