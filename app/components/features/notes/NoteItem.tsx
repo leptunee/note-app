@@ -77,19 +77,15 @@ export const NoteItem = memo<NoteItemProps>(({
   const formattedDate = useMemo(() => 
     formatDate(note.updatedAt), 
     [note.updatedAt]
-  );
-
-  // 缓存样式对象
+  );  // 缓存样式对象 - 使用固定边框宽度避免布局跳动
   const cardStyle = useMemo(() => [
     styles.noteCard,
     {
       backgroundColor: colors.cardBackground,
       borderColor: isSelected ? colors.tint : 'transparent',
-      borderWidth: isSelected ? 2 : 1,
-      borderLeftColor: note.pinned ? '#FF6B35' : 'transparent',
-      borderLeftWidth: note.pinned ? 4 : 0,
+      borderWidth: 2, // 固定边框宽度，避免选中时尺寸变化
     }
-  ], [colors.cardBackground, colors.tint, isSelected, note.pinned]);
+  ], [colors.cardBackground, colors.tint, isSelected]);
 
   const titleStyle = useMemo(() => [
     styles.noteTitle,
@@ -100,11 +96,16 @@ export const NoteItem = memo<NoteItemProps>(({
     styles.noteContent,
     { color: colors.secondaryText }
   ], [colors.secondaryText]);
-
   const dateStyle = useMemo(() => [
     styles.noteDate,
     { color: colors.tertiaryText }
   ], [colors.tertiaryText]);
+
+  // 缓存 noteHeader 样式，多选模式下添加右边距避让勾选框
+  const noteHeaderStyle = useMemo(() => [
+    styles.noteHeader,
+    isSelectionMode && { marginRight: 32 } // 为勾选框预留空间
+  ], [isSelectionMode]);
 
   // 使用 useCallback 缓存事件处理函数
   const handlePress = useCallback(() => {
@@ -137,18 +138,15 @@ export const NoteItem = memo<NoteItemProps>(({
             color={isSelected ? colors.tint : colors.secondaryText}
           />
         </View>
-      )}
-
-      <View style={styles.noteHeader}>
+      )}      <View style={noteHeaderStyle}>
         <View style={styles.noteTitleRow}>
           <Text style={titleStyle} numberOfLines={1}>
             {note.title || '无标题'}
-          </Text>
-          {note.pinned && (
+          </Text>          {note.pinned && (
             <FontAwesome
               name="thumb-tack"
-              size={14}
-              color="#FF6B35"
+              size={12}
+              color="#2196F3"
               style={styles.pinIcon}
             />
           )}
@@ -179,8 +177,7 @@ export const NoteItem = memo<NoteItemProps>(({
 // 添加 displayName 以便于调试
 NoteItem.displayName = 'NoteItem';
 
-const styles = StyleSheet.create({
-  noteCard: {
+const styles = StyleSheet.create({  noteCard: {
     padding: 16,
     marginVertical: 4,
     marginHorizontal: 8,
@@ -190,9 +187,9 @@ const styles = StyleSheet.create({
       width: 0,
       height: 1,
     },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+    shadowOpacity: 0.06,
+    shadowRadius: 1.5,
+    elevation: 1,
   },
   selectionIndicator: {
     position: 'absolute',
@@ -211,14 +208,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flex: 1,
     marginRight: 8,
-  },
-  noteTitle: {
+  },  noteTitle: {
     fontSize: 16,
     fontWeight: '600',
     flex: 1,
-  },
-  pinIcon: {
+    lineHeight: 20, // 添加行高以改善对齐
+  },pinIcon: {
     marginLeft: 6,
+    marginTop: 2, // 增加微调对齐
+    alignSelf: 'center', // 确保垂直居中对齐
     transform: [{ rotate: '45deg' }],
   },
   noteDate: {

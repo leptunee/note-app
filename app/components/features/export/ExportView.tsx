@@ -1,5 +1,5 @@
 // 导出视图组件 - 用于图片导出
-import React, { forwardRef, memo, useMemo } from 'react';
+import React, { forwardRef, memo, useMemo, useState, useCallback } from 'react';
 import { View, Text } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { useTranslation } from 'react-i18next';
@@ -25,8 +25,32 @@ export const ExportView = memo(
   }, ref) => {
     const { t } = useTranslation();
     
-    // 使用 useMemo 缓存计算结果
-    const webViewHeight = useMemo(() => calculateContentHeight(content), [content]);
+    // 状态管理WebView高度
+    const [actualWebViewHeight, setActualWebViewHeight] = useState(() => 
+      calculateContentHeight(content)
+    );
+    
+    // 使用 useMemo 缓存初始计算结果
+    const initialWebViewHeight = useMemo(() => calculateContentHeight(content), [content]);
+    
+    // WebView消息处理
+    const handleWebViewMessage = useCallback((event: any) => {
+      try {
+        const data = JSON.parse(event.nativeEvent.data);
+        if (data.type === 'ready' && data.contentHeight) {
+          // 使用实际测量的高度，并添加安全边距
+          const newHeight = Math.max(data.contentHeight + 50, initialWebViewHeight);
+          console.log('Updating WebView height:', {
+            measuredHeight: data.contentHeight,
+            newHeight,
+            initialHeight: initialWebViewHeight
+          });
+          setActualWebViewHeight(newHeight);
+        }
+      } catch (error) {
+        console.log('WebView message parsing error:', error);
+      }
+    }, [initialWebViewHeight]);
     
     // 缓存容器样式
     const containerStyle = useMemo(() => ({
@@ -64,31 +88,32 @@ export const ExportView = memo(
       marginBottom: 4,
       flexWrap: 'wrap' as const
     }], []);
-      // 缓存日期样式
+      
+    // 缓存日期样式
     const dateStyle = useMemo(() => [exportStyles.noteDate, { 
       color: '#666', 
       fontSize: 12 
     }], []);
     
-    // 缓存内容区域样式
+    // 缓存内容区域样式 - 使用动态高度
     const contentAreaStyle = useMemo(() => ({ 
       padding: 16, 
       backgroundColor: 'white', 
       width: 375,
-      minHeight: webViewHeight + 32,
+      minHeight: actualWebViewHeight + 32,
       flexShrink: 0,
       borderBottomLeftRadius: 8,
       borderBottomRightRadius: 8,
       overflow: 'hidden' as const
-    }), [webViewHeight]);
+    }), [actualWebViewHeight]);
     
-    // 缓存 WebView 样式
+    // 缓存 WebView 样式 - 使用动态高度
     const webViewStyle = useMemo(() => ({ 
-      height: webViewHeight,
+      height: actualWebViewHeight,
       width: 343,
       backgroundColor: 'white',
       flex: 0
-    }), [webViewHeight]);
+    }), [actualWebViewHeight]);
     
     // 缓存无内容文本样式
     const noContentStyle = useMemo(() => ({ 
@@ -118,8 +143,10 @@ export const ExportView = memo(
           <Text style={dateStyle}>
             {formattedDate}
           </Text>
-        </View>        <View style={contentAreaStyle}>
-          {content && content.trim() ? (            <WebView
+        </View>        
+        <View style={contentAreaStyle}>
+          {content && content.trim() ? (            
+            <WebView
               style={webViewStyle}
               source={htmlContent}
               scrollEnabled={false}
@@ -137,7 +164,7 @@ export const ExportView = memo(
               onLoadEnd={() => {
                 // WebView 加载完成
               }}
-              onMessage={() => {}}
+              onMessage={handleWebViewMessage}
               injectedJavaScript={webViewInjectedScript}
             />
           ) : (

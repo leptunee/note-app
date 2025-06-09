@@ -295,9 +295,7 @@ export function useExport() {
               padding: 0,
               borderRadius: 8,
             }
-          });
-          
-          // 使用改进的高度计算逻辑，与RichTextContent.tsx保持一致
+          });          // 使用优化的高度计算逻辑，与contentUtils.ts保持一致
           const contentLength = note.content ? note.content.replace(/<[^>]*>/g, '').length : 0;
           const imageCount = (note.content.match(/<img[^>]*>/gi) || []).length;
           
@@ -310,54 +308,82 @@ export function useExport() {
           // 计算列表相关元素
           const listItemCount = (note.content.match(/<li[^>]*>/gi) || []).length;
           const listCount = (note.content.match(/<[uo]l[^>]*>/gi) || []).length;
-            // 更精确的段落计数：包括所有可能导致换行的元素
+          
           const totalBlockElements = Math.max(1, paragraphCount + divCount + headingCount + listCount);
           
-          // 基础高度计算（与RichTextContent.tsx中calculateContentHeight函数完全相同）
-          let webViewHeight = 300; // 增加基础高度
+          // 基础高度计算 - 更保守的估算
+          let webViewHeight = 350; // 增加基础高度
           
-          // 文本高度：更保守的估算，每40个字符约一行，每行约28px
-          webViewHeight += Math.ceil(contentLength / 40) * 28;
+          // 文本高度：更精确的计算
+          const averageCharsPerLine = 42;
+          const lineHeight = 26;
+          const textLines = Math.ceil(contentLength / averageCharsPerLine);
+          webViewHeight += textLines * lineHeight;
           
-          // 块级元素间距：每个块级元素额外16px
-          webViewHeight += totalBlockElements * 16;
+          // 块级元素间距
+          webViewHeight += totalBlockElements * 18;
           
-          // 换行符：每个<br>标签额外20px
-          webViewHeight += brCount * 20;
+          // 换行符
+          webViewHeight += brCount * 18;
           
-          // 列表项高度：每个列表项约32px（包含项目符号和间距）
-          webViewHeight += listItemCount * 32;
+          // 列表项高度
+          webViewHeight += listItemCount * 30;
           
-          // 列表容器：每个列表额外20px的上下边距
+          // 列表容器高度
           webViewHeight += listCount * 20;
           
-          // 标题额外高度：标题通常比普通文本更高
-          webViewHeight += headingCount * 20;
+          // 标题额外高度
+          webViewHeight += headingCount * 24;
           
-          // 图片高度：每张图片平均250px + 20px margin（更保守的估算）
-          webViewHeight += imageCount * 270;
+          // 图片高度：为每张图片预留更多空间
+          if (imageCount > 0) {
+            // 基础图片高度 + 边距
+            const avgImageHeight = 350;
+            const imageMargin = 32; // 16px * 2 (上下边距)
+            webViewHeight += imageCount * (avgImageHeight + imageMargin);
+          }
+
+          // 动态调整缓冲空间
+          let bufferMultiplier = 1.3; // 增加基础缓冲倍数
+          if (imageCount > 0) {
+            bufferMultiplier = 1.5; // 有图片时增加更多缓冲
+          } else if (contentLength > 5000) {
+            bufferMultiplier = 1.25; // 长文本时适当增加缓冲
+          }
           
-          // 增加50%的缓冲空间以确保完整显示
-          webViewHeight = Math.ceil(webViewHeight * 1.5);
+          webViewHeight = Math.ceil(webViewHeight * bufferMultiplier);
           
-          // 限制在合理范围内（最小500px，最大8000px）
-          webViewHeight = Math.max(500, Math.min(8000, webViewHeight));
+          // 限制在合理范围内，确保最小高度足够
+          webViewHeight = Math.max(600, Math.min(10000, webViewHeight));
             // 头部高度（约120px）+ WebView高度 + 内容区padding(32px)
           const headerHeight = 120;
           const contentPadding = 32;
           totalHeight = headerHeight + webViewHeight + contentPadding;
         }
-          // 给WebView充足的时间来完全加载和渲染内容
-        
-        // 基于内容复杂度动态调整等待时间
+          // 给WebView充足的时间来完全加载和渲染内容        // 基于内容复杂度动态调整等待时间
         const hasImages = (note.content.match(/<img[^>]*>/gi) || []).length > 0;
+        const imageCount = (note.content.match(/<img[^>]*>/gi) || []).length;
         const isLongContent = note.content.length > 5000;
         const isVeryLongContent = note.content.length > 10000;
-          let waitTime = 3000; // 基础等待时间3秒
-        if (hasImages) waitTime += 2000; // 有图片额外加2秒
-        if (isLongContent) waitTime += 2000; // 长内容额外加2秒
-        if (isVeryLongContent) waitTime += 3000; // 超长内容额外加3秒
-          await new Promise(resolve => setTimeout(resolve, waitTime));
+        
+        let waitTime = 3000; // 增加基础等待时间到3秒，确保WebView稳定
+        if (hasImages) {
+          // 每张图片等待时间：前3张每张1秒，后续每张500ms
+          const firstThreeImages = Math.min(imageCount, 3);
+          const remainingImages = Math.max(0, imageCount - 3);
+          waitTime += firstThreeImages * 1000 + remainingImages * 500;
+          waitTime = Math.min(waitTime, 10000); // 总等待时间不超过10秒
+        }
+        if (isLongContent) waitTime += 1000; // 长内容额外等1秒
+        if (isVeryLongContent) waitTime += 2000; // 超长内容额外等2秒
+        
+        console.log('Waiting for content to load:', {
+          imageCount,
+          contentLength: note.content.length,
+          waitTime
+        });
+        
+        await new Promise(resolve => setTimeout(resolve, waitTime));
       } catch (error) {
         // 静默处理错误
       }// 使用更安全的截图配置

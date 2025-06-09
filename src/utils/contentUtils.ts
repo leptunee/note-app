@@ -1,6 +1,6 @@
 // 内容高度计算工具
 export function calculateContentHeight(htmlContent: string): number {
-  if (!htmlContent?.trim()) return 400;
+  if (!htmlContent?.trim()) return 500;
 
   // 提取各种元素数量
   const textLength = htmlContent.replace(/<[^>]*>/g, '').length;
@@ -14,21 +14,50 @@ export function calculateContentHeight(htmlContent: string): number {
 
   const totalBlockElements = Math.max(1, paragraphCount + divCount + headingCount + listCount);
 
-  // 基础高度计算
-  let estimatedHeight = 300;
-  estimatedHeight += Math.ceil(textLength / 40) * 28; // 文本高度
-  estimatedHeight += totalBlockElements * 16; // 块级元素间距
-  estimatedHeight += brCount * 20; // 换行符
-  estimatedHeight += listItemCount * 32; // 列表项
-  estimatedHeight += listCount * 20; // 列表容器
-  estimatedHeight += headingCount * 20; // 标题额外高度
-  estimatedHeight += imageCount * 270; // 图片高度
-
-  // 增加缓冲空间
-  estimatedHeight = Math.ceil(estimatedHeight * 1.5);
+  // 基础高度计算 - 更保守的估算
+  let estimatedHeight = 350; // 增加基础高度
   
-  // 限制范围
-  return Math.max(500, Math.min(8000, estimatedHeight));
+  // 文本高度：更精确的计算
+  const averageCharsPerLine = 42;
+  const lineHeight = 26;
+  const textLines = Math.ceil(textLength / averageCharsPerLine);
+  estimatedHeight += textLines * lineHeight;
+  
+  // 块级元素间距
+  estimatedHeight += totalBlockElements * 18;
+  
+  // 换行符
+  estimatedHeight += brCount * 18;
+  
+  // 列表项高度
+  estimatedHeight += listItemCount * 30;
+  
+  // 列表容器高度
+  estimatedHeight += listCount * 20;
+  
+  // 标题额外高度
+  estimatedHeight += headingCount * 24;
+  
+  // 图片高度：为每张图片预留更多空间
+  if (imageCount > 0) {
+    // 基础图片高度 + 边距
+    const avgImageHeight = 350;
+    const imageMargin = 32; // 16px * 2 (上下边距)
+    estimatedHeight += imageCount * (avgImageHeight + imageMargin);
+  }
+
+  // 动态调整缓冲空间
+  let bufferMultiplier = 1.3; // 增加基础缓冲倍数
+  if (imageCount > 0) {
+    bufferMultiplier = 1.5; // 有图片时增加更多缓冲
+  } else if (textLength > 5000) {
+    bufferMultiplier = 1.25; // 长文本时适当增加缓冲
+  }
+  
+  estimatedHeight = Math.ceil(estimatedHeight * bufferMultiplier);
+  
+  // 限制范围，确保最小高度足够
+  return Math.max(600, Math.min(10000, estimatedHeight));
 }
 
 // 格式化日期工具
@@ -70,9 +99,8 @@ export function generateWebViewHTML(content: string): string {
             min-height: 100%;
             overflow: visible;
             box-sizing: border-box;
-          }
-          body {
-            padding-bottom: 40px;
+          }          body {
+            padding-bottom: 16px; // 减少底部padding避免过多空白
             display: block;
             width: 100%;
           }
@@ -98,7 +126,7 @@ export function generateWebViewHTML(content: string): string {
             width: auto;
             height: auto; 
             display: block; 
-            margin: 12px 0;
+            margin: 16px 0; // 增加图片上下边距确保完整显示
             border-radius: 4px;
             clear: both;
             object-fit: contain;
@@ -164,13 +192,18 @@ export function generateWebViewHTML(content: string): string {
 }
 
 // WebView 注入脚本
-export const webViewInjectedScript = `  const images = document.querySelectorAll('img');
-  let loadedCount = 0;
-  const totalImages = images.length;
+export const webViewInjectedScript = `
+  let isReady = false;
+  let heightCheckCount = 0;
+  const maxHeightChecks = 15;
+  let lastHeight = 0;
   
-  function ensureLayoutComplete() {
+  function getActualContentHeight() {
+    // 强制重新计算布局
     document.body.offsetHeight;
+    document.documentElement.offsetHeight;
     
+    // 确保所有元素都有正确的高度
     const allElements = document.querySelectorAll('*');
     allElements.forEach(el => {
       if (el.offsetHeight === 0 && el.textContent && el.textContent.trim()) {
@@ -178,47 +211,109 @@ export const webViewInjectedScript = `  const images = document.querySelectorAll
       }
     });
     
-    window.ReactNativeWebView?.postMessage(JSON.stringify({
-      type: 'ready',
-      contentHeight: document.documentElement.scrollHeight,
-      bodyHeight: document.body.scrollHeight
-    }));
+    // 特别处理图片元素
+    const images = document.querySelectorAll('img');
+    images.forEach(img => {
+      if (img.naturalHeight > 0) {
+        img.style.height = 'auto';
+        img.style.maxHeight = 'none';
+        img.style.display = 'block';
+        img.style.margin = '16px 0';
+        img.style.clear = 'both';
+      }
+    });
+    
+    // 再次强制重新计算布局
+    document.body.offsetHeight;
+    document.documentElement.offsetHeight;
+    
+    // 获取多个高度值并取最大值
+    const scrollHeight = Math.max(
+      document.documentElement.scrollHeight,
+      document.body.scrollHeight,
+      document.documentElement.offsetHeight,
+      document.body.offsetHeight,
+      document.documentElement.clientHeight
+    );
+    
+    return scrollHeight;
+  }
+  
+  function checkContentReady() {
+    if (isReady) return;
+    
+    heightCheckCount++;
+    const currentHeight = getActualContentHeight();
+    
+    // 检查高度是否稳定
+    setTimeout(() => {
+      const newHeight = getActualContentHeight();
+      const heightDiff = Math.abs(newHeight - lastHeight);
+      const currentDiff = Math.abs(newHeight - currentHeight);
+      
+      // 如果高度稳定（连续两次检查差异小于10px）或达到最大检查次数
+      if ((heightDiff < 10 && currentDiff < 10) || heightCheckCount >= maxHeightChecks) {
+        isReady = true;
+        const finalHeight = Math.max(currentHeight, newHeight, lastHeight);
+        
+        window.ReactNativeWebView?.postMessage(JSON.stringify({
+          type: 'ready',
+          contentHeight: finalHeight + 50, // 添加额外的安全边距
+          bodyHeight: document.body.scrollHeight,
+          checkCount: heightCheckCount,
+          finalHeight: finalHeight
+        }));
+      } else if (heightCheckCount < maxHeightChecks) {
+        lastHeight = newHeight;
+        setTimeout(checkContentReady, 250); // 增加检查间隔
+      }
+    }, 150);
+  }
+  
+  // 处理图片加载
+  const images = document.querySelectorAll('img');
+  let loadedImageCount = 0;
+  const totalImages = images.length;
+  
+  function onImageLoaded() {
+    loadedImageCount++;
+    if (loadedImageCount >= totalImages) {
+      // 所有图片加载完成后，等待一段时间让布局稳定
+      setTimeout(checkContentReady, 400);
+    }
   }
   
   if (totalImages === 0) {
+    // 没有图片，等待DOM加载完成后检查内容
     if (document.readyState === 'complete') {
-      setTimeout(ensureLayoutComplete, 100);
+      setTimeout(checkContentReady, 300);
     } else {
       window.addEventListener('load', () => {
-        setTimeout(ensureLayoutComplete, 100);
+        setTimeout(checkContentReady, 300);
       });
     }
   } else {
-    images.forEach((img, index) => {      if (img.complete && img.naturalHeight !== 0) {
-        loadedCount++;
-        if (loadedCount === totalImages) {
-          setTimeout(ensureLayoutComplete, 200);
-        }
+    // 有图片，等待所有图片加载完成
+    images.forEach((img) => {
+      if (img.complete && img.naturalHeight > 0) {
+        onImageLoaded();
       } else {
-        img.onload = () => {
-          loadedCount++;
-          if (loadedCount === totalImages) {
-            setTimeout(ensureLayoutComplete, 200);
-          }
-        };
+        img.onload = onImageLoaded;
         img.onerror = () => {
-          loadedCount++;
-          if (loadedCount === totalImages) {
-            setTimeout(ensureLayoutComplete, 200);
-          }
+          console.log('Image failed to load:', img.src);
+          onImageLoaded(); // 即使加载失败也要继续
         };
       }
     });
-      setTimeout(() => {
-      if (loadedCount < totalImages) {
-        ensureLayoutComplete();
+    
+    // 设置超时保护，防止长时间等待
+    setTimeout(() => {
+      if (!isReady) {
+        console.log('Timeout: forcing content ready check');
+        checkContentReady();
       }
-    }, 5000);
+    }, 8000);
   }
+  
   true;
 `;
