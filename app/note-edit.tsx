@@ -57,29 +57,44 @@ export default function NoteEditScreen() {
     handleEditCategory,
     handleSaveCategory,
     handleDeleteCategory,
-    MAX_TITLE_LENGTH,
-    colorScheme,
+    MAX_TITLE_LENGTH,    colorScheme,
     t, // 添加翻译函数
-  } = useNoteEdit(themes, toastRef, titleInputRef);// 简化状态管理
-  const [forceShowEditor, setForceShowEditor] = useState(false);
+  } = useNoteEdit(themes, toastRef, titleInputRef);
+
   const contentSetRef = useRef<string>(''); // 跟踪已设置的内容
-    useEffect(() => {
-    // 如果3秒后编辑器还有问题，强制显示
-    const forceTimer = setTimeout(() => {
-      setForceShowEditor(true);
-    }, 3000);
-    
-    return () => {
-      clearTimeout(forceTimer);
+
+  // 创建编辑器实例 - 使用原始 TenTapStarterKit，通过CSS注入禁用占位符
+  const editorConfig = useMemo(() => {
+    return {
+      autofocus: false,
+      avoidIosKeyboard: false,
+      bridgeExtensions: TenTapStarterKit,
+      editable: true,
+      initialContent: '<p><br></p>', // 设置非空内容防止占位符显示
+      placeholder: '', // 设置空占位符
     };
-  }, []);// 创建编辑器实例 - 直接创建，使用空的初始内容
-  const editor = useEditorBridge({
-    autofocus: false,
-    avoidIosKeyboard: false,
-    bridgeExtensions: TenTapStarterKit,
-    editable: true,
-    initialContent: '', // 使用空内容避免初始化问题
-  });// 使用useBridgeState监听编辑器状态并获取isReady状态
+  }, []);
+
+  const editor = useEditorBridge(editorConfig);
+
+  // 立即设置空占位符，不等待任何状态
+  useEffect(() => {
+    if (editor) {
+      // 使用 setTimeout 确保在编辑器完全初始化后立即执行
+      setTimeout(() => {
+        try {
+          if (typeof editor.setPlaceholder === 'function') {
+            editor.setPlaceholder('');
+          }
+          if (editor.commands && typeof editor.commands.setPlaceholder === 'function') {
+            editor.commands.setPlaceholder('');
+          }
+        } catch (error) {
+          // 静默处理错误
+        }
+      }, 0); // 立即执行，但在下一个事件循环
+    }
+  }, [editor]);// 使用useBridgeState监听编辑器状态并获取isReady状态
   const editorState = useBridgeState(editor);
   const isReady = editorState?.isReady || false;
 
@@ -95,8 +110,7 @@ export default function NoteEditScreen() {
     if (editor && typeof editor.redo === 'function') {
       editor.redo();
     }
-  }, [editor]);
-  // 监听编辑器状态变化，更新undo/redo状态
+  }, [editor]);  // 监听编辑器状态变化，更新undo/redo状态
   useEffect(() => {
     if (editor && editorState) {
       const newCanUndo = editorState.canUndo || false;
@@ -106,6 +120,43 @@ export default function NoteEditScreen() {
       setCanRedo(newCanRedo);
     }
   }, [editor, editorState, setCanUndo, setCanRedo]);
+  // 尝试通过编辑器 API 禁用占位符
+  useEffect(() => {
+    if (editor && isReady) {
+      try {
+        // 尝试设置空占位符
+        if (typeof editor.setPlaceholder === 'function') {
+          editor.setPlaceholder('');
+        }
+        // 尝试通过 commands 设置
+        if (editor.commands && typeof editor.commands.setPlaceholder === 'function') {
+          editor.commands.setPlaceholder('');
+        }
+        
+        // 尝试通过扩展管理器直接禁用占位符
+        if (editor.extensionManager && editor.extensionManager.extensions) {
+          const placeholderExtensions = editor.extensionManager.extensions.filter((ext: any) => 
+            ext.name === 'placeholder' || ext.type === 'placeholder' || 
+            (typeof ext === 'string' && ext.toLowerCase().includes('placeholder'))
+          );
+          
+          placeholderExtensions.forEach((ext: any) => {
+            try {
+              if (ext.options) {
+                ext.options.placeholder = '';
+                ext.options.showOnlyWhenEditable = false;
+                ext.options.showOnlyCurrent = false;
+              }
+            } catch (error) {
+              // 静默处理错误
+            }
+          });
+        }
+      } catch (error) {
+        // 静默处理错误
+      }
+    }
+  }, [editor, isReady]);
   // 监听键盘显示状态来控制工具栏显示（更可靠的方式）
   useEffect(() => {
     // 当键盘显示时，假设编辑器获得了焦点
@@ -113,10 +164,11 @@ export default function NoteEditScreen() {
       setIsEditorFocused(true);
     }
   }, [isKeyboardVisible]);
-
   // 监听编辑器焦点状态（用于控制工具栏显示）
   useEffect(() => {
-    if (!editor) return;    const handleFocus = () => {
+    if (!editor) return;
+
+    const handleFocus = () => {
       setIsEditorFocused(true);
     };
 
@@ -125,7 +177,9 @@ export default function NoteEditScreen() {
       setTimeout(() => {
         setIsEditorFocused(false);
       }, 100);
-    };    // 尝试添加焦点监听器
+    };
+
+    // 尝试添加焦点监听器
     try {
       if (typeof editor.on === 'function') {
         editor.on('focus', handleFocus);
@@ -202,11 +256,10 @@ export default function NoteEditScreen() {
             contentSetRef.current = content;
           } catch (error) {
             // 静默处理错误
-          }
-        } else {
-          // 清空编辑器
+          }        } else {
+          // 即使清空编辑器，也要保持最小的HTML结构以避免占位符显示
           try {
-            await editor.setContent('');
+            await editor.setContent('<p><br></p>');
             contentSetRef.current = '';
           } catch (error) {
             // 静默处理错误
@@ -340,9 +393,7 @@ export default function NoteEditScreen() {
 
   const editorBackgroundColor = useMemo(() => {
     return getEditorBackgroundColor(pageSettings, colorScheme);
-  }, [pageSettings, colorScheme]);
-
-  const editorBorderColor = useMemo(() => {
+  }, [pageSettings, colorScheme]);  const editorBorderColor = useMemo(() => {
     return getEditorBorderColor(pageSettings, colorScheme);
   }, [pageSettings, colorScheme]);
   // 涂鸦画板相关处理函数
@@ -485,12 +536,14 @@ export default function NoteEditScreen() {
             onPageSettings={handleOpenPageSettings}
           />
 
-          {/* 内容区域受页边距影响 */}
-          <View style={{ 
+          {/* 内容区域受页边距影响 */}          <View style={{ 
             flex: 1, 
             paddingHorizontal: contentPadding,
             paddingTop: 0,
-            paddingBottom: 0          }}>              {editor || forceShowEditor ? (              <RichTextContent
+            paddingBottom: 0
+          }}>
+            {editor ? (
+              <RichTextContent
                 title={title}
                 content={content}
                 onChangeContent={handleContentChange}
@@ -507,7 +560,8 @@ export default function NoteEditScreen() {
                 selectedCategoryId={selectedCategoryId}
                 onCategoryChange={handleCategoryChange}
                 onAddCategory={handleAddCategory}
-                onEditCategory={handleEditCategory}                onTitleFocus={handleTitleFocus}
+                onEditCategory={handleEditCategory}
+                onTitleFocus={handleTitleFocus}
                 onTitleBlur={handleTitleBlur}
                 isToolbarVisible={isKeyboardVisible || isEditorFocused || isTitleFocused}
                 isKeyboardVisible={isKeyboardVisible}

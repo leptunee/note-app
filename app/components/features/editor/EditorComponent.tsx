@@ -4,7 +4,6 @@ import { View, useColorScheme, Text } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { RichText, useBridgeState } from '@10play/tentap-editor';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
-import { EditorPlaceholderOverlay } from './EditorPlaceholderOverlay';
 
 interface EditorComponentProps {
   editor: any;
@@ -16,14 +15,58 @@ interface EditorComponentProps {
 export const EditorComponent = memo<EditorComponentProps>(({ 
   editor, 
   content = '',
-  isToolbarVisible = false,  isKeyboardVisible = false
+  isToolbarVisible = false,
+  isKeyboardVisible = false
 }) => {
   const { t } = useTranslation();
   const colorScheme = useColorScheme() ?? 'light';
-  
-  // 获取编辑器状态
+    // 获取编辑器状态
   const editorState = useBridgeState(editor);
-  const isReady = editorState?.isReady || false;
+  const isReady = editorState?.isReady || false;  // 通过 CSS 注入来彻底隐藏占位符
+  useEffect(() => {
+    if (editor && isReady) {
+      try {
+        // 延迟一下确保编辑器完全加载
+        const timer = setTimeout(() => {
+          // 尝试通过编辑器 API 设置空占位符
+          if (typeof editor.setPlaceholder === 'function') {
+            editor.setPlaceholder('');
+          }
+          
+          if (editor.commands && typeof editor.commands.setPlaceholder === 'function') {
+            editor.commands.setPlaceholder('');
+          }
+
+          // 通过 WebView 注入 CSS 来隐藏占位符
+          if (editor.webviewRef && editor.webviewRef.current && editor.webviewRef.current.injectJavaScript) {
+            const hideCSS = `
+              (function() {
+                var style = document.createElement('style');
+                style.textContent = \`
+                  .ProseMirror p.is-editor-empty:first-child::before,
+                  .ProseMirror [data-placeholder]:before,
+                  .ProseMirror .placeholder,
+                  [data-placeholder]::before {
+                    display: none !important;
+                    content: '' !important;
+                    opacity: 0 !important;
+                    visibility: hidden !important;
+                  }
+                \`;
+                document.head.appendChild(style);
+              })();
+            `;
+            
+            editor.webviewRef.current.injectJavaScript(hideCSS);
+          }
+        }, 200); // 延迟200ms确保编辑器完全初始化
+
+        return () => clearTimeout(timer);
+      } catch (error) {
+        console.log('Placeholder hiding attempt failed:', error);
+      }
+    }
+  }, [editor, isReady]);
 
   // 缓存样式计算
   const containerStyle = useMemo(() => ({ 
@@ -59,24 +102,8 @@ export const EditorComponent = memo<EditorComponentProps>(({
       </View>
     );
   }
-  // 如果编辑器还没准备好，仍然显示编辑器但添加一个标识
-  // if (!isReady) {
-  //   return (
-  //     <View style={{ flex: 1, minHeight: 200, justifyContent: 'center', alignItems: 'center' }}>
-  //       <Text style={{ color: colorScheme === 'dark' ? '#ffffff' : '#000000', opacity: 0.6 }}>
-  //         正在加载编辑器...
-  //       </Text>
-  //     </View>
-  //   );
-  // }
-  // 检查是否应该显示占位符
-  const shouldShowPlaceholder = useMemo(() => {
-    return !content || content.trim() === '' || content === '<p></p>';
-  }, [content]);
 
-  // 注意：图片点击事件现在通过 ImageClickExtension (ProseMirror 扩展) 处理
-  // 不再需要通过 JavaScript 注入的方式处理
-    return (
+  return (
     <KeyboardAwareScrollView 
       enableOnAndroid={true}
       keyboardShouldPersistTaps="handled"
@@ -89,23 +116,18 @@ export const EditorComponent = memo<EditorComponentProps>(({
       scrollEnabled={true}
       keyboardOpeningTime={250}
       enableResetScrollToCoords={false}
-    >      <View style={containerStyle}>
+    >
+      <View style={containerStyle}>
         <RichText 
           editor={editor}
           style={richTextStyle}
           containerStyle={richTextContainerStyle}
           removeClippedSubviews={false}
+          placeholder=""
         />
-        
-        {/* 占位符覆盖组件 */}
-        <EditorPlaceholderOverlay 
-          editor={editor}
-          showPlaceholder={shouldShowPlaceholder}
-        />
-        
         {/* 工具栏占位符，仅在工具栏可见但键盘不可见时显示 */}
         {isToolbarVisible && !isKeyboardVisible && (
-          <View style={{ height: 48, backgroundColor: 'transparent' }} /> // 测试得到48px最佳
+          <View style={{ height: 48, backgroundColor: 'transparent' }} />
         )}
       </View>
     </KeyboardAwareScrollView>

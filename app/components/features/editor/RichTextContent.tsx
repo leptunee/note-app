@@ -19,18 +19,22 @@ interface RichTextContentProps {
   onChangeTitle: (text: string) => void;
   noteViewRef: React.RefObject<any>;
   textColor?: string;
-  editorBackgroundColor?: string;  editorBorderColor?: string;
+  editorBackgroundColor?: string;
+  editorBorderColor?: string;
   maxLength?: number;
   titleError?: string;
   editor: any;
   titleInputRef?: React.RefObject<TextInput | null>;
   // 分类相关props
   categories: Category[];
-  selectedCategoryId: string;  onCategoryChange: (categoryId: string) => void;
+  selectedCategoryId: string;
+  onCategoryChange: (categoryId: string) => void;
   onAddCategory?: () => void;
-  onEditCategory?: (category: Category) => void;  // 标题焦点处理
+  onEditCategory?: (category: Category) => void;
+  // 标题焦点处理
   onTitleFocus?: () => void;
-  onTitleBlur?: () => void;  // 工具栏状态
+  onTitleBlur?: () => void;
+  // 工具栏状态
   isToolbarVisible?: boolean;
   isKeyboardVisible?: boolean;
 }
@@ -42,14 +46,19 @@ export const RichTextContent = memo<RichTextContentProps>(({
   onChangeTitle,
   noteViewRef,
   textColor,
+  editorBackgroundColor,
+  editorBorderColor,
   maxLength,
   titleError,
   editor,
   titleInputRef,
   categories,
-  selectedCategoryId,  onCategoryChange,  onAddCategory,
+  selectedCategoryId,
+  onCategoryChange,
+  onAddCategory,
   onEditCategory,
-  onTitleFocus,  onTitleBlur,
+  onTitleFocus,
+  onTitleBlur,
   isToolbarVisible = false,
   isKeyboardVisible = false,
 }) => {

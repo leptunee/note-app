@@ -65,3 +65,24 @@ export function getContentPadding(marginValue: number) {
   // 确保值在有效范围内
   return Math.max(minPadding, Math.min(maxPadding, marginValue));
 }
+
+// 获取编辑器遮罩的背景色 - 专门用于占位符遮罩
+export function getEditorMaskColor(pageSettings: any, colorScheme: string) {
+  if (!pageSettings) {
+    return colorScheme === 'dark' ? '#000000' : '#ffffff';
+  }
+  
+  // 如果有背景图片，根据图片的主色调或透明度来决定遮罩颜色
+  if (pageSettings.backgroundImageUri) {
+    // 对于背景图片，我们需要使用容器的背景色，而不是透明
+    const themeDefinition = themes.find(t => t.id === pageSettings.themeId);
+    if (themeDefinition) {
+      return themeDefinition.backgroundColor;
+    }
+    // 如果没有主题定义，使用默认的容器背景色
+    return colorScheme === 'dark' ? '#000000' : '#ffffff';
+  }
+  
+  // 没有背景图片时，使用编辑器背景色
+  return getEditorBackgroundColor(pageSettings, colorScheme);
+}
