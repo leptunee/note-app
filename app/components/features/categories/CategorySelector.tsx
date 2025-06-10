@@ -72,7 +72,7 @@ export const CategorySelector = memo<CategorySelectorProps>(({
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Text style={[styles.label, { color: colors.text }]}
       >
-        {t('category', '分类')}
+        {t('category')}
       </Text>
       
       <View style={styles.selectorRow}>
@@ -100,9 +100,8 @@ export const CategorySelector = memo<CategorySelectorProps>(({
                 size={14}
                 color="#ffffff"
               />
-            </View>
-            <Text style={[styles.categoryName, { color: colors.text }]}>
-              {selectedCategory.name}
+            </View>            <Text style={[styles.categoryName, { color: colors.text }]}>
+              {['uncategorized', 'work', 'personal', 'study'].includes(selectedCategory.name) ? t(selectedCategory.name) : selectedCategory.name}
             </Text>
           </View>
           <FontAwesome 
@@ -180,9 +179,8 @@ export const CategorySelector = memo<CategorySelectorProps>(({
                           color: isSelected ? colors.activeText : colors.text,
                           fontWeight: isSelected ? '600' : '400',
                         },
-                      ]}
-                    >
-                      {category.name}
+                      ]}                    >
+                      {['allNotes', 'uncategorized', 'work', 'personal', 'study'].includes(category.name) ? t(category.name) : category.name}
                     </Text>
                     {isSelected && (
                       <FontAwesome

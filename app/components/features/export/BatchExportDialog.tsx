@@ -1,6 +1,7 @@
 // 批量导出选项对话框组件
 import React, { useRef, memo, useCallback, useMemo } from 'react';
 import { Modal, View, Text, TouchableOpacity, useColorScheme, TouchableWithoutFeedback } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { Note } from '@/src/hooks/useNotes';
 import { useExport } from '@/src/hooks/useExport';
@@ -16,11 +17,11 @@ interface BatchExportDialogProps {
 }
 
 export const BatchExportDialog = memo<BatchExportDialogProps>(({
-  visible,
-  onClose,
+  visible,  onClose,
   notes,
   selectedCount
 }) => {
+  const { t } = useTranslation();
   const colorScheme = useColorScheme() ?? 'light';
   const toastRef = useRef<ToastRef>(null);
   const { exportMultipleAsTxt, exportMultipleAsWord, exportMultipleAsMarkdown } = useExport();
@@ -70,7 +71,7 @@ export const BatchExportDialog = memo<BatchExportDialogProps>(({
       if (result.message) {
         toastRef.current?.show(result.message, result.success ? 'success' : 'error');
       }    } catch (error) {
-      toastRef.current?.show('导出过程中发生错误，请重试。', 'error');
+      toastRef.current?.show(t('exportError'), 'error');
     }
   }, [notes, onClose]);
 
@@ -111,33 +112,29 @@ export const BatchExportDialog = memo<BatchExportDialogProps>(({
                 <TouchableOpacity 
                   style={styles.exportOption} 
                   onPress={handleTxtExport}
-                >
-                  <FontAwesome name="file-text-o" size={24} color={tintColor} />
-                  <Text style={optionTextStyle}>文本文件 (.txt)</Text>
+                >                  <FontAwesome name="file-text-o" size={24} color={tintColor} />
+                  <Text style={optionTextStyle}>{t('textFile')}</Text>
                 </TouchableOpacity>
                 
                 <TouchableOpacity 
                   style={styles.exportOption} 
                   onPress={handleWordExport}
-                >
-                  <FontAwesome name="file-word-o" size={24} color="#2B579A" />
-                  <Text style={optionTextStyle}>Word文档 (.html)</Text>
+                >                  <FontAwesome name="file-word-o" size={24} color="#2B579A" />
+                  <Text style={optionTextStyle}>{t('wordDocument')}</Text>
                 </TouchableOpacity>
                 
                 <TouchableOpacity 
                   style={styles.exportOption} 
                   onPress={handleMarkdownExport}
-                >
-                  <FontAwesome name="file-code-o" size={24} color="#663399" />
-                  <Text style={optionTextStyle}>Markdown (.md)</Text>
+                >                  <FontAwesome name="file-code-o" size={24} color="#663399" />
+                  <Text style={optionTextStyle}>{t('markdownFile')}</Text>
                 </TouchableOpacity>
                 
                 <TouchableOpacity 
                   style={closeButtonStyle} 
                   onPress={onClose}
-                >
-                  <FontAwesome name="times-circle" size={16} color={closeIconColor} style={{marginRight: 6}} />
-                  <Text style={closeButtonTextStyle}>取消</Text>
+                >                  <FontAwesome name="times-circle" size={16} color={closeIconColor} style={{marginRight: 6}} />
+                  <Text style={closeButtonTextStyle}>{t('cancel')}</Text>
                 </TouchableOpacity>
               </View>
             </TouchableWithoutFeedback>

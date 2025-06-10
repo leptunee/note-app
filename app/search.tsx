@@ -168,15 +168,14 @@ export default function SearchScreen() {
   const handleCategorySelect = useCallback((categoryId: string) => {
     setSelectedCategoryId(categoryId);
   }, []);
-
   // 获取当前选中分类的信息
   const selectedCategory = useMemo(() => {
     if (selectedCategoryId === 'all') {
-      return { name: '全部笔记', icon: 'file-text', color: '#2196F3' };
+      return { name: t('allNotes'), icon: 'file-text', color: '#2196F3' };
     }
     return categories.find(cat => cat.id === selectedCategoryId) || 
-           { name: '未分类', icon: 'folder', color: '#9E9E9E' };
-  }, [selectedCategoryId, categories]);
+           { name: t('uncategorized'), icon: 'folder', color: '#9E9E9E' };
+  }, [selectedCategoryId, categories, t]);
 
   return (
     <View style={[styles.container, { backgroundColor: Colors[colorScheme].background }]}>
@@ -216,14 +215,12 @@ export default function SearchScreen() {
             </TouchableOpacity>
           )}
         </View>
-      </View>
-
-      {/* 分类选择器 */}
+      </View>      {/* 分类选择器 */}
       <View style={[styles.categoryContainer, { backgroundColor: colors.background }]}>
         <FlatList
           horizontal
           showsHorizontalScrollIndicator={false}
-          data={[{ id: 'all', name: '全部笔记', icon: 'file-text', color: '#2196F3' }, ...categories.filter(cat => cat.id !== 'all')]}
+          data={[{ id: 'all', name: t('allNotes'), icon: 'file-text', color: '#2196F3' }, ...categories.filter(cat => cat.id !== 'all')]}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.categoryList}
           renderItem={({ item }) => (
@@ -241,15 +238,16 @@ export default function SearchScreen() {
                   size={10} 
                   color="#fff" 
                 />
-              </View>
-              <Text style={[
+              </View>              <Text style={[
                 styles.categoryName, 
                 { 
                   color: selectedCategoryId === item.id ? '#fff' : colors.text,
                   fontWeight: selectedCategoryId === item.id ? '600' : '400'
                 }
               ]}>
-                {item.name}
+                {item.id === 'all' || ['uncategorized', 'work', 'personal', 'study'].includes(item.name) 
+                  ? t(item.id === 'all' ? 'allNotes' : item.name) 
+                  : item.name}
               </Text>
             </TouchableOpacity>
           )}
@@ -274,11 +272,10 @@ export default function SearchScreen() {
             </Text>
           </View>
         ) : (
-          <>
-            <Text style={[styles.resultsCount, { color: colors.secondaryText }]}>
+          <>            <Text style={[styles.resultsCount, { color: colors.secondaryText }]}>
               {searchQuery.trim() 
                 ? t('foundResults', { count: searchResults.length })
-                : `${selectedCategory.name}: ${searchResults.length} 条笔记`
+                : `${['allNotes', 'uncategorized', 'work', 'personal', 'study'].includes(selectedCategory.name) ? t(selectedCategory.name) : selectedCategory.name}: ${searchResults.length} 条笔记`
               }
             </Text>
             {searchResults.map((note) => (

@@ -1,8 +1,10 @@
 // 编辑器组件 - 富文本编辑器封装
 import React, { memo, useMemo, useEffect } from 'react';
 import { View, useColorScheme, Text } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { RichText, useBridgeState } from '@10play/tentap-editor';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import { EditorPlaceholderOverlay } from './EditorPlaceholderOverlay';
 
 interface EditorComponentProps {
   editor: any;
@@ -14,9 +16,9 @@ interface EditorComponentProps {
 export const EditorComponent = memo<EditorComponentProps>(({ 
   editor, 
   content = '',
-  isToolbarVisible = false,
-  isKeyboardVisible = false
+  isToolbarVisible = false,  isKeyboardVisible = false
 }) => {
+  const { t } = useTranslation();
   const colorScheme = useColorScheme() ?? 'light';
   
   // 获取编辑器状态
@@ -52,7 +54,7 @@ export const EditorComponent = memo<EditorComponentProps>(({
     return (
       <View style={{ flex: 1, minHeight: 200, justifyContent: 'center', alignItems: 'center' }}>
         <Text style={{ color: colorScheme === 'dark' ? '#ffffff' : '#000000', opacity: 0.6 }}>
-          正在初始化编辑器...
+          {t('initializingEditor')}
         </Text>
       </View>
     );
@@ -67,6 +69,10 @@ export const EditorComponent = memo<EditorComponentProps>(({
   //     </View>
   //   );
   // }
+  // 检查是否应该显示占位符
+  const shouldShowPlaceholder = useMemo(() => {
+    return !content || content.trim() === '' || content === '<p></p>';
+  }, [content]);
 
   // 注意：图片点击事件现在通过 ImageClickExtension (ProseMirror 扩展) 处理
   // 不再需要通过 JavaScript 注入的方式处理
@@ -90,6 +96,13 @@ export const EditorComponent = memo<EditorComponentProps>(({
           containerStyle={richTextContainerStyle}
           removeClippedSubviews={false}
         />
+        
+        {/* 占位符覆盖组件 */}
+        <EditorPlaceholderOverlay 
+          editor={editor}
+          showPlaceholder={shouldShowPlaceholder}
+        />
+        
         {/* 工具栏占位符，仅在工具栏可见但键盘不可见时显示 */}
         {isToolbarVisible && !isKeyboardVisible && (
           <View style={{ height: 48, backgroundColor: 'transparent' }} /> // 测试得到48px最佳

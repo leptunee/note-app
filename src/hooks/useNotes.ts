@@ -89,7 +89,7 @@ export function useNotes() {
           if (notesData) {
           const parsedNotes = JSON.parse(notesData);
           
-          // 迁移所有笔记到"未分类"分类
+          // Migrate all notes to "Uncategorized" category
           const migratedNotes = parsedNotes.map((note: Note) => ({
             ...note,
             categoryId: note.categoryId && note.categoryId !== 'all' ? note.categoryId : 'uncategorized'
@@ -239,7 +239,7 @@ export function useNotes() {
     // 不允许删除系统分类
     if (id === 'all' || id === 'uncategorized') return;
     
-    // 将该分类下的笔记移到"未分类"分类
+    // Move notes in this category to "Uncategorized" category
     const newNotes = notes.map(n => 
       n.categoryId === id ? { ...n, categoryId: 'uncategorized' } : n
     );

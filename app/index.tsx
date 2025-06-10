@@ -142,10 +142,10 @@ const NotesScreen = memo(() => {
   }, [notes, selectedCategoryId, getNotesByCategory]);  // 获取当前选中的分类信息 - 使用useMemo优化
   const selectedCategory = useMemo(() => {
     if (selectedCategoryId === 'all') {
-      return { name: String(t('allNotes', '全部笔记')), icon: 'file-text', color: '#2196F3' };
+      return { name: String(t('allNotes')), icon: 'file-text', color: '#2196F3' };
     }
     return categories.find(cat => cat.id === selectedCategoryId) || 
-      { name: String(t('uncategorized', '未分类')), icon: 'folder', color: '#999999' };
+      { name: String(t('uncategorized')), icon: 'folder', color: '#999999' };
   }, [selectedCategoryId, categories, t]);
 
   // 截断长内容，只显示前若干个字符
@@ -200,8 +200,8 @@ const NotesScreen = memo(() => {
         barStyle={colorScheme === 'dark' ? 'light-content' : 'dark-content'}
         backgroundColor={Colors[colorScheme].background}
         translucent={false}
-      />        <NotesHeader
-        title={selectedCategory.name}
+      />      <NotesHeader
+        title={['allNotes', 'uncategorized', 'work', 'personal', 'study'].includes(selectedCategory.name) ? t(selectedCategory.name) : selectedCategory.name}
         categoryIcon={selectedCategory.icon}
         categoryColor={selectedCategory.color}
         colors={colors}

@@ -52,15 +52,15 @@ export default function NoteEditScreen() {
     handleTitleChange,
     handleContentChange,
     handleOpenPageSettings,
-    handlePageSettingsChange,
-    handleCategoryChange,
+    handlePageSettingsChange,    handleCategoryChange,
     handleAddCategory,
     handleEditCategory,
     handleSaveCategory,
     handleDeleteCategory,
     MAX_TITLE_LENGTH,
     colorScheme,
-  } = useNoteEdit(themes, toastRef, titleInputRef);  // 简化状态管理
+    t, // 添加翻译函数
+  } = useNoteEdit(themes, toastRef, titleInputRef);// 简化状态管理
   const [forceShowEditor, setForceShowEditor] = useState(false);
   const contentSetRef = useRef<string>(''); // 跟踪已设置的内容
     useEffect(() => {
@@ -355,7 +355,7 @@ export default function NoteEditScreen() {
       return;
     }try {      // 创建可删除的图片HTML结构
       // 使用简洁的图片标签，保持可通过键盘删除的功能
-      const imageHtml = `<img src="${imageData}" style="max-width: 100%; height: auto; display: block; margin: 10px 0; border-radius: 4px; object-fit: contain;" alt="涂鸦" title="涂鸦" data-type="image" data-source="drawing" />`;
+      const imageHtml = `<img src="${imageData}" style="max-width: 100%; height: auto; display: block; margin: 10px 0; border-radius: 4px; object-fit: contain;" alt="${t('drawing')}" title="${t('drawing')}" data-type="image" data-source="drawing" />`;
 
       // 尝试插入涂鸦图片，参考图片插入的成功方法
       let insertSuccess = false;      // 方法1: 使用直接的 insertContent（参考图片插入的成功方法）
@@ -409,9 +409,9 @@ export default function NoteEditScreen() {
       }
 
       if (!insertSuccess) {
-        Alert.alert('插入失败', '无法将涂鸦插入到编辑器中，请检查编辑器状态');
+        Alert.alert(t('insertFailed'), t('cannotInsertDrawingToEditor'));
       }    } catch (error) {
-      Alert.alert('插入失败', '涂鸦插入失败，请重试');
+      Alert.alert(t('insertFailed'), t('drawingInsertFailed'));
     } finally {
       setShowDrawingCanvas(false);
     }
@@ -512,8 +512,7 @@ export default function NoteEditScreen() {
                 isToolbarVisible={isKeyboardVisible || isEditorFocused || isTitleFocused}
                 isKeyboardVisible={isKeyboardVisible}
               />
-            ) : (
-              <View style={{
+            ) : (              <View style={{
                 flex: 1,
                 justifyContent: 'center',
                 alignItems: 'center',
@@ -524,7 +523,7 @@ export default function NoteEditScreen() {
                   fontSize: 16,
                   opacity: 0.6 
                 }}>
-                  正在初始化编辑器...
+                  {t('initializingEditor')}
                 </Text>
               </View>
             )}

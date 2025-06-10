@@ -126,14 +126,12 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
         addNote(newNote);
         setCurrentNoteId(newNoteId);
       }
-      
-      if (showToast) {
-        toastRef?.current?.show('保存成功', 'success');
+        if (showToast) {
+        toastRef?.current?.show(t('saveSuccess'), 'success');
       }
       return true;
-    } catch (error) {
-      if (showToast) {
-        toastRef?.current?.show('保存失败，请重试', 'error');
+    } catch (error) {      if (showToast) {
+        toastRef?.current?.show(t('saveFailed'), 'error');
       }
       return false;
     }
@@ -169,7 +167,7 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
     if (currentNoteId) {
       await togglePinNote(currentNoteId);
       setShowOptionsMenu(false);
-      toastRef?.current?.show('已更新置顶状态', 'success');
+      toastRef?.current?.show(t('pinStatusUpdated'), 'success');
     }
   }, [currentNoteId, togglePinNote, toastRef]);
 
@@ -197,11 +195,10 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
 
   const handleExportAsTxt = useCallback(async () => {
     if (titleInputRef?.current) {
-      titleInputRef.current.blur();
-    }
+      titleInputRef.current.blur();    }
     
     Keyboard.dismiss();
-    toastRef?.current?.show('正在导出文本文件...', 'loading');
+    toastRef?.current?.show(t('exportingText'), 'loading');
     
     try {
       const result = await exportAsTxt(currentOrTempNote);
@@ -211,18 +208,17 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
       return result;
     } catch (error) {
       toastRef?.current?.hide();
-      toastRef?.current?.show('导出文本文件时发生错误', 'error');
-      return { success: false, message: '导出文本文件时发生错误' };
+      toastRef?.current?.show(t('exportTextError'), 'error');
+      return { success: false, message: t('exportTextError') };
     }
-  }, [titleInputRef, toastRef, exportAsTxt, currentOrTempNote]);
+  }, [titleInputRef, toastRef, exportAsTxt, currentOrTempNote, t]);
 
   const handleExportAsMarkdown = useCallback(async () => {
     if (titleInputRef?.current) {
-      titleInputRef.current.blur();
-    }
+      titleInputRef.current.blur();    }
     
     Keyboard.dismiss();
-    toastRef?.current?.show('正在导出Markdown文件...', 'loading');
+    toastRef?.current?.show(t('exportingMarkdown'), 'loading');
     
     try {
       const result = await exportAsMarkdown(currentOrTempNote);
@@ -232,22 +228,21 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
       return result;
     } catch (error) {
       toastRef?.current?.hide();
-      toastRef?.current?.show('导出Markdown文件时发生错误', 'error');
-      return { success: false, message: '导出Markdown文件时发生错误' };
+      toastRef?.current?.show(t('exportMarkdownError'), 'error');
+      return { success: false, message: t('exportMarkdownError') };
     }
-  }, [titleInputRef, toastRef, exportAsMarkdown, currentOrTempNote]);
+  }, [titleInputRef, toastRef, exportAsMarkdown, currentOrTempNote, t]);
 
   const handleExportAsImage = useCallback(async () => {
     if (titleInputRef?.current) {
       titleInputRef.current.blur();
     }
-    
-    Keyboard.dismiss();
-    toastRef?.current?.show('正在导出图片...', 'loading');
+      Keyboard.dismiss();
+    toastRef?.current?.show(t('exportingImage'), 'loading');
     
     try {
       if (!noteViewRef.current) {
-        const message = '无法获取笔记视图以截图。';
+        const message = t('cannotGetNoteView');
         toastRef?.current?.hide();
         toastRef?.current?.show(message, 'error');
         return { success: false, message };
@@ -260,18 +255,17 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
       return result;
     } catch (error) {
       toastRef?.current?.hide();
-      toastRef?.current?.show('导出图片时发生错误', 'error');
-      return { success: false, message: '导出图片时发生错误' };
+      toastRef?.current?.show(t('exportImageError'), 'error');
+      return { success: false, message: t('exportImageError') };
     }
-  }, [titleInputRef, toastRef, noteViewRef, exportAsImage, currentOrTempNote]);
+  }, [titleInputRef, toastRef, noteViewRef, exportAsImage, currentOrTempNote, t]);
 
-  const handleExportAsWord = useCallback(async () => {
-    if (titleInputRef?.current) {
+  const handleExportAsWord = useCallback(async () => {    if (titleInputRef?.current) {
       titleInputRef.current.blur();
     }
     
     Keyboard.dismiss();
-    toastRef?.current?.show('正在导出Word文档...', 'loading');
+    toastRef?.current?.show(t('exportingWord'), 'loading');
     
     try {
       const result = await exportAsWord(currentOrTempNote);
@@ -281,10 +275,10 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
       return result;
     } catch (error) {
       toastRef?.current?.hide();
-      toastRef?.current?.show('导出Word文档时发生错误', 'error');
-      return { success: false, message: '导出Word文档时发生错误' };
+      toastRef?.current?.show(t('exportWordError'), 'error');
+      return { success: false, message: t('exportWordError') };
     }
-  }, [titleInputRef, toastRef, exportAsWord, currentOrTempNote]);
+  }, [titleInputRef, toastRef, exportAsWord, currentOrTempNote, t]);
 
   const handleTitleChange = useCallback((text: string) => {
     setTitle(text);
@@ -393,8 +387,7 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
     handleTitleChange,
     handleContentChange,
     handleOpenPageSettings,
-    handlePageSettingsChange,
-    handleCategoryChange,
+    handlePageSettingsChange,    handleCategoryChange,
     handleAddCategory,
     handleEditCategory,
     handleSaveCategory,
@@ -404,5 +397,6 @@ export function useNoteEdit(themes: any[], toastRef?: React.RefObject<ToastRef |
     setCanUndo,
     setCanRedo,
     getCurrentNotePinStatus,
+    t, // 导出翻译函数
   };
 }

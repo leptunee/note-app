@@ -87,15 +87,14 @@ export const CategoryModal = memo<CategoryModalProps>(({
   }, [category, isVisible]);
 
   // 使用 useCallback 缓存事件处理函数
-  const handleSave = useCallback(() => {
-    // 验证输入
+  const handleSave = useCallback(() => {    // 验证输入
     if (!name.trim()) {
-      setNameError(String(t('categoryNameRequired', '分类名称不能为空')));
+      setNameError(String(t('categoryNameRequired')));
       return;
     }
 
     if (name.trim().length > 20) {
-      setNameError(String(t('categoryNameTooLong', '分类名称不能超过20个字符')));
+      setNameError(String(t('categoryNameTooLong')));
       return;
     }
 
@@ -109,18 +108,16 @@ export const CategoryModal = memo<CategoryModalProps>(({
   }, [name, selectedIcon, selectedColor, onSave, onClose, t]);
 
   const handleDelete = useCallback(() => {
-    if (!category || !onDelete) return;
-
-    Alert.alert(
-      String(t('confirmDelete', '确认删除')),
-      String(t('confirmDeleteCategory', '确定要删除这个分类吗？该分类下的笔记将移动到"全部笔记"分类。')),
+    if (!category || !onDelete) return;    Alert.alert(
+      String(t('confirmDelete')),
+      String(t('confirmDeleteCategory')),
       [
         {
-          text: String(t('cancel', '取消')),
+          text: String(t('cancel')),
           style: 'cancel',
         },
         {
-          text: String(t('delete', '删除')),
+          text: String(t('delete')),
           style: 'destructive',
           onPress: () => {
             onDelete(category.id);
@@ -175,7 +172,7 @@ export const CategoryModal = memo<CategoryModalProps>(({
               {/* 头部 */}
               <View style={headerStyle}>
                 <Text style={headerTitleStyle}>
-                  {category ? String(t('editCategory', '编辑分类')) : String(t('addCategory', '新建分类'))}
+                  {category ? String(t('editCategory')) : String(t('addCategory'))}
                 </Text>
                 <TouchableOpacity style={localStyles.closeButton} onPress={onClose}>
                   <FontAwesome name="times" size={20} color={colors.secondaryText} />
@@ -186,7 +183,7 @@ export const CategoryModal = memo<CategoryModalProps>(({
                 <View style={localStyles.section}>
                   <View style={localStyles.sectionTitleRow}>
                     <Text style={[localStyles.sectionTitle, { color: colors.text }]}>
-                      {t('categoryName', '分类名称')}
+                      {t('categoryName')}
                     </Text>                    <Text style={[localStyles.charCount, { color: colors.secondaryText }]}>
                       {String(name.length)}/20
                     </Text>
@@ -201,7 +198,7 @@ export const CategoryModal = memo<CategoryModalProps>(({
                       },
                     ]}
                     value={name}                    onChangeText={handleNameChange}
-                    placeholder={t('enterCategoryName', '请输入分类名称')}
+                    placeholder={t('enterCategoryName')}
                     placeholderTextColor={colors.secondaryText}
                     maxLength={20}
                   />
@@ -213,7 +210,7 @@ export const CategoryModal = memo<CategoryModalProps>(({
                 {/* 图标选择 */}
                 <View style={localStyles.section}>
                   <Text style={[localStyles.sectionTitle, { color: colors.text }]}>
-                    {t('categoryIcon', '分类图标')}
+                    {t('categoryIcon')}
                   </Text>
                   <View style={localStyles.iconGrid}>
                     {CATEGORY_ICONS.map((icon) => (
@@ -237,7 +234,7 @@ export const CategoryModal = memo<CategoryModalProps>(({
                 </View>                {/* 颜色选择 */}
                 <View style={localStyles.section}>
                   <Text style={[localStyles.sectionTitle, { color: colors.text }]}>
-                    {t('categoryColor', '分类颜色')}
+                    {t('categoryColor')}
                   </Text>
                   <View style={localStyles.colorGrid}>
                     {CATEGORY_COLORS.map((color) => (
@@ -268,7 +265,7 @@ export const CategoryModal = memo<CategoryModalProps>(({
                     >
                       <FontAwesome name="trash" size={16} color="#F44336" />
                       <Text style={localStyles.deleteButtonText}>
-                        {t('delete', '删除')}
+                        {t('delete')}
                       </Text>
                     </TouchableOpacity>
                   )}
@@ -283,7 +280,7 @@ export const CategoryModal = memo<CategoryModalProps>(({
                   onPress={handleSave}
                 >
                   <Text style={localStyles.saveButtonText}>
-                    {t('save', '保存')}
+                    {t('save')}
                   </Text>
                 </TouchableOpacity>
               </View>

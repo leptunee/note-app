@@ -4,7 +4,7 @@ import { Category } from '../types/category';
 export const DEFAULT_CATEGORIES: Category[] = [
   {
     id: 'all',
-    name: '全部笔记',
+    name: 'allNotes', // 将在显示时通过翻译系统转换
     icon: 'file-text',
     color: '#2196F3',
     createdAt: Date.now(),
@@ -12,7 +12,7 @@ export const DEFAULT_CATEGORIES: Category[] = [
   },
   {
     id: 'uncategorized',
-    name: '未分类',
+    name: 'uncategorized', // 将在显示时通过翻译系统转换
     icon: 'folder',
     color: '#9E9E9E',
     createdAt: Date.now(),
@@ -20,7 +20,7 @@ export const DEFAULT_CATEGORIES: Category[] = [
   },
   {
     id: 'work',
-    name: '工作',
+    name: 'work', // 将在显示时通过翻译系统转换
     icon: 'briefcase',
     color: '#FF9800',
     createdAt: Date.now(),
@@ -28,7 +28,7 @@ export const DEFAULT_CATEGORIES: Category[] = [
   },
   {
     id: 'personal',
-    name: '个人',
+    name: 'personal', // 将在显示时通过翻译系统转换
     icon: 'user',
     color: '#4CAF50',
     createdAt: Date.now(),
@@ -36,7 +36,7 @@ export const DEFAULT_CATEGORIES: Category[] = [
   },
   {
     id: 'study',
-    name: '学习',
+    name: 'study', // 将在显示时通过翻译系统转换
     icon: 'graduation-cap',
     color: '#9C27B0',
     createdAt: Date.now(),

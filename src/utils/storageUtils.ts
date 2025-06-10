@@ -1,12 +1,12 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// 存储工具�?- 解决数据过大的问�?
+// Storage utility - solve data size issues
 export class ChunkedStorage {
-  private static readonly CHUNK_SIZE = 1.5 * 1024 * 1024; // 1.5MB 每块，留出安全边�?
+  private static readonly CHUNK_SIZE = 1.5 * 1024 * 1024; // 1.5MB per chunk, with safety margin
   private static readonly MAX_RETRIES = 3;
 
   /**
-   * 分块存储大数�?
+   * Store large data in chunks
    */
   static async setItem(key: string, data: any): Promise<void> {
     try {
@@ -15,15 +15,15 @@ export class ChunkedStorage {
       
 
       
-      // 如果数据小于限制，直接存�?
+      // 如果数据小于限制，直接存�?
       if (dataSize < this.CHUNK_SIZE) {
         await AsyncStorage.setItem(key, serializedData);
-        // 清理可能存在的分块数�?
+        // 清理可能存在的分块数�?
         await this.clearChunks(key);
         return;
       }
 
-      // 数据过大，需要分块存�?
+      // 数据过大，需要分块存�?
 
       
       const chunks: string[] = [];
@@ -42,7 +42,7 @@ export class ChunkedStorage {
       
       await Promise.all(promises);
       
-      // 存储元数�?
+      // 存储元数�?
       await AsyncStorage.setItem(`${key}_meta`, JSON.stringify({
         chunked: true,
         totalChunks: chunks.length,
@@ -84,14 +84,14 @@ export class ChunkedStorage {
 
 
 
-      // 读取所有分�?
+      // 读取所有分�?
       const chunkPromises = Array.from({ length: meta.totalChunks }, (_, index) =>
         AsyncStorage.getItem(`${key}_chunk_${index}`)
       );
 
       const chunks = await Promise.all(chunkPromises);
       
-      // 检查是否有丢失的分�?
+      // 检查是否有丢失的分�?
       const missingChunks = chunks.findIndex(chunk => chunk === null);
       if (missingChunks !== -1) {
 
@@ -114,7 +114,7 @@ export class ChunkedStorage {
    */
   static async removeItem(key: string): Promise<void> {
     try {
-      // 删除直接存储的数�?
+      // 删除直接存储的数�?
       await AsyncStorage.removeItem(key);
       
       // 检查并删除分块数据
@@ -137,7 +137,7 @@ export class ChunkedStorage {
   }
 
   /**
-   * 清理指定key的所有分�?
+   * 清理指定key的所有分�?
    */
   private static async clearChunks(key: string): Promise<void> {
     try {
@@ -165,7 +165,7 @@ export class ChunkedStorage {
  */
 export class DataRecovery {
   /**
-   * 尝试恢复损坏的数�?
+   * 尝试恢复损坏的数�?
    */
   static async attemptRecovery(key: string): Promise<any> {
     try {

@@ -2,6 +2,7 @@
 import React, { memo, useMemo, useCallback } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Animated } from 'react-native';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
+import { useTranslation } from 'react-i18next';
 
 interface ToolbarButtonProps {
   onPress: () => void;
@@ -73,10 +74,11 @@ export const SelectionToolbar = memo<SelectionToolbarProps>(({
   onPinSelected,
   onUnpinSelected,
   onExportSelected,
-  onMoveSelected,
-  selectedNotes,
+  onMoveSelected,  selectedNotes,
   notes
 }) => {
+  const { t } = useTranslation();
+  
   // 缓存计算值
   const isAllSelected = useMemo(() => selectedCount === totalCount, [selectedCount, totalCount]);
   
@@ -141,7 +143,7 @@ export const SelectionToolbar = memo<SelectionToolbarProps>(({
       <ToolbarButton 
         onPress={handleExitSelection}
         iconName="chevron-left"
-        text="返回"
+        text={t('back')}
         iconColor={colors.tint}
         textColor={colors.toolbarText}
       />
@@ -149,7 +151,7 @@ export const SelectionToolbar = memo<SelectionToolbarProps>(({
       <ToolbarButton 
         onPress={handleToggleSelectAll}
         iconName={isAllSelected ? "check-square" : "square-o"}
-        text="全选"
+        text={t('selectAll')}
         iconColor={colors.tint}
         textColor={colors.toolbarText}
       />
@@ -157,7 +159,7 @@ export const SelectionToolbar = memo<SelectionToolbarProps>(({
       <ToolbarButton 
         onPress={handleDeleteSelected}
         iconName="trash-o"
-        text="删除"
+        text={t('delete')}
         iconColor="#ff3b30"
         textColor="#ff3b30"
       />
@@ -165,7 +167,7 @@ export const SelectionToolbar = memo<SelectionToolbarProps>(({
       <ToolbarButton 
         onPress={handlePinAction}
         iconName={pinnedStatus.allSelectedArePinned ? "times" : "thumb-tack"}
-        text={pinnedStatus.allSelectedArePinned ? "取消" : "置顶"}
+        text={pinnedStatus.allSelectedArePinned ? t('unpin') : t('pin')}
         iconColor={colors.tint}
         textColor={colors.toolbarText}
       />
@@ -173,7 +175,7 @@ export const SelectionToolbar = memo<SelectionToolbarProps>(({
       <ToolbarButton 
         onPress={handleMoveSelected}
         iconName="folder-o"
-        text="移动"
+        text={t('move')}
         iconColor={colors.tint}
         textColor={colors.toolbarText}
       />
@@ -181,7 +183,7 @@ export const SelectionToolbar = memo<SelectionToolbarProps>(({
       <ToolbarButton 
         onPress={handleExportSelected}
         iconName="download"
-        text="导出"
+        text={t('export')}
         iconColor={colors.tint}
         textColor={colors.toolbarText}
       />

@@ -54,9 +54,8 @@ export const CategoryDisplay = memo<CategoryDisplayProps>(({
             size={8}
             color="#ffffff"
           />
-        </View>
-        <Text style={textStyle}>
-          {category.name}
+        </View>        <Text style={textStyle}>
+          {['allNotes', 'uncategorized', 'work', 'personal', 'study'].includes(category.name) ? t(category.name) : category.name}
         </Text>
         <FontAwesome 
           name="chevron-right" 

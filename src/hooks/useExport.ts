@@ -4,6 +4,7 @@ import { Note } from './useNotes';
 import * as MediaLibrary from 'expo-media-library';
 import { Platform } from 'react-native';
 import { captureRef } from 'react-native-view-shot';
+import { useTranslation } from 'react-i18next';
 
 /**
  * 导出结果类型
@@ -52,6 +53,8 @@ const extractPlainTextFromHTML = (html: string): string => {
  * 支持导出为文本文件(.txt)、Word文档(.docx)、Markdown(.md)和图片(.png)
  */
 export function useExport() {
+  const { t } = useTranslation();
+  
   /**
    * 将笔记导出为纯文本文件(.txt)
    * @param note 要导出的笔记
@@ -86,12 +89,11 @@ export function useExport() {
           mimeType: 'text/plain',
           dialogTitle: `分享笔记: ${note.title}`,
           UTI: 'public.plain-text' // 用于iOS
-        });
-        return { success: true, message: '笔记已成功导出为文本文件。' };
+        });        return { success: true, message: t('noteExportedAsText') };
       } else {
-        return { success: false, message: '分享功能不可用，无法导出文本文件。' };
-      }    } catch (error) {
-      return { success: false, message: '导出文本文件失败，请重试。' };
+        return { success: false, message: t('shareUnavailableText') };
+      }} catch (error) {
+      return { success: false, message: t('exportTextFailed') };
     }
   };
 
@@ -204,12 +206,11 @@ export function useExport() {
           mimeType: 'text/html',
           dialogTitle: `分享Word文档: ${note.title}`,
           UTI: 'public.html' // 用于iOS
-        });
-        return { success: true, message: '笔记已导出为Word文档并分享成功。' };
+        });        return { success: true, message: t('noteExportedAsWord') };
       } else {
-        return { success: false, message: '分享功能不可用，无法导出Word文档。' };
+        return { success: false, message: t('shareUnavailableWord') };
       }    } catch (error) {
-      return { success: false, message: '导出Word文档失败，请重试。' };
+      return { success: false, message: t('exportWordFailed') };
     }
   };
 
@@ -253,12 +254,11 @@ export function useExport() {
           mimeType: 'text/markdown',
           dialogTitle: `分享Markdown笔记: ${note.title}`,
           UTI: 'net.daringfireball.markdown' // 用于iOS
-        });
-        return { success: true, message: '笔记已导出为Markdown文件并分享成功。' };
+        });        return { success: true, message: t('noteExportedAsMarkdown') };
       } else {
-        return { success: false, message: '分享功能不可用，无法导出Markdown文件。' };
+        return { success: false, message: t('shareUnavailableMarkdown') };
       }    } catch (error) {
-      return { success: false, message: '导出Markdown失败，请重试。' };
+      return { success: false, message: t('exportMarkdownFailed') };
     }
   };  /**
    * 将笔记导出为图片(.png)
@@ -271,11 +271,11 @@ export function useExport() {
       // 请求存储权限（仅限 Android）
       if (Platform.OS === 'android') {
         const { status } = await MediaLibrary.requestPermissionsAsync();        if (status !== 'granted') {
-          return { success: false, message: '需要存储权限来保存图片。' };
+          return { success: false, message: t('storagePermissionRequired') };
         }
       }      // 截取视图为图片 - 确保捕获视图的有效性
       if (!viewRef.current) {
-        return { success: false, message: '无法获取笔记视图以截图。' };
+        return { success: false, message: t('cannotGetNoteView') };
       }// 临时显示导出视图以进行截图
       let totalHeight = 800; // 默认高度
       try {
@@ -421,9 +421,9 @@ export function useExport() {
       if (Platform.OS === 'android') {
         try {
           const asset = await MediaLibrary.createAssetAsync(fileUri);
-          const album = await MediaLibrary.getAlbumAsync('笔记应用');
+          const album = await MediaLibrary.getAlbumAsync(t('noteAppAlbum'));
           if (album === null) {
-            await MediaLibrary.createAlbumAsync('笔记应用', asset, false);
+            await MediaLibrary.createAlbumAsync(t('noteAppAlbum'), asset, false);
           } else {
             await MediaLibrary.addAssetsToAlbumAsync([asset], album, false);          }
           savedToGallery = true;
@@ -433,12 +433,11 @@ export function useExport() {
       }
 
       // 验证文件是否存在
-      try {        const fileInfo = await FileSystem.getInfoAsync(fileUri);
-        if (!fileInfo.exists) {
-          return { success: false, message: '创建的图片文件无效或无法访问。' };
+      try {        const fileInfo = await FileSystem.getInfoAsync(fileUri);        if (!fileInfo.exists) {
+          return { success: false, message: t('invalidImageFile') };
         }
       } catch (error) {
-        return { success: false, message: '检查文件时出错，无法访问图片。' };
+        return { success: false, message: t('imageAccessError') };
       }
 
       // 分享图片
@@ -449,36 +448,33 @@ export function useExport() {
             mimeType: 'image/png',
             dialogTitle: `分享笔记图片: ${note.title}`,
             UTI: 'public.png' // 用于iOS
-          });
-          if (Platform.OS === 'android' && savedToGallery) {
-            return { success: true, message: '图片已保存到相册并成功分享。' };
+          });          if (Platform.OS === 'android' && savedToGallery) {
+            return { success: true, message: t('imageSharedSuccessfully') };
           }
-          return { success: true, message: '图片已成功分享。' };        } else {
+          return { success: true, message: t('imageSharedOnly') };        } else {
           if (Platform.OS === 'android' && savedToGallery) {
-            return { success: true, message: '图片已保存到相册。分享功能当前不可用。' };
+            return { success: true, message: t('imageSavedOnly') };
           } else if (Platform.OS === 'ios') {
-            return { success: false, message: '分享功能不可用，无法完成图片导出。' };
+            return { success: false, message: t('shareImageFailed') };
           }
-          return { success: false, message: '分享功能不可用。' };        }
-      } catch (error) {
+          return { success: false, message: t('shareFeatureUnavailable') };        }      } catch (error) {
         if (Platform.OS === 'android' && savedToGallery) {
-          return { success: true, message: '图片已保存到相册，但分享失败。' };
+          return { success: true, message: t('imageSavedButShareFailed') };
         }
-        return { success: false, message: '图片分享失败。' };
+        return { success: false, message: t('imageShareFailed') };
       }
     } catch (error) {
-      return { success: false, message: '导出图片失败，请重试。' };
+      return { success: false, message: t('exportImageError') };
     }
   };
   /**
    * 批量导出多个笔记为纯文本文件(.txt)
    * @param notes 要导出的笔记数组
    * @returns 对象包含导出是否成功和消息
-   */
-  const exportMultipleAsTxt = async (notes: Note[]): Promise<ExportResult> => {
+   */  const exportMultipleAsTxt = async (notes: Note[]): Promise<ExportResult> => {
     try {
       if (notes.length === 0) {
-        return { success: false, message: '没有选择任何笔记。' };
+        return { success: false, message: t('noNotesSelected') };
       }
 
       // 构建合并的文件内容
@@ -522,11 +518,10 @@ export function useExport() {
           dialogTitle: `分享 ${notes.length} 篇笔记`,
           UTI: 'public.plain-text'
         });
-        return { success: true, message: `已成功导出 ${notes.length} 篇笔记为文本文件。` };
-      } else {
-        return { success: false, message: '分享功能不可用，无法导出文本文件。' };      }
+        return { success: true, message: t('batchExportedText', { count: notes.length }) };      } else {
+        return { success: false, message: t('shareUnavailableText') };      }
     } catch (error) {
-      return { success: false, message: '批量导出文本文件失败，请重试。' };
+      return { success: false, message: t('batchExportTextFailed') };
     }
   };
 
@@ -537,8 +532,7 @@ export function useExport() {
    */
   const exportMultipleAsWord = async (notes: Note[]): Promise<ExportResult> => {
     try {
-      if (notes.length === 0) {
-        return { success: false, message: '没有选择任何笔记。' };
+      if (notes.length === 0) {        return { success: false, message: t('noNotesSelected') };
       }
 
       // 构建HTML内容
@@ -547,7 +541,7 @@ export function useExport() {
       notes.forEach((note, index) => {
         const dateStr = new Date(note.createdAt).toLocaleDateString();
         const timeStr = new Date(note.createdAt).toLocaleTimeString();
-        const formattedContent = note.content || '<p>无内容</p>';
+        const formattedContent = note.content || `<p>${t('noContent')}</p>`;
         
         // 添加分页符（除了第一个笔记）
         if (index > 0) {
@@ -644,11 +638,10 @@ export function useExport() {
           dialogTitle: `分享 ${notes.length} 篇笔记`,
           UTI: 'public.html'
         });
-        return { success: true, message: `已成功导出 ${notes.length} 篇笔记为Word文档。` };
-      } else {
-        return { success: false, message: '分享功能不可用，无法导出Word文档。' };      }
+        return { success: true, message: t('batchExportedWord', { count: notes.length }) };
+      } else {        return { success: false, message: t('shareUnavailableWord') };      }
     } catch (error) {
-      return { success: false, message: '批量导出Word文档失败，请重试。' };
+      return { success: false, message: t('batchExportWordFailed') };
     }
   };
 
@@ -660,7 +653,7 @@ export function useExport() {
   const exportMultipleAsMarkdown = async (notes: Note[]): Promise<ExportResult> => {
     try {
       if (notes.length === 0) {
-        return { success: false, message: '没有选择任何笔记。' };
+        return { success: false, message: t('noNotesSelected') };
       }
 
       // 构建合并的Markdown内容
@@ -706,11 +699,10 @@ export function useExport() {
           dialogTitle: `分享 ${notes.length} 篇笔记`,
           UTI: 'net.daringfireball.markdown'
         });
-        return { success: true, message: `已成功导出 ${notes.length} 篇笔记为Markdown文件。` };
-      } else {
-        return { success: false, message: '分享功能不可用，无法导出Markdown文件。' };      }
+        return { success: true, message: t('batchExportedMarkdown', { count: notes.length }) };      } else {
+        return { success: false, message: t('shareUnavailableMarkdown') };      }
     } catch (error) {
-      return { success: false, message: '批量导出Markdown失败，请重试。' };
+      return { success: false, message: t('batchExportMarkdownFailed') };
     }
   };
 

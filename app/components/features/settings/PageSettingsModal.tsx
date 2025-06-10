@@ -35,10 +35,10 @@ interface PageSettingsModalProps {
 }
 
 const themes: PageTheme[] = [
-  { id: 'default', name: '默认', backgroundColor: '#ffffff', textColor: '#000000', editorBackgroundColor: '#f5f5f5', editorBorderColor: '#ddd' },
-  { id: 'dark', name: '淡绿', backgroundColor: '#e8f5e9', textColor: '#1b5e20', editorBackgroundColor: '#c8e6c9', editorBorderColor: '#81c784' },
-  { id: 'sepia', name: '护眼', backgroundColor: '#f8f1e3', textColor: '#5b4636', editorBackgroundColor: '#f0e8da', editorBorderColor: '#d8c8b6' },
-  { id: 'blue', name: '蓝色', backgroundColor: '#edf6ff', textColor: '#333333', editorBackgroundColor: '#e0f0ff', editorBorderColor: '#c0d8f0' },
+  { id: 'default', name: 'themeDefault', backgroundColor: '#ffffff', textColor: '#000000', editorBackgroundColor: '#f5f5f5', editorBorderColor: '#ddd' },
+  { id: 'dark', name: 'themeLight', backgroundColor: '#e8f5e9', textColor: '#1b5e20', editorBackgroundColor: '#c8e6c9', editorBorderColor: '#81c784' },
+  { id: 'sepia', name: 'themeSepia', backgroundColor: '#f8f1e3', textColor: '#5b4636', editorBackgroundColor: '#f0e8da', editorBorderColor: '#d8c8b6' },
+  { id: 'blue', name: 'themeBlue', backgroundColor: '#edf6ff', textColor: '#333333', editorBackgroundColor: '#e0f0ff', editorBorderColor: '#c0d8f0' },
 ];
 
 export const PageSettingsModal: React.FC<PageSettingsModalProps> = memo(({
@@ -61,7 +61,7 @@ export const PageSettingsModal: React.FC<PageSettingsModalProps> = memo(({
   const handleChooseImage = useCallback(async () => {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (permissionResult.granted === false) {
-      alert('需要相册权限才能选择背景图片！');
+      alert(t('albumPermissionRequired'));
       return;
     }
 
@@ -257,11 +257,10 @@ export const PageSettingsModal: React.FC<PageSettingsModalProps> = memo(({
           style={modalContainerStyle}
           // 阻止点击事件冒泡，防止点击内容区域时关闭窗口
           onTouchEnd={(e) => e.stopPropagation()}
-        >
-          {/* 模态框标题栏 */}
+        >          {/* 模态框标题栏 */}
           <View style={modalHeaderStyle}>
             <Text style={modalTitleStyle}>
-              页面设置
+              {t('pageSettings')}
             </Text>
             <TouchableOpacity
               style={styles.modalCloseBtn}
@@ -278,9 +277,8 @@ export const PageSettingsModal: React.FC<PageSettingsModalProps> = memo(({
             showsVerticalScrollIndicator={true}
             scrollEnabled={true} // 确保滚动可用
           >            {/* 纯色主题设置 */}
-            <View style={sectionContainerStyle}>
-              <Text style={sectionTitleStyle}>
-                纯色主题
+            <View style={sectionContainerStyle}>              <Text style={sectionTitleStyle}>
+                {t('solidTheme')}
               </Text>
               <View style={styles.optionGrid}>
                 {themes.map((theme) => (
@@ -288,23 +286,20 @@ export const PageSettingsModal: React.FC<PageSettingsModalProps> = memo(({
                     key={theme.id}
                     style={getThemeOptionStyle(theme)}
                     onPress={() => handleThemeSelect(theme.id)}
-                  >
-                    <Text style={themeTextStyle(theme)}>
-                      {theme.name}
+                  >                    <Text style={themeTextStyle(theme)}>
+                      {t(theme.name)}
                     </Text>
                   </TouchableOpacity>
                 ))}
               </View>
             </View>            {/* 自定义背景图片设置 */}
-            <View style={sectionContainerStyle}>
-              <Text style={sectionTitleStyle}>
-                自定义背景图片
+            <View style={sectionContainerStyle}>              <Text style={sectionTitleStyle}>
+                {t('customBackground')}
               </Text>
               
               {hasBackgroundImage && (
-                <View style={centerContainerStyle}>
-                  <Text style={backgroundStatusTextStyle}>
-                    当前已设置背景图片
+                <View style={centerContainerStyle}>                  <Text style={backgroundStatusTextStyle}>
+                    {t('currentBackgroundSet')}
                   </Text>
                 </View>
               )}
@@ -312,9 +307,8 @@ export const PageSettingsModal: React.FC<PageSettingsModalProps> = memo(({
               <TouchableOpacity
                 style={pageSettingsButtonStyle}
                 onPress={handleChooseImage}
-              >
-                <Text style={buttonTextStyle}>
-                  {hasBackgroundImage ? '更换自定义图片' : '选择自定义图片'}
+              >                <Text style={buttonTextStyle}>
+                  {hasBackgroundImage ? t('changeCustomImage') : t('selectCustomImage')}
                 </Text>
               </TouchableOpacity>
               
@@ -323,14 +317,13 @@ export const PageSettingsModal: React.FC<PageSettingsModalProps> = memo(({
                   style={removeButtonStyle}
                   onPress={handleRemoveImage}
                 >
-                  <Text style={buttonTextStyle}>移除背景图片</Text>
+                  <Text style={buttonTextStyle}>{t('removeBackgroundImage')}</Text>
                 </TouchableOpacity>
               )}
             </View>{/* 背景图片透明度设置 */}
             {hasBackgroundImage && (
-              <View style={sectionContainerStyle}>
-                <Text style={sectionTitleStyle}>
-                  背景图片透明度 ({opacityPercentage}%)
+              <View style={sectionContainerStyle}>                <Text style={sectionTitleStyle}>
+                  {t('backgroundImageOpacity')} ({opacityPercentage}%)
                 </Text>
                 <Slider
                   style={sliderStyle}
@@ -345,10 +338,9 @@ export const PageSettingsModal: React.FC<PageSettingsModalProps> = memo(({
                 />
               </View>
             )}            {/* 背景模糊度设置 */}
-            {hasBackgroundImage && (
-              <View style={sectionContainerStyle}>
+            {hasBackgroundImage && (              <View style={sectionContainerStyle}>
                 <Text style={sectionTitleStyle}>
-                  背景模糊度 ({blurValue}px)
+                  {t('backgroundImageBlur')} ({blurValue}px)
                 </Text>
                 <Slider
                   style={sliderStyle}
@@ -362,10 +354,9 @@ export const PageSettingsModal: React.FC<PageSettingsModalProps> = memo(({
                   thumbTintColor={sliderTrackColors.thumb}
                 />
               </View>
-            )}            {/* 页边距设置 */}
-            <View style={sectionContainerStyle}>
+            )}            {/* 页边距设置 */}            <View style={sectionContainerStyle}>
               <Text style={sectionTitleStyle}>
-                左右页边距 ({currentSettings.marginValue}px)
+                {t('leftRightMargin')} ({currentSettings.marginValue}px)
               </Text>
               <Slider
                                 style={sliderStyle}
@@ -381,12 +372,11 @@ export const PageSettingsModal: React.FC<PageSettingsModalProps> = memo(({
             </View>
           </ScrollView>
           
-          {/* 确定按钮 */}
-          <TouchableOpacity
+          {/* 确定按钮 */}          <TouchableOpacity
             style={closeButtonStyle}
             onPress={onClose}
           >
-            <Text style={[styles.closeButtonText, { color: '#fff' }]}>确定</Text>
+            <Text style={[styles.closeButtonText, { color: '#fff' }]}>{t('confirm')}</Text>
           </TouchableOpacity>
         </View>
       </View>

@@ -137,7 +137,7 @@ export const CategorySelectorModal = memo<CategorySelectorModalProps>(({
         >
           <View style={headerStyle}>
             <Text style={headerTitleStyle}>
-              {t('selectCategory', '选择分类')}
+              {t('selectCategory')}
             </Text>
             <TouchableOpacity style={styles.closeButton} onPress={onClose}>
               <FontAwesome name="times" size={18} color={colors.secondaryText} />
@@ -175,8 +175,7 @@ export const CategorySelectorModal = memo<CategorySelectorModalProps>(({
                       size={12}
                       color={isSelected ? '#ffffff' : category.color}
                     />
-                  </View>
-                  <Text
+                  </View>                  <Text
                     style={[
                       styles.optionName,
                       {
@@ -185,7 +184,9 @@ export const CategorySelectorModal = memo<CategorySelectorModalProps>(({
                       },
                     ]}
                   >
-                    {category.name}
+                    {['uncategorized', 'work', 'personal', 'study'].includes(category.name) 
+                      ? t(category.name) 
+                      : category.name}
                   </Text>
                   {isSelected && (
                     <FontAwesome
@@ -207,7 +208,7 @@ export const CategorySelectorModal = memo<CategorySelectorModalProps>(({
               >
                 <FontAwesome name="plus" size={14} color="#ffffff" />
                 <Text style={styles.addButtonText}>
-                  {t('addCategory', '新建分类')}
+                  {t('addCategory')}
                 </Text>
               </TouchableOpacity>
             </View>

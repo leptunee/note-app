@@ -91,9 +91,8 @@ export const CategorySidebar = memo<CategorySidebarProps>(({
       return () => clearImmediate(animationTimer);
     }
   }, [isVisible, slideAnimation]);
-
   // 缓存系统分类ID
-  const systemCategoryIds = useMemo(() => ['all', 'uncategorized'], []);
+  const systemCategoryIds = useMemo(() => ['all', 'uncategorized', 'work', 'personal', 'study'], []);
   // 缓存事件处理函数
   const handleCategoryPress = useCallback((categoryId: string) => {
     onCategorySelect(categoryId);
@@ -131,8 +130,7 @@ export const CategorySidebar = memo<CategorySidebarProps>(({
                 size={16}
                 color={isSelected ? colors.activeText : category.color}
               />
-            </View>
-            <Text
+            </View>            <Text
               style={[
                 styles.categoryName,
                 {
@@ -140,8 +138,9 @@ export const CategorySidebar = memo<CategorySidebarProps>(({
                   fontWeight: isSelected ? '600' : '400',
                 }
               ]}
-              numberOfLines={1}            >
-              {String(t(`category.${category.id}`, category.name))}
+              numberOfLines={1}
+            >
+              {isSystemCategory ? t(category.name) : category.name}
             </Text>
           </View>
           <Text
@@ -242,9 +241,8 @@ export const CategorySidebar = memo<CategorySidebarProps>(({
         ]}
         {...panResponder.panHandlers}
       >
-        <View style={[styles.sidebarHeader, { borderBottomColor: colors.border }]}>
-          <Text style={[styles.sidebarTitle, { color: colors.text }]}>
-            {String(t('categories', '分类'))}
+        <View style={[styles.sidebarHeader, { borderBottomColor: colors.border }]}>          <Text style={[styles.sidebarTitle, { color: colors.text }]}>
+            {String(t('categories'))}
           </Text>
           <TouchableOpacity onPress={onAddCategory}>
             <FontAwesome name="plus" size={20} color={colors.activeText} />

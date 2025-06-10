@@ -125,56 +125,54 @@ export const PERFORMANCE_CONFIG = {
   },
 };
 
-// 性能优化最佳实践指南
+// Performance optimization best practices guide
 export const PERFORMANCE_BEST_PRACTICES = {
   components: [
-    '使用React.memo包装纯组件以避免不必要的重渲染',
-    '使用useCallback缓存事件处理函数',
-    '使用useMemo缓存昂贵的计算结果',
-    '避免在render方法中创建新对象或函数',
-    '使用稳定的key属性用于列表项',
-    '合理使用shouldComponentUpdate或React.memo的第二个参数',
+    'Use React.memo to wrap pure components to avoid unnecessary re-renders',
+    'Use useCallback to cache event handlers',
+    'Use useMemo to cache expensive computation results',
+    'Avoid creating new objects or functions in render methods',
+    'Use stable key props for list items',
+    'Properly use shouldComponentUpdate or React.memo second parameter',
   ],
   
   lists: [
-    '使用FlatList而不是ScrollView来渲染大列表',
-    '实现getItemLayout以提高滚动性能',
-    '设置合适的initialNumToRender和maxToRenderPerBatch',
-    '启用removeClippedSubviews移除屏幕外视图',
-    '使用optimized keyExtractor',
-    '避免在renderItem中创建新函数',
+    'Use FlatList instead of ScrollView for rendering large lists',
+    'Implement getItemLayout to improve scroll performance',
+    'Set appropriate initialNumToRender and maxToRenderPerBatch',
+    'Enable removeClippedSubviews to remove off-screen views',
+    'Use optimized keyExtractor',
+    'Avoid creating new functions in renderItem',
   ],
   
   images: [
-    '使用合适的图片格式和大小',
-    '实现图片懒加载',
-    '使用图片缓存策略',
-    '压缩图片减少内存占用',
-    '避免同时加载大量图片',
+    'Use appropriate image formats and sizes',
+    'Implement image lazy loading',
+    'Use image caching strategies',
+    'Compress images to reduce memory usage',
+    'Avoid loading many images simultaneously',
   ],
   
   animations: [
-    '使用原生动画驱动（useNativeDriver: true）',
-    '避免在动画过程中更新大量状态',
-    '使用transform动画而不是layout动画',
-    '合理设置动画持续时间',
-    '避免复杂的动画嵌套',
-  ],
+    'Use native animation driver (useNativeDriver: true)',
+    'Avoid updating lots of state during animations',
+    'Use transform animations instead of layout animations',
+    'Set reasonable animation durations',
+    'Avoid complex animation nesting',  ],
   
   memory: [
-    '及时清理定时器和事件监听器',
-    '避免内存泄漏，正确使用useEffect的清理函数',
-    '限制缓存大小',
-    '定期清理不需要的数据',
-    '监控内存使用情况',
-  ],
+    'Clean up timers and event listeners promptly',
+    'Avoid memory leaks, properly use useEffect cleanup functions',
+    'Limit cache sizes',
+    'Regularly clean up unnecessary data',
+    'Monitor memory usage',  ],
   
   networking: [
-    '实现请求缓存策略',
-    '使用分页加载大量数据',
-    '避免重复请求',
-    '设置合理的超时时间',
-    '实现重试机制',
+    'Implement request caching strategies',
+    'Use pagination for loading large datasets',
+    'Avoid duplicate requests',
+    'Set reasonable timeout values',
+    'Implement retry mechanisms',
   ],
 };
 
@@ -222,43 +220,42 @@ export const PERFORMANCE_METRICS = {
 // 性能优化检查清单
 export const PERFORMANCE_CHECKLIST = {
   react: [
-    '✓ 组件使用React.memo优化',
-    '✓ 事件处理函数使用useCallback',
-    '✓ 昂贵计算使用useMemo',
-    '✓ 避免匿名函数作为props',
-    '✓ 使用稳定的key值',
+    '✓ Components optimized with React.memo',
+    '✓ Event handlers use useCallback',
+    '✓ Expensive computations use useMemo',
+    '✓ Avoid anonymous functions as props',
+    '✓ Use stable key values',
   ],
   
   rendering: [
-    '✓ 使用FlatList代替ScrollView',
-    '✓ 实现getItemLayout优化',
-    '✓ 启用removeClippedSubviews',
-    '✓ 合理设置渲染批次大小',
-    '✓ 优化图片加载和缓存',
+    '✓ Use FlatList instead of ScrollView',
+    '✓ Implement getItemLayout optimization',
+    '✓ Enable removeClippedSubviews',
+    '✓ Set reasonable render batch sizes',
+    '✓ Optimize image loading and caching',
   ],
   
   memory: [
-    '✓ 清理定时器和监听器',
-    '✓ 避免内存泄漏',
-    '✓ 限制缓存大小',
-    '✓ 监控内存使用',
-    '✓ 定期垃圾回收',
+    '✓ Clean up timers and listeners',
+    '✓ Avoid memory leaks',
+    '✓ Limit cache sizes',
+    '✓ Monitor memory usage',
+    '✓ Regular garbage collection',
   ],
   
   network: [
-    '✓ 实现请求缓存',
-    '✓ 避免重复请求',
-    '✓ 使用分页加载',
-    '✓ 设置请求超时',
-    '✓ 实现错误重试',
+    '✓ Implement request caching',
+    '✓ Avoid duplicate requests',
+    '✓ Use pagination loading',
+    '✓ Set request timeouts',
+    '✓ Implement error retry',
   ],
-  
-  bundle: [
-    '✓ 启用代码分割',
-    '✓ 移除未使用代码',
-    '✓ 压缩和混淆代码',
-    '✓ 优化依赖包大小',
-    '✓ 使用动态导入',
+    bundle: [
+    '✓ Enable code splitting',
+    '✓ Remove unused code',
+    '✓ Compress and minify code',
+    '✓ Optimize dependency size',
+    '✓ Use dynamic imports',
   ],
 };
 

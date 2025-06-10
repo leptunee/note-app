@@ -68,12 +68,11 @@ export const RichTextContent = memo<RichTextContentProps>(({
   //   onContentChange: onChangeContent,
   //   debounceMs: 500
   // });
-
   // 缓存当前选中的分类
   const selectedCategory = useMemo(() => 
     categories.find(cat => cat.id === selectedCategoryId) || 
-    { id: 'uncategorized', name: '未分类', icon: 'folder', color: '#999999', createdAt: 0, updatedAt: 0 },
-    [categories, selectedCategoryId]
+    { id: 'uncategorized', name: t('uncategorized'), icon: 'folder', color: '#999999', createdAt: 0, updatedAt: 0 },
+    [categories, selectedCategoryId, t]
   );
 
   // 使用 useCallback 缓存事件处理函数

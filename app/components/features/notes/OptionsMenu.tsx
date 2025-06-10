@@ -101,9 +101,8 @@ export const OptionsMenu = memo<OptionsMenuProps>(({
           <View style={menuStyle}>            <TouchableOpacity 
               style={optionItemStyle} 
               onPress={handleExportPress}
-            >
-              <FontAwesome name="download" size={ICON_SIZE} color={iconColor} style={menuStyles.optionIcon} />
-              <Text style={[menuStyles.optionText, textColor]}>导出笔记</Text>
+            >              <FontAwesome name="download" size={ICON_SIZE} color={iconColor} style={menuStyles.optionIcon} />
+              <Text style={[menuStyles.optionText, textColor]}>{t('exportNote')}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity 
@@ -115,18 +114,16 @@ export const OptionsMenu = memo<OptionsMenuProps>(({
                 size={ICON_SIZE} 
                 color={iconColor} 
                 style={menuStyles.optionIcon} 
-              />
-              <Text style={[menuStyles.optionText, textColor]}>
-                {isPinned ? '取消置顶' : '置顶笔记'}
+              />              <Text style={[menuStyles.optionText, textColor]}>
+                {isPinned ? t('unpinNote') : t('pinNote')}
               </Text>
             </TouchableOpacity>
             
             <TouchableOpacity 
               style={optionItemStyle} 
               onPress={handleDeletePress}
-            >
-              <FontAwesome name="trash-o" size={ICON_SIZE} color="#ff3b30" style={menuStyles.optionIcon} />
-              <Text style={[menuStyles.optionText, { color: '#ff3b30' }]}>删除笔记</Text>
+            >              <FontAwesome name="trash-o" size={ICON_SIZE} color="#ff3b30" style={menuStyles.optionIcon} />
+              <Text style={[menuStyles.optionText, { color: '#ff3b30' }]}>{t('deleteNote')}</Text>
             </TouchableOpacity>
           </View>
         )}

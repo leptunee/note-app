@@ -2,6 +2,7 @@
 import { useState, useCallback, useMemo } from 'react';
 import { Animated, Alert, BackHandler } from 'react-native';
 import { useFocusEffect } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 
 interface UseSelectionModeProps {
   deleteNote: (id: string) => Promise<void>;
@@ -11,6 +12,7 @@ interface UseSelectionModeProps {
 }
 
 export default function useSelectionMode({ deleteNote, deleteNotes, togglePinNote, setPinNotes }: UseSelectionModeProps) {
+  const { t } = useTranslation();
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [selectedNotes, setSelectedNotes] = useState<Set<string>>(new Set());
   const [showExportDialog, setShowExportDialog] = useState(false);
@@ -37,8 +39,9 @@ export default function useSelectionMode({ deleteNote, deleteNotes, togglePinNot
     Animated.spring(toolbarAnimation, {
       toValue: 0,
       useNativeDriver: true,
-    }).start();
-  }, [toolbarAnimation]);  // 切换笔记选择状态
+    }).start();  }, [toolbarAnimation]);
+  
+  // 切换笔记选择状态
   const toggleNoteSelection = useCallback((noteId: string) => {
     setSelectedNotes(prevSelected => {
       const newSelectedNotes = new Set(prevSelected);
@@ -47,48 +50,50 @@ export default function useSelectionMode({ deleteNote, deleteNotes, togglePinNot
       } else {
         newSelectedNotes.add(noteId);
       }
-      return newSelectedNotes;
-    });
-  }, []);  // 全选/取消全选
+      return newSelectedNotes;    });
+  }, []);
+  
+  // 全选/取消全选
   const toggleSelectAll = useCallback((allNotes: any[]) => {
     setSelectedNotes(prevSelected => {
       if (prevSelected.size === allNotes.length) {
         return new Set();
       } else {
         return new Set(allNotes.map(note => note.id));
-      }
-    });
+      }    });
   }, []);
+  
   // 删除选中的笔记
   const deleteSelectedNotes = useCallback(() => {
     const selectedCount = selectedNotes.size;
-    const noteText = selectedCount === 1 ? '笔记' : '篇笔记';
+    const noteText = selectedCount === 1 ? t('singleNote') : t('multipleNotes');
     
     Alert.alert(
-      '确认删除',
-      `确定要删除所选的 ${selectedCount} ${noteText}吗？`,
+      t('confirmDelete'),
+      `${t('confirmDeleteSelected')} ${selectedCount} ${noteText}${t('questionMark')}`,
       [
         {
-          text: '取消',
+          text: t('cancel'),
           style: 'cancel',
-        },        {
-          text: '删除',
+        },
+        {
+          text: t('delete'),
           style: 'destructive',
           onPress: async () => {
             const selectedArray = Array.from(selectedNotes);
             await deleteNotes(selectedArray);
             exitSelectionMode();
           },
-        },
-      ]
+        },      ]
     );
-  }, [selectedNotes, deleteNotes, exitSelectionMode]);// 置顶选中的笔记 - 使用批量操作避免卡顿
+  }, [selectedNotes, deleteNotes, exitSelectionMode, t]);
+  
+  // 置顶选中的笔记 - 使用批量操作避免卡顿
   const pinSelectedNotes = useCallback(async () => {
     const selectedArray = Array.from(selectedNotes);
     // 统一设置所有选中的笔记为置顶状态
     await setPinNotes(selectedArray, true);
-    exitSelectionMode();
-  }, [selectedNotes, setPinNotes, exitSelectionMode]);
+    exitSelectionMode();  }, [selectedNotes, setPinNotes, exitSelectionMode]);
 
   // 取消置顶选中的笔记
   const unpinSelectedNotes = useCallback(async () => {
@@ -97,14 +102,15 @@ export default function useSelectionMode({ deleteNote, deleteNotes, togglePinNot
     await setPinNotes(selectedArray, false);
     exitSelectionMode();
   }, [selectedNotes, setPinNotes, exitSelectionMode]);
+
   // 导出选中的笔记
   const exportSelectedNotes = useCallback(() => {
     if (selectedNotes.size === 0) {
-      Alert.alert('提示', '请先选择要导出的笔记');
+      Alert.alert(t('hint'), t('selectNotesFirst'));
       return;
     }
     setShowExportDialog(true);
-  }, [selectedNotes]);
+  }, [selectedNotes, t]);
 
   // 关闭导出对话框
   const closeExportDialog = useCallback(() => {
@@ -123,9 +129,10 @@ export default function useSelectionMode({ deleteNote, deleteNotes, togglePinNot
       };
 
       const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
-      return () => subscription.remove();
-    }, [isSelectionMode, exitSelectionMode])
-  );  return {
+      return () => subscription.remove();    }, [isSelectionMode, exitSelectionMode])
+  );
+  
+  return {
     isSelectionMode,
     selectedNotes,
     toolbarAnimation,

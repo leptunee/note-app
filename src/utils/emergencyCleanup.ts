@@ -37,12 +37,11 @@ export class EmergencyDataCleanup {
       }
       
     } catch (error) {      // 如果批量删除失败，尝试逐个删除
-      try {
-        await AsyncStorage.removeItem('NOTES');
+      try {        await AsyncStorage.removeItem('NOTES');
         await AsyncStorage.removeItem('CATEGORIES');
       } catch (fallbackError) {
         // 记录错误但不抛出
-        throw new Error('无法清理损坏的数据');
+        throw new Error('Failed to clean corrupted data');
       }
     }
   }

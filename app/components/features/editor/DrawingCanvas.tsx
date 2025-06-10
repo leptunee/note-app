@@ -4,6 +4,7 @@ import { View, PanResponder, Dimensions, StyleSheet, TouchableOpacity, Text, Mod
 import { FontAwesome } from '@expo/vector-icons';
 import Svg, { Path } from 'react-native-svg';
 import { captureRef } from 'react-native-view-shot';
+import { useTranslation } from 'react-i18next';
 
 interface Point {
   x: number;
@@ -31,7 +32,8 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
   onSave,
   onCancel,  visible
 }) => {
-  const colorScheme = useColorScheme();  const [paths, setPaths] = useState<DrawingPath[]>([]);
+  const { t } = useTranslation();
+  const colorScheme = useColorScheme();const [paths, setPaths] = useState<DrawingPath[]>([]);
   const [currentPath, setCurrentPath] = useState<string>('');
   const [currentColor, setCurrentColor] = useState('#000000');  const [currentWidth, setCurrentWidth] = useState(3);  const [isEraserMode, setIsEraserMode] = useState(false); // 橡皮擦模式状态
   const [eraserType, setEraserType] = useState<'pixel' | 'stroke'>('pixel'); // 橡皮擦类型
@@ -312,7 +314,7 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
           </View>
         </View>{/* 颜色选择器 */}
         <View style={[styles.colorPicker, { backgroundColor: colorScheme === 'dark' ? '#2a2a2a' : '#f8f8f8' }]}>
-          <Text style={[styles.sectionTitle, { color: colorScheme === 'dark' ? '#fff' : '#333' }]}>颜色:</Text>
+          <Text style={[styles.sectionTitle, { color: colorScheme === 'dark' ? '#fff' : '#333' }]}>{t('color')}:</Text>
           <View style={styles.colorRow}>
             {colors.map((color) => (
               <TouchableOpacity
@@ -330,9 +332,8 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
             ))}
           </View>
         </View>        {/* 笔刷大小选择器 */}
-        <View style={[styles.widthPicker, { backgroundColor: colorScheme === 'dark' ? '#2a2a2a' : '#f8f8f8' }]}>
-          <Text style={[styles.sectionTitle, { color: colorScheme === 'dark' ? '#fff' : '#333' }]}>
-            笔刷: {isEraserMode ? (eraserType === 'pixel' ? '像素橡皮' : '笔画橡皮') : '画笔'}
+        <View style={[styles.widthPicker, { backgroundColor: colorScheme === 'dark' ? '#2a2a2a' : '#f8f8f8' }]}>          <Text style={[styles.sectionTitle, { color: colorScheme === 'dark' ? '#fff' : '#333' }]}>
+            {t('brush')}: {isEraserMode ? (eraserType === 'pixel' ? t('pixelEraser') : t('strokeEraser')) : t('paint')}
           </Text>
           <View style={styles.widthRow}>            {widths.map((width) => (
               <TouchableOpacity

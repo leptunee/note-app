@@ -1,6 +1,7 @@
 // 性能优化版本的笔记项组件
 import React, { memo, useMemo, useCallback } from 'react';
 import { View, Text, TouchableOpacity, Image, StyleSheet } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import Colors from '@/constants/Colors';
 import { extractFirstImageUri } from '@/src/utils/imageUtils';
@@ -63,6 +64,7 @@ export const NoteItem = memo<NoteItemProps>(({
   onToggleSelection,
   truncateContent
 }) => {
+  const { t } = useTranslation();
   // 使用 useMemo 缓存计算结果
   const truncatedContent = useMemo(() => 
     truncateContent(note.content, 80), 
@@ -139,10 +141,9 @@ export const NoteItem = memo<NoteItemProps>(({
           />
         </View>
       )}      <View style={noteHeaderStyle}>
-        <View style={styles.noteTitleRow}>
-          <Text style={titleStyle} numberOfLines={1}>
-            {note.title || '无标题'}
-          </Text>          {note.pinned && (
+        <View style={styles.noteTitleRow}>          <Text style={titleStyle} numberOfLines={1}>
+            {note.title || t('untitledNote')}
+          </Text>{note.pinned && (
             <FontAwesome
               name="thumb-tack"
               size={12}
@@ -164,9 +165,8 @@ export const NoteItem = memo<NoteItemProps>(({
             resizeMode="cover"
           />
         )}
-        <View style={[styles.noteTextContainer, firstImageUri && styles.noteTextWithImage]}>
-          <Text style={contentStyle} numberOfLines={2}>
-            {truncatedContent || '无内容'}
+        <View style={[styles.noteTextContainer, firstImageUri && styles.noteTextWithImage]}>          <Text style={contentStyle} numberOfLines={2}>
+            {truncatedContent || t('noContent')}
           </Text>
         </View>
       </View>

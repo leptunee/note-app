@@ -1,5 +1,6 @@
 import React, { memo, useCallback, useMemo } from 'react';
 import { View, TouchableOpacity, Text, StyleSheet, Alert, useColorScheme } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
 import { FontAwesome } from '@expo/vector-icons';
@@ -25,11 +26,11 @@ export const CustomToolbar = memo<CustomToolbarProps>(({
   isItalic = false,
   isUnderline = false,
   isBulletList = false,
-  isOrderedList = false,
-  onOpenDrawing,
+  isOrderedList = false,  onOpenDrawing,
   isDisabled = false
 }) => {
-  const colorScheme = useColorScheme();  const toolbarStyle = useMemo(() => [
+  const { t } = useTranslation();
+  const colorScheme = useColorScheme();const toolbarStyle = useMemo(() => [
     styles.toolbar,
     {
       backgroundColor: backgroundColor || (colorScheme === 'dark' ? '#2c2c2c' : '#ffffff'),
@@ -116,7 +117,6 @@ export const CustomToolbar = memo<CustomToolbarProps>(({
       // 静默处理错误
     }
   }, [editor]);
-
   const insertImages = useCallback(async (images: ImagePicker.ImagePickerAsset[]) => {
     if (!editor) return;
 
@@ -167,7 +167,7 @@ export const CustomToolbar = memo<CustomToolbarProps>(({
 
         if (!insertSuccess) {
           try {
-            const imageHtml = `<img src="${imageUri}" style="max-width: 100%; height: auto; display: block; margin: 10px 0; border-radius: 4px;" alt="插入的图片" title="插入的图片" />`;
+            const imageHtml = `<img src="${imageUri}" style="max-width: 100%; height: auto; display: block; margin: 10px 0; border-radius: 4px;" alt="${t('insertedImage')}" title="${t('insertedImage')}" />`;
             
             if (typeof editor.insertContent === 'function') {
               await editor.insertContent(imageHtml);
@@ -182,7 +182,7 @@ export const CustomToolbar = memo<CustomToolbarProps>(({
         }
 
         if (!insertSuccess) {
-          Alert.alert('插入失败', '当前编辑器版本不支持图片插入功能');
+          Alert.alert(t('insertFailed'), t('editorVersionNotSupported'));
           return;
         }
 
@@ -194,16 +194,14 @@ export const CustomToolbar = memo<CustomToolbarProps>(({
           // 静默处理验证错误
         }
       }
-    } catch (error) {
-      Alert.alert('插入失败', '图片插入失败，请重试');
+    } catch (error) {        Alert.alert(t('insertFailed'), t('imageInsertFailed'));
     }
-  }, [editor]);
-
+  }, [editor, t]);
   const handleImagePicker = useCallback(async () => {
     try {
       const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (permissionResult.granted === false) {
-        Alert.alert('权限被拒绝', '需要相册权限才能选择图片！');
+        Alert.alert(t('permissionDenied'), t('albumPermissionRequired'));
         return;
       }
 
@@ -218,9 +216,9 @@ export const CustomToolbar = memo<CustomToolbarProps>(({
         await insertImages(result.assets);
       }
     } catch (error) {
-      Alert.alert('错误', '选择图片时出现错误');
+      Alert.alert(t('error'), t('imageSelectionError'));
     }
-  }, [insertImages]);  return (
+  }, [insertImages, t]);return (
     <View style={toolbarStyle}>
       <TouchableOpacity style={getButtonStyle(isBold)} onPress={handleBold}>
         <FontAwesome 

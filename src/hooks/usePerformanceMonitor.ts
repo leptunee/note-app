@@ -238,36 +238,34 @@ export const usePerformanceMonitor = (options?: {
   ): string[] => {
     const recommendations: string[] = [];
 
-    if (!currentMetrics) return recommendations;
-
-    // 内存相关建议
+    if (!currentMetrics) return recommendations;    // 内存相关建议
     if (currentMetrics.memoryUsage > 50 * 1024 * 1024) { // 50MB
-      recommendations.push('考虑清理不必要的缓存数据');
-      recommendations.push('检查是否有内存泄漏');
+      recommendations.push('Consider cleaning unnecessary cache data');
+      recommendations.push('Check for memory leaks');
     }
 
     // 渲染性能建议
     if (currentMetrics.renderTime > 16) {
-      recommendations.push('优化组件渲染，使用React.memo');
-      recommendations.push('减少不必要的重渲染');
+      recommendations.push('Optimize component rendering, use React.memo');
+      recommendations.push('Reduce unnecessary re-renders');
     }
 
     // FPS相关建议
     if (currentMetrics.fps > 0 && currentMetrics.fps < 55) {
-      recommendations.push('优化动画使用原生驱动');
-      recommendations.push('减少复杂的UI操作');
+      recommendations.push('Optimize animations to use native driver');
+      recommendations.push('Reduce complex UI operations');
     }
 
     // 组件数量建议
     if (currentMetrics.componentCount > 50) {
-      recommendations.push('考虑使用虚拟化列表');
-      recommendations.push('及时卸载不需要的组件');
+      recommendations.push('Consider using virtualized lists');
+      recommendations.push('Unload unnecessary components promptly');
     }
 
     // 基于警告的建议
     const hasHighSeverityAlerts = currentAlerts.some(alert => alert.severity === 'high');
     if (hasHighSeverityAlerts) {
-      recommendations.push('立即处理高优先级性能问题');
+      recommendations.push('Handle high-priority performance issues immediately');
     }
 
     return recommendations;
