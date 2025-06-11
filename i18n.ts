@@ -27,10 +27,13 @@ const resources = {      zh: {
       noCategoryNotes: '该分类下暂无笔记',
       selectDifferentCategory: '选择其他分类查看',
       foundResults_one: '找到 {{count}} 条笔记',
-      foundResults_other: '找到 {{count}} 条笔记',
-      about: '关于',
+      foundResults_other: '找到 {{count}} 条笔记',      about: '关于',
       version: '版本号',
-      authorEmail: '作者邮箱',      description: 'demo版本，后续功能开发中',      appName: '做笔记',
+      authorEmail: '作者邮箱',      description: '记录思考，备份想法。\n让 TakeNotes 成为您思考的延伸。',      appName: '做笔记',
+      // 赞助相关
+      sponsorAuthor: '赞助作者',
+      supportDevelopment: '支持开发',
+      thankYouForSupport: '感谢您的支持！',
       // 分类相关
       allNotes: '全部笔记',
       uncategorized: '未分类',
@@ -43,7 +46,7 @@ const resources = {      zh: {
       categoryColor: '分类颜色',
       categoryNameRequired: '分类名称不能为空',
       categoryNameTooLong: '分类名称不能超过20个字符',      enterCategoryName: '请输入分类名称',
-      confirmDeleteCategory: '确定要删除这个分类吗？该分类下的笔记将移动到"全部笔记"分类。',
+      confirmDeleteCategory: '确定要删除这个分类吗？该分类下的笔记将移动到未分类目录下。',
       confirmDelete: '确认删除',      // 导出相关
       hint: '提示',
       selectNotesFirst: '请先选择要导出的笔记',
@@ -144,6 +147,14 @@ const resources = {      zh: {
       writeSomething: '开始记录...',
       initializingEditor: '正在初始化编辑器...',
       
+      // 欢迎引导笔记相关
+      welcomeNoteTitle: '📝 欢迎使用 TakeNotes！',
+      welcomeGuide: '新用户引导',
+      devMode: '开发者模式',
+      resetWelcomeStatus: '重置欢迎状态',
+      resetSuccess: '欢迎状态已重置。重启应用后将再次显示引导笔记。',
+      resetFailed: '重置失败，请重试。',
+      
       // 错误提示和编辑器相关
       insertFailed: '插入失败',
       cannotInsertDrawingToEditor: '无法将涂鸦插入到编辑器中',
@@ -178,10 +189,13 @@ const resources = {      zh: {
       noCategoryNotes: 'No notes in this category',
       selectDifferentCategory: 'Select a different category',
       foundResults_one: 'Found {{count}} note',
-      foundResults_other: 'Found {{count}} notes',
-      about: 'About',
+      foundResults_other: 'Found {{count}} notes',      about: 'About',
       version: 'Version',
-      authorEmail: 'Author Email',      description: 'Demo version, more features coming soon',      appName: 'Take Notes',
+      authorEmail: 'Author Email',      description: 'Record thoughts, backup ideas.\nLet TakeNotes be an extension of your thinking.',      appName: 'Take Notes',
+      // Sponsor related
+      sponsorAuthor: 'Sponsor Author',
+      supportDevelopment: 'Support Development',
+      thankYouForSupport: 'Thank you for your support!',
       // Categories related
       allNotes: 'All Notes',
       uncategorized: 'Uncategorized',
@@ -194,7 +208,7 @@ const resources = {      zh: {
       categoryColor: 'Category Color',
       categoryNameRequired: 'Category name cannot be empty',
       categoryNameTooLong: 'Category name cannot exceed 20 characters',      enterCategoryName: 'Enter category name',
-      confirmDeleteCategory: 'Are you sure you want to delete this category? Notes in this category will be moved to "All Notes".',
+      confirmDeleteCategory: 'Are you sure you want to delete this category? Notes in this category will be moved to "Uncategorized".',
       confirmDelete: 'Confirm Delete',      // Export related
       hint: 'Hint',
       selectNotesFirst: 'Please select notes to export first',
@@ -297,6 +311,14 @@ const resources = {      zh: {
       color: 'Color',      // 编辑器占位符
       writeSomething: 'Write something...',
       initializingEditor: 'Initializing editor...',
+      
+      // 欢迎引导笔记相关
+      welcomeNoteTitle: '📝 Welcome to TakeNotes!',
+      welcomeGuide: 'Welcome Guide',
+      devMode: 'Developer Mode',
+      resetWelcomeStatus: 'Reset Welcome Status',
+      resetSuccess: 'Welcome status has been reset. The guide note will appear again after restarting the app.',
+      resetFailed: 'Reset failed, please try again.',
       
       // 错误提示和编辑器相关
       insertFailed: 'Insert Failed',

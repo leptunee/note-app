@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, useColorScheme, Linking, Image, StatusBar } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, useColorScheme, Linking, Image, StatusBar, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
@@ -9,8 +9,28 @@ export default function AboutScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const colorScheme = useColorScheme() ?? 'light';
-  const handleEmailPress = () => {
+    const handleEmailPress = () => {
     Linking.openURL('mailto:leptunee@qq.com');
+  };  const handleSponsorPress = () => {
+    Alert.alert(
+      t('sponsorAuthor'),
+      t('supportDevelopment'),
+      [
+        {
+          text: '赞赏码',
+          onPress: () => {
+            Alert.alert(
+              '赞赏支持',
+              '感谢您的支持！可通过微信或支付宝扫描赞赏码支持开发者。\n\n赞赏功能即将开放，敬请期待！'
+            );
+          }
+        },
+        {
+          text: '取消',
+          style: 'cancel'
+        }
+      ]
+    );
   };
 
   return (
@@ -58,9 +78,7 @@ export default function AboutScreen() {
             <Text style={[styles.infoValue, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
               1.0.0
             </Text>
-          </View>
-
-          <TouchableOpacity style={styles.infoItem} onPress={handleEmailPress}>
+          </View>          <TouchableOpacity style={styles.infoItem} onPress={handleEmailPress}>
             <FontAwesome 
               name="envelope" 
               size={20} 
@@ -74,7 +92,24 @@ export default function AboutScreen() {
               leptunee@qq.com
             </Text>          
           </TouchableOpacity>
-        </View>        
+
+          <TouchableOpacity style={[styles.infoItem, styles.sponsorButton]} onPress={handleSponsorPress}>
+            <FontAwesome 
+              name="heart" 
+              size={20} 
+              color="#FF6B6B" 
+              style={styles.infoIcon} 
+            />            
+            <Text style={[styles.sponsorText, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
+              {t('sponsorAuthor')}
+            </Text>
+            <FontAwesome 
+              name="chevron-right" 
+              size={16} 
+              color={colorScheme === 'dark' ? '#ccc' : '#666'} 
+            />
+          </TouchableOpacity>
+        </View>
         <Text style={[styles.description, { color: colorScheme === 'dark' ? '#888' : '#999' }]}>
           {t('description')}
         </Text>
@@ -146,9 +181,18 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '500',
     flex: 1,
-  },
-  emailText: {
+  },  emailText: {
     textDecorationLine: 'underline',
+  },
+  sponsorButton: {
+    backgroundColor: 'rgba(255, 107, 107, 0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 107, 107, 0.3)',
+  },
+  sponsorText: {
+    fontSize: 16,
+    fontWeight: '600',
+    flex: 1,
   },
   description: {
     fontSize: 14,

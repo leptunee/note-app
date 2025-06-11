@@ -3,6 +3,8 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { ChunkedStorage, DataRecovery } from '../utils/storageUtils';
 import { EmergencyDataCleanup } from '../utils/emergencyCleanup';
 import { DEFAULT_CATEGORIES } from '../constants/categories';
+import { isNewUser, markWelcomeSeen, createWelcomeNote } from '../utils/welcomeNote';
+import * as Localization from 'expo-localization';
 
 export type Note = {
   id: string;
@@ -85,8 +87,7 @@ export function useNotes() {
               notesData = JSON.stringify(recoveredNotes);
             }
           }
-        }
-          if (notesData) {
+        }          if (notesData) {
           const parsedNotes = JSON.parse(notesData);
           
           // Migrate all notes to "Uncategorized" category
@@ -101,11 +102,52 @@ export function useNotes() {
           );
           if (hasChanges) {
             await ChunkedStorage.setItem(NOTES_KEY, migratedNotes);
-          }
+          }          // 检查是否需要添加欢迎笔记（即使已有笔记）
+          const isFirstTime = await isNewUser();
           
-          setNotes(migratedNotes);
+          if (isFirstTime) {
+            // 检查是否已经有欢迎笔记
+            const hasWelcomeNote = migratedNotes.some((note: Note) => 
+              note.title.includes('欢迎使用 TakeNotes') || 
+              note.title.includes('Welcome to TakeNotes')
+            );
+            
+            if (!hasWelcomeNote) {
+              // 创建欢迎引导笔记并添加到现有笔记前面
+              const systemLanguage = Localization.locale || 'zh';
+              const welcomeNote = createWelcomeNote(systemLanguage);
+              const notesWithWelcome = [welcomeNote, ...migratedNotes];
+              
+              // 保存更新后的笔记列表
+              await ChunkedStorage.setItem(NOTES_KEY, notesWithWelcome);
+              setNotes(notesWithWelcome);
+              
+              // 标记用户已看过欢迎内容
+              await markWelcomeSeen();
+            } else {
+              setNotes(migratedNotes);
+            }
+          } else {
+            setNotes(migratedNotes);
+          }
         } else {
-          setNotes([]);
+          // 如果没有笔记数据，检查是否为新用户
+          const isFirstTime = await isNewUser();
+          if (isFirstTime) {
+            // 创建欢迎引导笔记
+            const systemLanguage = Localization.locale || 'zh';
+            const welcomeNote = createWelcomeNote(systemLanguage);
+            const initialNotes = [welcomeNote];
+            
+            // 保存初始笔记
+            await ChunkedStorage.setItem(NOTES_KEY, initialNotes);
+            setNotes(initialNotes);
+            
+            // 标记用户已看过欢迎内容
+            await markWelcomeSeen();
+          } else {
+            setNotes([]);
+          }
         }
 
         // 使用新的存储系统加载分类
