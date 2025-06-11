@@ -18,7 +18,7 @@
       "developmentClient": false,
       "distribution": "store",
       "android": {
-        "buildType": "apk" // 或 "aab"（推荐 aab 上架商店）
+        "buildType": "app-bundle" // 或 "aab"（推荐 aab 上架商店）
       }
     }
   },
