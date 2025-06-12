@@ -143,7 +143,6 @@ npm run prebuild:android
 ### Build Scripts
 - `build:android`: Build Android application
 - `build:preview`: Build preview version
-```
 
 ## 📁 Project Structure
 
@@ -241,6 +240,20 @@ All forms of contributions are welcome! Please follow these steps:
 ## 📄 License
 
 This project is licensed under the [MIT License](LICENSE).
+
+## 🔒 Privacy Policy
+
+We take your privacy and data security very seriously:
+
+- 📖 **[Privacy Policy (English)](privacy-policy-en.md)**
+- 📖 **[隐私政策 (中文)](privacy-policy.md)**
+
+**Core Commitments**:
+- ✅ All note data is stored completely locally
+- ✅ No collection of personal information or note content
+- ✅ No user behavior tracking
+- ✅ No ads, no third-party data sharing
+- ✅ Open source and transparent, code is auditable
 
 ## 🎯 Project Goals
 
