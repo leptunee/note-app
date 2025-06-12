@@ -39,3 +39,6 @@ yarn-error.*
 # IDE
 .idea/
 .vscode/
+
+# Expo credentials
+credentials.json
