@@ -1,14 +1,19 @@
 {
   "name": "takenotes",
   "main": "expo-router/entry",
-  "version": "1.0.0",
-  "scripts": {
+  "version": "1.0.0",  "scripts": {
     "start": "expo start",
     "android": "expo run:android",
     "ios": "expo run:ios",
     "web": "expo start --web",
     "test": "jest --watchAll",
-    "postinstall": "patch-package"
+    "postinstall": "patch-package",
+    "prebuild:clean": "expo prebuild --clean",
+    "prebuild:android": "expo prebuild --platform android --clean && node scripts/fix-permissions.js",
+    "fix-permissions": "node scripts/fix-permissions.js",
+    "check-permissions": "node scripts/check-permissions.js",
+    "build:android": "npm run prebuild:android && expo run:android",
+    "build:preview": "npm run prebuild:android && eas build --platform android --profile preview"
   },
   "jest": {
     "preset": "jest-expo"

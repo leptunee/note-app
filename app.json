@@ -13,18 +13,25 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },    "ios": {
-      "supportsTablet": true,
-      "statusBarStyle": "auto"
-    },
-    "android": {
+      "supportsTablet": true
+    },    "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
       "package": "com.leptunee.takenotes",
-      "statusBarStyle": "auto",
-      "statusBarTranslucent": false
+      "permissions": [
+        "android.permission.INTERNET",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.SYSTEM_ALERT_WINDOW",
+        "android.permission.VIBRATE"
+      ],
+      "blockedPermissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.CAMERA"
+      ]
     },
     "web": {
       "bundler": "metro",

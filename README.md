@@ -121,6 +121,30 @@ npm run android
 npm run web
 ```
 
+5. **Permission management**
+```bash
+# Check permission configuration
+npm run check-permissions
+
+# Fix permission configuration
+npm run fix-permissions
+
+# Android clean build (auto-fix permissions)
+npm run prebuild:android
+```
+
+## 🛠️ Development Tools
+
+### Permission Management
+- `check-permissions`: Check Android permission configuration
+- `fix-permissions`: Automatically fix sensitive permission configuration
+- `prebuild:android`: Clean rebuild Android project and fix permissions
+
+### Build Scripts
+- `build:android`: Build Android application
+- `build:preview`: Build preview version
+```
+
 ## 📁 Project Structure
 
 ```

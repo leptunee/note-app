@@ -1,4 +1,4 @@
-package com.leptunee.noteApp
+package com.leptunee.takenotes
 import expo.modules.splashscreen.SplashScreenManager
 
 import android.os.Build
